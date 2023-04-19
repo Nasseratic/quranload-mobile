@@ -6,6 +6,7 @@ import Typographies from "styles/Typographies";
 import StatsBox from "components/StatsBox";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
+import LectureBox from "components/LectureBox";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Home">;
 
@@ -14,10 +15,12 @@ const HomeScreen = ({ navigation }: Props) => {
     <QuranLoadView>
       <Text style={Typographies.display.heavy}>Home Screen</Text>
       <Button title="Go to Assignments" onPress={() => navigation.navigate("Assignments")} />
+      <LectureBox />
       <View
         style={{
           flexDirection: "row",
           gap: GeneralConstants.Spacing.md,
+          marginTop: GeneralConstants.Spacing.md,
         }}
       >
         <StatsBox
