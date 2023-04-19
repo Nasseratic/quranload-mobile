@@ -1,1 +1,58 @@
-export default {};
+export const Colors = {
+  Black: {
+    1: "#000000",
+    2: "#00000080",
+    3: "#00000040",
+    4: "#0000001A",
+    5: "#0000000D",
+  },
+  White: {
+    1: "#FFFFFF",
+    2: "#FFFFFFB2",
+    3: "#FFFFFF80",
+    4: "#FFFFFF59",
+    5: "#FFFFFF40",
+  },
+  Gray: {
+    1: "#C2C9D1",
+    2: "#FFFFFF80",
+    3: "#FFFFFFBF",
+    4: "#FFFFFFE5",
+    5: "#FFFFFFF2",
+  },
+  Primary: {
+    1: "#0B2540",
+    2: "#144476",
+    3: "#1D62AB",
+    4: "#2B80DB",
+    5: "#60A0E4",
+  },
+  Accent: {
+    1: "#854C9E",
+    2: "#9960B2",
+    3: "#A26DB9",
+    4: "#B387C5",
+    5: "#CCAFD9",
+  },
+  Success: {
+    1: "#01B287",
+    2: "#01E1A9",
+    3: "#13FEC3",
+    4: "#43FECF",
+    5: "#72FEDB",
+  },
+  Warning: {
+    1: "#FF9F1C",
+    2: "#FFAD3A",
+    3: "#FFBB5B",
+    4: "#FFC87C",
+    5: "#FFD69D",
+  },
+  Error: {
+    1: "#E5505A",
+    2: "#E96B73",
+    3: "#ED838A",
+    4: "#F09CA2",
+    5: "#F4B5B9",
+  },
+};

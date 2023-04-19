@@ -3,10 +3,7 @@ import { Button, Text } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 
-type Props = NativeStackScreenProps<
-  Frontend.Navigation.RootStackParamList,
-  "Assignments"
->;
+type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Assignments">;
 const AssignmentsScreen = ({ navigation }: Props) => {
   return (
     <QuranLoadView>
