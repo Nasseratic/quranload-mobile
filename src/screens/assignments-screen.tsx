@@ -8,7 +8,7 @@ const AssignmentsScreen = ({ navigation }: Props) => {
   return (
     <QuranLoadView>
       <Text>Assignments Screen</Text>
-      <Button title="Go to Home" onPress={() => navigation.navigate("Home")} />
+      <Button title="Go to Home" onPress={() => navigation.navigate("Dashboard")} />
     </QuranLoadView>
   );
 };

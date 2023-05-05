@@ -1,20 +1,24 @@
 import React from "react";
-import { Text, Button, View } from "react-native";
+import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
-import Typographies from "styles/Typographies";
 import StatsBox from "components/StatsBox";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import LectureBox from "components/LectureBox";
+import Typography from "components/Typography";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Home">;
+type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
 
-const HomeScreen = ({ navigation }: Props) => {
+const Dashboard = ({ navigation }: Props) => {
   return (
     <QuranLoadView>
-      <Text style={Typographies.display.heavy}>Home Screen</Text>
-      <Button title="Go to Assignments" onPress={() => navigation.navigate("Assignments")} />
+      <View>
+        <Typography type="BodyLight">As salam aleykum,</Typography>
+        <View>
+          <Typography type="HeadlineHeavy">As salam aleykum,</Typography>
+        </View>
+      </View>
       <LectureBox />
       <View
         style={{
@@ -40,4 +44,4 @@ const HomeScreen = ({ navigation }: Props) => {
   );
 };
 
-export default HomeScreen;
+export default Dashboard;

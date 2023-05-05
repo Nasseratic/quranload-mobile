@@ -1,8 +1,8 @@
 import React, { FunctionComponent } from "react";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import { StyleSheet, Text, View } from "react-native";
-import Typographies from "styles/Typographies";
+import { StyleSheet, View } from "react-native";
+import Typography from "components/Typography";
 
 interface Props {
   lecture?: Frontend.Content.Lecture;
@@ -15,15 +15,21 @@ const LectureBox: FunctionComponent<Props> = ({ lecture }) => {
       <View style={styles.lecture}>
         <View style={styles.institutionImage}></View>
         <View style={styles.lectureDetails}>
-          <Text style={styles.lectureTitle}>Niveau 2 - Læsning</Text>
-          <Text style={styles.lectureInstitution}>Imam Malik Institutet</Text>
+          <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
+            Niveau 2 - Læsning
+          </Typography>
+          <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
+            Imam Malik Institutet
+          </Typography>
         </View>
         <View style={styles.lectureMissingAssignments}>
-          <Text style={{ ...Typographies.small.heavy, color: Colors.White[1] }}>3</Text>
+          <Typography type="SmallHeavy" style={{ color: Colors.White[1] }}>
+            3
+          </Typography>
         </View>
       </View>
       <View style={styles.assignment}>
-        <Text>Read: 100-101</Text>
+        <Typography type="BodyLight">Read: 100-101</Typography>
       </View>
     </View>
   );
@@ -50,14 +56,6 @@ const styles = StyleSheet.create({
   lectureDetails: {
     flex: 1,
     flexDirection: "column",
-  },
-  lectureTitle: {
-    color: Colors.Primary[1],
-    ...Typographies.subheader.heavy,
-  },
-  lectureInstitution: {
-    color: Colors.Black[2],
-    ...Typographies.caption.light,
   },
   lectureMissingAssignments: {
     justifyContent: "center",

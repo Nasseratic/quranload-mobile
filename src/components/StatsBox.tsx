@@ -1,8 +1,8 @@
 import React, { FunctionComponent } from "react";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import { StyleSheet, Text, View } from "react-native";
-import Typographies from "styles/Typographies";
+import { StyleSheet, View } from "react-native";
+import Typography from "components/Typography";
 
 interface Props {
   icon: string;
@@ -16,8 +16,22 @@ const StatsBox: FunctionComponent<Props> = ({ icon, label, value, backgroundColo
   return (
     <View style={{ ...styles.container, backgroundColor: backgroundColor }}>
       <View style={styles.icon}></View>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+      <Typography
+        type="CaptionHeavy"
+        style={{
+          color: Colors.White[1],
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        type="CaptionLight"
+        style={{
+          color: Colors.White[1],
+        }}
+      >
+        {value}
+      </Typography>
     </View>
   );
 };
@@ -36,14 +50,6 @@ const styles = StyleSheet.create({
     width: 40,
     backgroundColor: Colors.White[1],
     marginBottom: GeneralConstants.Spacing.sm,
-  },
-  label: {
-    color: Colors.White[1],
-    ...Typographies.caption.heavy,
-  },
-  value: {
-    color: Colors.White[1],
-    ...Typographies.caption.light,
   },
 });
 

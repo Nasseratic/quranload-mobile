@@ -7,7 +7,7 @@ import {
 } from "@expo-google-fonts/noto-sans";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "screens/home-screen";
+import Dashboard from "screens/dashboard-screen";
 import AssignmentsScreen from "screens/assignments-screen";
 
 export default function App() {
@@ -23,8 +23,8 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <RootStack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Home" component={HomeScreen} />
+      <RootStack.Navigator initialRouteName="Dashboard" screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Dashboard" component={Dashboard} />
         <RootStack.Screen name="Assignments" component={AssignmentsScreen} />
       </RootStack.Navigator>
     </NavigationContainer>
