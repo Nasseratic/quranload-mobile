@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Text, TextProps, TextStyle } from "react-native";
-import typographiesStyles, { TypographyType } from "styles/Typographies";
+import typographiesStyles, { TypographyType } from "styles/typographies";
 
 const LINE_HEIGHT_MULTIPLIER = 1.33;
 
