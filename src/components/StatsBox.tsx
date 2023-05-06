@@ -3,9 +3,8 @@ import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, View } from "react-native";
 import Typography from "components/Typography";
-
 interface Props {
-  icon: string;
+  icon: JSX.Element;
   label: string;
   value: string;
   backgroundColor: string;
@@ -15,7 +14,7 @@ const StatsBox: FunctionComponent<Props> = ({ icon, label, value, backgroundColo
   React;
   return (
     <View style={{ ...styles.container, backgroundColor: backgroundColor }}>
-      <View style={styles.icon}></View>
+      {icon}
       <Typography
         type="CaptionHeavy"
         style={{
@@ -39,6 +38,7 @@ const StatsBox: FunctionComponent<Props> = ({ icon, label, value, backgroundColo
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
+    flexBasis: 1,
     borderRadius: GeneralConstants.BorderRadius.default,
     justifyContent: "center",
     alignItems: "center",

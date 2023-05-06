@@ -9,6 +9,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Dashboard from "screens/dashboard-screen";
 import AssignmentsScreen from "screens/assignments-screen";
+import { Colors } from "constants/Colors";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -23,7 +24,15 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <RootStack.Navigator initialRouteName="Dashboard" screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator
+        initialRouteName="Dashboard"
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: Colors.White[1],
+          },
+        }}
+      >
         <RootStack.Screen name="Dashboard" component={Dashboard} />
         <RootStack.Screen name="Assignments" component={AssignmentsScreen} />
       </RootStack.Navigator>

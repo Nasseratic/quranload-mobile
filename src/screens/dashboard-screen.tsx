@@ -7,6 +7,7 @@ import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import LectureBox from "components/LectureBox";
 import Typography from "components/Typography";
+import { BookIcon, ClockIcon, CogIcon } from "assets/icons";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
 
@@ -15,8 +16,15 @@ const Dashboard = ({ navigation }: Props) => {
     <QuranLoadView>
       <View>
         <Typography type="BodyLight">As salam aleykum,</Typography>
-        <View>
-          <Typography type="HeadlineHeavy">As salam aleykum,</Typography>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography type="HeadlineHeavy">Matin Kacar</Typography>
+          <CogIcon width={18} height={18} color={Colors.Primary[1]} />
         </View>
       </View>
       <LectureBox />
@@ -24,19 +32,18 @@ const Dashboard = ({ navigation }: Props) => {
         style={{
           flexDirection: "row",
           gap: GeneralConstants.Spacing.md,
-          marginTop: GeneralConstants.Spacing.md,
         }}
       >
         <StatsBox
-          icon=""
+          icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
           label="Time pr page"
           value="2.5 min"
           backgroundColor={Colors.Primary[1]}
         />
         <StatsBox
-          icon=""
-          label="Time pr page"
-          value="2.5 min"
+          icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
+          label="Pages"
+          value="193"
           backgroundColor={Colors.Success[1]}
         />
       </View>
