@@ -1,5 +1,5 @@
 import React from "react";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import StatsBox from "components/StatsBox";
@@ -15,7 +15,9 @@ const Dashboard = ({ navigation }: Props) => {
   return (
     <QuranLoadView>
       <View>
-        <Typography type="BodyLight">As salam aleykum,</Typography>
+        <Typography type="BodyLight" style={{ opacity: 0.5 }}>
+          As salam aleykum,
+        </Typography>
         <View
           style={{
             flexDirection: "row",
@@ -24,7 +26,9 @@ const Dashboard = ({ navigation }: Props) => {
           }}
         >
           <Typography type="HeadlineHeavy">Matin Kacar</Typography>
-          <CogIcon width={18} height={18} color={Colors.Primary[1]} />
+          <TouchableOpacity>
+            <CogIcon width={18} height={18} color={Colors.Primary[1]} />
+          </TouchableOpacity>
         </View>
       </View>
       <LectureBox />
