@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     flexBasis: 1,
-    borderRadius: GeneralConstants.BorderRadius.default,
+    borderRadius: GeneralConstants.BorderRadius.xl,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "column",

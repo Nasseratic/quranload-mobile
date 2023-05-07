@@ -11,6 +11,7 @@ const QuranLoadView: FunctionComponent<Props> = ({ children, ...rest }) => {
       edges={["top"]}
       style={{
         backgroundColor: "transparent",
+        flex: 1,
       }}
       {...rest}
     >

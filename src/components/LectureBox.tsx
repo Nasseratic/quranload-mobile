@@ -4,6 +4,7 @@ import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, View } from "react-native";
 import Typography from "components/Typography";
 import { Image } from "expo-image";
+import Checkbox from "components/Checkbox";
 
 const BLURHASH = "U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xt";
 
@@ -39,6 +40,7 @@ const LectureBox: FunctionComponent<Props> = ({ lecture }) => {
         </View>
       </View>
       <View style={styles.assignment}>
+        <Checkbox style={styles.checkbox} value={true} color={Colors.Success[1]} />
         <Typography type="BodyLight">Read: 100-101</Typography>
       </View>
     </View>
@@ -48,7 +50,7 @@ const LectureBox: FunctionComponent<Props> = ({ lecture }) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    borderRadius: GeneralConstants.BorderRadius.default,
+    borderRadius: GeneralConstants.BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.Gray[1],
   },
@@ -76,7 +78,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     backgroundColor: Colors.Error[1],
-    borderRadius: GeneralConstants.BorderRadius.default,
+    borderRadius: GeneralConstants.BorderRadius.xl,
   },
   assignment: {
     borderTopWidth: 1,
@@ -86,6 +88,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: GeneralConstants.Spacing.sm,
     alignItems: "center",
+  },
+  checkbox: {
+    height: 18.5,
+    width: 18.5,
+    borderRadius: GeneralConstants.BorderRadius.xxs,
   },
 });
 
