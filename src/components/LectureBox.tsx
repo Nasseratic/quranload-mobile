@@ -1,23 +1,25 @@
-import React, { FunctionComponent } from "react";
+import React from "react";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Typography from "components/Typography";
 import { Image } from "expo-image";
-import Checkbox from "components/Checkbox";
 import { ChevronRightIcon } from "assets/icons";
+import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
 
 const BLURHASH = "U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xt";
 
 interface Props {
   lecture?: Frontend.Content.Lecture;
+  onLecturePress: () => void;
+  onAssignmentPress?: () => void;
 }
 
-const LectureBox: FunctionComponent<Props> = ({ lecture }) => {
+const LectureBox = ({ lecture, onLecturePress, onAssignmentPress }: Props) => {
   React;
   return (
-    <View style={{ ...styles.container }}>
-      <TouchableOpacity style={styles.lecture}>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
         <View style={styles.institutionImageContainer}>
           <Image
             style={styles.institutionImage}
@@ -40,8 +42,8 @@ const LectureBox: FunctionComponent<Props> = ({ lecture }) => {
           </Typography>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.assignment}>
-        <Checkbox style={styles.checkbox} value={true} color={Colors.Success[1]} />
+      <TouchableOpacity style={styles.assignment} onPress={onAssignmentPress}>
+        <AssignmentStatusCheckbox status="pending" />
         <Typography type="BodyLight">Read: 100-101</Typography>
         <ChevronRightIcon
           style={{

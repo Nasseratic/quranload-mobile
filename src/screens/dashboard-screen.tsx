@@ -31,7 +31,7 @@ const Dashboard = ({ navigation }: Props) => {
           </TouchableOpacity>
         </View>
       </View>
-      <LectureBox />
+      <LectureBox onLecturePress={() => navigation.navigate("Assignments")} />
       <View
         style={{
           flexDirection: "row",
