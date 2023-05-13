@@ -1,5 +1,5 @@
-import React from "react";
-import { TouchableOpacity, View } from "react-native";
+import React, { useContext, useEffect, useState } from "react";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import StatsBox from "components/StatsBox";
@@ -8,10 +8,27 @@ import GeneralConstants from "constants/GeneralConstants";
 import LectureBox from "components/LectureBox";
 import Typography from "components/Typography";
 import { BookIcon, ClockIcon, CogIcon } from "assets/icons";
+import { StatusBar } from "expo-status-bar";
+import Loader from "components/Loader";
+import { i18n } from "locales/config";
+import AuthContext from "contexts/auth";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
 
-const Dashboard = ({ navigation }: Props) => {
+const DashboardScreen = ({ navigation }: Props) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useContext(AuthContext);
+
+  const getData = () => {
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  if (isLoading) return <Loader />;
+
   return (
     <QuranLoadView>
       <View>
@@ -25,8 +42,8 @@ const Dashboard = ({ navigation }: Props) => {
             justifyContent: "space-between",
           }}
         >
-          <Typography type="HeadlineHeavy">Matin Kacar</Typography>
-          <TouchableOpacity>
+          <Typography type="HeadlineHeavy">{user!.name}</Typography>
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
             <CogIcon width={18} height={18} color={Colors.Primary[1]} />
           </TouchableOpacity>
         </View>
@@ -40,13 +57,13 @@ const Dashboard = ({ navigation }: Props) => {
       >
         <StatsBox
           icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
-          label="Time pr page"
+          label={i18n.t("hoursPerPage")}
           value="2.5 min"
           backgroundColor={Colors.Primary[1]}
         />
         <StatsBox
           icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
-          label="Pages"
+          label={i18n.t("pages")}
           value="193"
           backgroundColor={Colors.Success[1]}
         />
@@ -55,4 +72,4 @@ const Dashboard = ({ navigation }: Props) => {
   );
 };
 
-export default Dashboard;
+export default DashboardScreen;

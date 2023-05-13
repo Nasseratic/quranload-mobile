@@ -74,7 +74,7 @@ const mock: Frontend.Content.Assignment[] = [
 ];
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Assignments">;
-const AssignmentsScreen = ({ navigation }: Props) => {
+const AssignmentsScreen = ({}: Props) => {
   return (
     <QuranLoadView appBar={{ title: "Homework" }}>
       <View style={styles.assignments}>

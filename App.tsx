@@ -5,11 +5,10 @@ import {
   NotoSans_600SemiBold,
   NotoSans_400Regular,
 } from "@expo-google-fonts/noto-sans";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import Dashboard from "screens/dashboard-screen";
-import AssignmentsScreen from "screens/assignments-screen";
-import { Colors } from "constants/Colors";
+import Nav from "navigation/Nav";
+import { AuthProvider } from "contexts/auth";
+
+require("./src/locales/config");
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -20,22 +19,9 @@ export default function App() {
 
   if (!fontsLoaded) return null;
 
-  const RootStack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
-
   return (
-    <NavigationContainer>
-      <RootStack.Navigator
-        initialRouteName="Dashboard"
-        screenOptions={{
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: Colors.White[1],
-          },
-        }}
-      >
-        <RootStack.Screen name="Dashboard" component={Dashboard} />
-        <RootStack.Screen name="Assignments" component={AssignmentsScreen} />
-      </RootStack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <Nav />
+    </AuthProvider>
   );
 }
