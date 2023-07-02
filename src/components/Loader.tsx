@@ -3,7 +3,6 @@ import { Colors } from "constants/Colors";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
 
-
 const Loader: FunctionComponent = () => {
   return (
     <View

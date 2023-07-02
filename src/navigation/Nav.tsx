@@ -9,9 +9,12 @@ import AuthContext from "contexts/auth";
 import QuranLoadView from "components/QuranLoadView";
 import { Text } from "react-native";
 import ProfileScreen from "screens/account/ProfileScreen";
-import AdvancedSettingsScreen from "screens/account/AdvancedSettings";
+import AdvancedSettingsScreen from "screens/account/advancedSettings/AdvancedSettingsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "screens/teacher/HomeScreen";
+import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswordScreen";
+import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguage";
+import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscription";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
 
@@ -30,8 +33,8 @@ const Nav = () => {
       setIsLoading(false);
     };
 
-    initialize();
-  }, []);
+    initialize().catch(console.error);
+  });
 
   if (isLoading)
     return (
@@ -51,20 +54,23 @@ const Nav = () => {
           },
         }}
       >
-        {signed ? (
+        {signed && user ? (
           <>
-            {user!.role == "Student" ? (
+            {user.role == "Student" ? (
               <>
                 <Stack.Screen name="Dashboard" component={DashboardScreen} />
                 <Stack.Screen name="Assignments" component={AssignmentsScreen} />
               </>
             ) : (
               <>
-                <Stack.Screen name="TeacherHome" component={HomeScreen}/>
+                <Stack.Screen name="TeacherHome" component={HomeScreen} />
               </>
             )}
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="AdvancedSettings" component={AdvancedSettingsScreen} />
+            <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+            <Stack.Screen name="ChangeLanguage" component={ChangeLanguageScreen} />
+            <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
           </>
         ) : (
           <>

@@ -7,6 +7,9 @@ declare namespace Frontend.Navigation {
     Record: undefined;
     RecordSettings: undefined;
     AdvancedSettings: undefined;
+    ChangePassword: undefined;
+    ChangeLanguage: undefined;
+    CancelSubscription: undefined;
     TeacherHome: undefined;
   };
 }

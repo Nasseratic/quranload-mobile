@@ -5,3 +5,6 @@ export { default as ChevronRightIcon } from "./ChevronRight.svg";
 export { default as ChevronLeftIcon } from "./ChevronLeft.svg";
 export { default as CheckmarkIcon } from "./Checkmark.svg";
 export { default as RejectedCrossIcon } from "./RejectedCross.svg";
+export { default as KeyIcon } from "./Key.svg";
+export { default as GlobeIcon } from "./Globe.svg";
+export { default as SadFaceIcon } from "./SadFace.svg";

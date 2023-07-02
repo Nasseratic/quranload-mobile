@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import { Colors } from "constants/Colors";
+import GeneralConstants from "constants/GeneralConstants";
+import Typography from "components/Typography";
 
 interface OwnProps {
   disabled?: boolean;
@@ -17,7 +19,7 @@ interface OwnProps {
   textStyle?: StyleProp<TextStyle>;
   onPress: () => void;
   title: string;
-  isSubmitting?: boolean;
+  isLoading?: boolean;
 }
 
 type Props = OwnProps;
@@ -26,11 +28,11 @@ const ActionButton: FunctionComponent<Props> = ({
   disabled,
   title,
   onPress,
-  isSubmitting,
+  isLoading,
   style,
   textStyle,
 }) => {
-  if (isSubmitting) {
+  if (isLoading) {
     return (
       <View>
         <ActivityIndicator style={{ backgroundColor: Colors.Accent["1"] }} />
@@ -41,11 +43,16 @@ const ActionButton: FunctionComponent<Props> = ({
   return (
     <TouchableOpacity
       activeOpacity={0.6}
-      style={[disabled ? styles.disabled : styles.button, style]}
+      style={[styles.button, disabled ? styles.disabled : undefined, style]}
       disabled={disabled}
       onPress={onPress}
     >
-      <Text style={[styles.buttonText, textStyle]}>{title}</Text>
+      <Typography
+        type="CaptionHeavy"
+        style={[{ color: disabled ? Colors.Black[2] : Colors.White[1] }, textStyle]}
+      >
+        {title}
+      </Typography>
     </TouchableOpacity>
   );
 };
@@ -57,22 +64,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.Success["1"],
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 28,
-    marginTop: 10,
+    borderRadius: GeneralConstants.BorderRadius.xs,
   },
   disabled: {
-    width: "100%",
-    height: 55,
     backgroundColor: Colors.Gray["1"],
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 28,
-    marginTop: 10,
-  },
-  buttonText: {
-    fontWeight: "600",
-    fontSize: 16,
-    color: Colors.Primary["1"],
   },
 });
 

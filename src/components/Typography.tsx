@@ -1,12 +1,12 @@
-import React, { useMemo } from "react";
-import { Text, TextProps, TextStyle } from "react-native";
+import { useMemo } from "react";
+import { Text, TextProps, TextStyle, StyleProp } from "react-native";
 import typographiesStyles, { TypographyType } from "styles/typographies";
 
 const LINE_HEIGHT_MULTIPLIER = 1.33;
 
 interface Props extends TextProps {
   type?: TypographyType;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
 }
 
 const Typography = ({ type = "BodyLight", style, children }: Props) => {
@@ -14,11 +14,13 @@ const Typography = ({ type = "BodyLight", style, children }: Props) => {
 
   return (
     <Text
-      style={{
-        lineHeight: typographyStyle.fontSize * LINE_HEIGHT_MULTIPLIER,
-        ...typographyStyle,
-        ...style,
-      }}
+      style={[
+        {
+          lineHeight: typographyStyle.fontSize * LINE_HEIGHT_MULTIPLIER,
+          ...typographyStyle,
+        },
+        style,
+      ]}
     >
       {children}
     </Text>

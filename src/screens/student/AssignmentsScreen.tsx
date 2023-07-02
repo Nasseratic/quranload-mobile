@@ -1,4 +1,3 @@
-import React from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import AssignmentItem from "components/AssignmentItem";
@@ -74,7 +73,7 @@ const mock: Frontend.Content.Assignment[] = [
 ];
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Assignments">;
-const AssignmentsScreen = ({}: Props) => {
+const AssignmentsScreen = (props: Props) => {
   return (
     <QuranLoadView appBar={{ title: "Homework" }}>
       <View style={styles.assignments}>

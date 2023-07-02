@@ -7,6 +7,7 @@
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
+    "plugin:react/jsx-runtime",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking"
@@ -18,7 +19,7 @@
   },
   "plugins": ["react", "@typescript-eslint", "react-hooks", "prettier"],
   "rules": {
-    "indent": ["error", 2],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "double"],
     "semi": ["error", "always"],
@@ -27,7 +28,13 @@
     "react/display-name": "off",
     "react/prop-types": "off",
     "prettier/prettier": "error",
-    "arrow-parens": "warn"
+    "arrow-parens": "warn",
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": false
+      }
+    ]
   },
   "settings": {
     "react": {
