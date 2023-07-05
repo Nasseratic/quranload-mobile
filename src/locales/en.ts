@@ -35,11 +35,11 @@ const english = {
   changeLanguageScreen: {
     title: "Change language",
   },
+  subscriptionsScreen: {
+    title: "Subscriptions",
+  },
   cancelSubscriptionScreen: {
     title: "Cancel subscription",
-    description:
-      "We're sorry to hear that you're canceling your subscription. If there's anything we can do to improve your experience, please let us know. We value your feedback and hope to serve you better in the future",
-    cancelSubscription: "Cancel subscription",
   },
 };
 export default english;

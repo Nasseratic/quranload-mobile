@@ -13,8 +13,9 @@ import AdvancedSettingsScreen from "screens/account/advancedSettings/AdvancedSet
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "screens/teacher/HomeScreen";
 import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswordScreen";
-import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguage";
-import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscription";
+import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguageScreen";
+import SubscriptionScreen from "screens/account/advancedSettings/SubscriptionsScreen";
+import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscriptionScreen";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
 
@@ -70,6 +71,7 @@ const Nav = () => {
             <Stack.Screen name="AdvancedSettings" component={AdvancedSettingsScreen} />
             <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
             <Stack.Screen name="ChangeLanguage" component={ChangeLanguageScreen} />
+            <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
             <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
           </>
         ) : (

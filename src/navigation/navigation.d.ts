@@ -9,7 +9,10 @@ declare namespace Frontend.Navigation {
     AdvancedSettings: undefined;
     ChangePassword: undefined;
     ChangeLanguage: undefined;
-    CancelSubscription: undefined;
+    Subscriptions: undefined;
+    CancelSubscription: {
+      subscription: Frontend.Content.Subscription;
+    };
     TeacherHome: undefined;
   };
 }

@@ -1,13 +1,10 @@
 import React from "react";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, Image } from "react-native";
 import Typography from "components/Typography";
-import { Image } from "expo-image";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
-
-const BLURHASH = "U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xt";
 
 interface Props {
   lecture?: Frontend.Content.Lecture;
@@ -20,14 +17,12 @@ const LectureBox = ({ lecture, onLecturePress, onAssignmentPress }: Props) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
-        <View style={styles.institutionImageContainer}>
-          <Image
-            style={styles.institutionImage}
-            contentFit="contain"
-            source="https://s3-alpha-sig.figma.com/img/3569/704f/4eadebbdb061c627ee3560b99fccffcc?Expires=1684108800&Signature=kWeltpIz8rXtqGjmlmtXM6YT287tuDwqUhxAolPLMajP5iNP2566ZIMk1PcdGw80M80-oi4PG3kr8~lWTUifYcH4GYQxSqp2C36P81vRKp-05nM4V1CySHDWRYXfaiPrqO6rTS-fR7es5X6I9IPBwYxkPleufxL~Gi5dzHfhki0d~qEfJ2xeNsAOfin6aSWvT~E8Eumi7pbFbCW1QlliKtS2yfg9mIlbGc3bqFUIgZf1WbR-ybLqIxXq-M0AGi50TSsaJGU5GLQIKo04BuqmZFmo5KK0z2oJIHRE3k0Afo3QjAGkgD0ADyIdo739LqdgJDfY~Hd4LQXRAex17cs6~A__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4"
-            placeholder={BLURHASH}
-          />
-        </View>
+        <Image
+          style={styles.institutionImage}
+          source={{
+            uri: "https://time.my-masjid.com//Uploads/b349b4c3-2a12-46a8-97fc-520480ade280-e590f.png",
+          }}
+        />
         <View style={styles.lectureDetails}>
           <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
             Niveau 2 - Læsning
@@ -69,13 +64,9 @@ const styles = StyleSheet.create({
     gap: GeneralConstants.Spacing.sm,
     alignItems: "center",
   },
-  institutionImageContainer: {
+  institutionImage: {
     width: 45,
     height: 45,
-  },
-  institutionImage: {
-    flex: 1,
-    width: "100%",
   },
   lectureDetails: {
     flex: 1,

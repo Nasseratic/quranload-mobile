@@ -23,7 +23,7 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
     },
     {
       text: i18n.t("advancedSettingsScreen.cancelSubscription"),
-      onPress: () => navigation.navigate("CancelSubscription"),
+      onPress: () => navigation.navigate("Subscriptions"),
       icon: <SadFaceIcon color={Colors.Primary[1]} />,
     },
   ];

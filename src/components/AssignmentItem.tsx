@@ -1,6 +1,5 @@
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";

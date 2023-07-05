@@ -1,7 +1,7 @@
 import { ChevronLeftIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Typography from "./Typography";
 import { useNavigation } from "@react-navigation/native";
