@@ -1,4 +1,3 @@
-import React from "react";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -6,17 +5,18 @@ import Typography from "components/Typography";
 import { Image } from "expo-image";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
+import { LessonStatusFromTypeToEnum } from "types/Lessons";
 
 const BLURHASH = "U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xt";
 
 interface Props {
-  lecture?: Frontend.Content.Lecture;
+  team: Frontend.Content.Team;
+  latestOpenAssignment?: Frontend.Content.Assignment;
   onLecturePress: () => void;
   onAssignmentPress?: () => void;
 }
 
-const LectureBox = ({ lecture, onLecturePress, onAssignmentPress }: Props) => {
-  React;
+const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPress }: Props) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
@@ -24,34 +24,38 @@ const LectureBox = ({ lecture, onLecturePress, onAssignmentPress }: Props) => {
           <Image
             style={styles.institutionImage}
             contentFit="contain"
-            source="https://s3-alpha-sig.figma.com/img/3569/704f/4eadebbdb061c627ee3560b99fccffcc?Expires=1684108800&Signature=kWeltpIz8rXtqGjmlmtXM6YT287tuDwqUhxAolPLMajP5iNP2566ZIMk1PcdGw80M80-oi4PG3kr8~lWTUifYcH4GYQxSqp2C36P81vRKp-05nM4V1CySHDWRYXfaiPrqO6rTS-fR7es5X6I9IPBwYxkPleufxL~Gi5dzHfhki0d~qEfJ2xeNsAOfin6aSWvT~E8Eumi7pbFbCW1QlliKtS2yfg9mIlbGc3bqFUIgZf1WbR-ybLqIxXq-M0AGi50TSsaJGU5GLQIKo04BuqmZFmo5KK0z2oJIHRE3k0Afo3QjAGkgD0ADyIdo739LqdgJDfY~Hd4LQXRAex17cs6~A__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4"
+            source={team.image}
             placeholder={BLURHASH}
           />
         </View>
         <View style={styles.lectureDetails}>
           <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
-            Niveau 2 - Læsning
+            {team.title}
           </Typography>
           <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
-            Imam Malik Institutet
+            {team.institution}
           </Typography>
         </View>
         <View style={styles.lectureMissingAssignments}>
           <Typography type="SmallHeavy" style={{ color: Colors.White[1] }}>
-            3
+            {team.assignments}
           </Typography>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.assignment} onPress={onAssignmentPress}>
-        <AssignmentStatusCheckbox status="pending" />
-        <Typography type="BodyLight">Read: 100-101</Typography>
-        <ChevronRightIcon
-          style={{
-            marginLeft: "auto",
-          }}
-          color={Colors.Primary[1]}
-        />
-      </TouchableOpacity>
+      {latestOpenAssignment && (
+        <TouchableOpacity style={styles.assignment} onPress={onAssignmentPress}>
+          <AssignmentStatusCheckbox
+            status={LessonStatusFromTypeToEnum(latestOpenAssignment.status)}
+          />
+          <Typography type="BodyLight">{latestOpenAssignment.description}</Typography>
+          <ChevronRightIcon
+            style={{
+              marginLeft: "auto",
+            }}
+            color={Colors.Primary[1]}
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

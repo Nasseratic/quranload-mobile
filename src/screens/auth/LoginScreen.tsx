@@ -19,13 +19,18 @@ const LoginScreen: FunctionComponent<Props> = () => {
 
   const formik = useFormik({
     initialValues: {
-      username: "xfarouk@live.dk",
-      password: "0505",
+      username: "zaab",
+      password: "P@ssw0rd",
+      error: "",
     },
-    onSubmit: (values) => {
+    onSubmit: (values, { setErrors }) => {
+      setErrors({});
       signIn(values.username, values.password)
-        .catch((err) => {
-          console.log("err", err);
+        .catch((err: ISignInErrorResponse) => {
+          console.log("error", err.response.data.message);
+          if (err.response?.data?.message) {
+            setErrors({ error: err.response.data.message });
+          }
         })
         .finally(() => {
           formik.setSubmitting(false);
@@ -60,6 +65,8 @@ const LoginScreen: FunctionComponent<Props> = () => {
           error={formik.errors.password}
           touched={formik.touched.password}
         />
+        {formik.errors.error && <Text style={{ color: "red" }}> {formik.errors.error} </Text>}
+
         <View style={{ alignItems: "center", marginTop: 25 }}>
           <ActionBtn
             isSubmitting={formik.isSubmitting}

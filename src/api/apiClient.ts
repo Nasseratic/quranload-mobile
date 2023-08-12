@@ -1,8 +1,9 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ErrorResponse from "types/ErrorResponse";
 
 const api = axios.create({
-  baseURL: "https://api.quranload.com/api/",
+  baseURL: "https://quranload-be-dev-app.azurewebsites.net/api/",
 });
 
 api.interceptors.request.use(async (conf) => {
@@ -13,6 +14,26 @@ api.interceptors.request.use(async (conf) => {
   }
   return conf;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError): Promise<ErrorResponse | null> => {
+    const { data, status } = error.response!;
+    if (status === 400) {
+      //TODO: HANDLE VALIDATION ERRORS TO RETURN
+      return { error: "an expected error occurred" };
+    } else if (status === 500) {
+      console.log(data);
+      return Promise.reject({ status: status, error: "an expected error occurred" });
+    } else if (status === 401) {
+      return Promise.reject(null);
+    } else if (status === 404) {
+      return Promise.reject({ status: status, error: "an expected error occurred" });
+    } else {
+      return Promise.reject({ status: status, error: "an expected error occurred" });
+    }
+  }
+);
 
 const responseBody = <T>(response: AxiosResponse<T>) => {
   return response.data;

@@ -2,8 +2,11 @@ import { createContext, useState } from "react";
 import * as auth from "../api/authClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, UserRole } from "types/User";
+import { GetUserProfile } from "services/profileService";
+import * as SplashScreen from "expo-splash-screen";
 
 interface AuthContextData {
+  initialized: boolean;
   signed: boolean;
   user: User | undefined;
   signIn: (username: string, password: string) => Promise<void>;
@@ -18,25 +21,34 @@ interface Props {
 }
 export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState<boolean>(false);
 
   const [user, setUser] = useState<User | undefined>();
 
   const signIn = async (username: string, password: string) => {
     const res = await auth.signIn({ username, password });
-    if (res.accessToken) {
-      await AsyncStorage.setItem("accessToken", res.accessToken);
+    if (res.data.accessToken) {
+      await AsyncStorage.setItem("accessToken", res.data.accessToken);
       handleSignIn();
     }
   };
 
   const handleSignIn = () => {
-    setSignedIn(true);
-    //TODO: HENT BRUGER OPLYSNINGER FRA API
-    setUser({
-      name: "Matin Kacer",
-      email: "xfarouk@live.dk",
-      role: "Student",
-    });
+    GetUserProfile()
+      .then((res) => {
+        console.log(res);
+        setUser(res);
+        setSignedIn(true);
+      })
+      .catch((err) => {
+        console.log(err);
+        setSignedIn(false);
+      })
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      .finally(async () => {
+        setInitialized(true);
+        await SplashScreen.hideAsync();
+      });
   };
   const signOut = async () => {
     await AsyncStorage.removeItem("accessToken");
@@ -44,7 +56,7 @@ export const AuthProvider = ({ children }: Props) => {
   };
 
   return (
-    <AuthContext.Provider value={{ signed: signedIn, signIn, user, handleSignIn, signOut }}>
+    <AuthContext.Provider value={{ initialized, signed: signedIn, signIn, user, handleSignIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

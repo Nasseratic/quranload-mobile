@@ -4,16 +4,19 @@ declare namespace Frontend.Content {
     disableGoBack?: boolean;
   }
 
-  export interface Lecture {
+  export interface Team {
+    id: string;
     title: string;
+    image: string;
     institution: string;
+    assignments: number;
   }
 
   export type AssignmentStatus = "done" | "pending" | "rejected";
 
   export interface Assignment {
     status: AssignmentStatus;
-    text: string;
-    deadline: string;
+    description: string;
+    endDate: string;
   }
 }

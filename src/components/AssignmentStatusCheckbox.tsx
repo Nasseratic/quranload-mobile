@@ -3,11 +3,14 @@ import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { AssignmentStatusEnum, LessonStatusFromEnumToType } from "types/Lessons";
 
 interface Props {
-  status: Frontend.Content.AssignmentStatus;
+  status: AssignmentStatusEnum;
 }
+
 const AssignmentStatusCheckbox = ({ status }: Props) => {
+  const statusNormal = LessonStatusFromEnumToType(status);
   return (
     <View
       style={{
@@ -16,11 +19,11 @@ const AssignmentStatusCheckbox = ({ status }: Props) => {
         borderRadius: GeneralConstants.BorderRadius.xxs * 1.2,
         justifyContent: "center",
         alignItems: "center",
-        ...styles[status],
+        ...styles[statusNormal],
       }}
     >
-      {status === "done" && <CheckmarkIcon color={Colors.White[1]} />}
-      {status === "rejected" && <RejectedCrossIcon color={Colors.White[1]} />}
+      {statusNormal === "done" && <CheckmarkIcon color={Colors.White[1]} />}
+      {statusNormal === "rejected" && <RejectedCrossIcon color={Colors.White[1]} />}
     </View>
   );
 };

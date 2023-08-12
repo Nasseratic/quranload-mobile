@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import { TouchableOpacity, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import StatsBox from "components/StatsBox";
@@ -8,19 +8,46 @@ import GeneralConstants from "constants/GeneralConstants";
 import LectureBox from "components/LectureBox";
 import Typography from "components/Typography";
 import { BookIcon, ClockIcon, CogIcon } from "assets/icons";
-import { StatusBar } from "expo-status-bar";
 import Loader from "components/Loader";
 import { i18n } from "locales/config";
 import AuthContext from "contexts/auth";
+import { GetUserLesson } from "services/lessonsService";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
 
 const DashboardScreen = ({ navigation }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [team, setTeam] = useState<Frontend.Content.Team>();
+  const [latestOpenAssignment, setLatestOpenAssignment] = useState<Frontend.Content.Assignment>();
   const { user } = useContext(AuthContext);
 
   const getData = () => {
     setIsLoading(false);
+
+    if (user?.teams && user.teams.length > 0) {
+      GetUserLesson({
+        teamId: user.teams[0].id,
+        lessonState: 0,
+      })
+        .then((res) => {
+          setTeam({
+            id: user.teams[0].id,
+            title: user.teams[0].name,
+            institution: user.teams[0].description,
+            assignments: 50,
+            image:
+              "https://s3-alpha-sig.figma.com/img/3569/704f/4eadebbdb061c627ee3560b99fccffcc?Expires=1684108800&Signature=kWeltpIz8rXtqGjmlmtXM6YT287tuDwqUhxAolPLMajP5iNP2566ZIMk1PcdGw80M80-oi4PG3kr8~lWTUifYcH4GYQxSqp2C36P81vRKp-05nM4V1CySHDWRYXfaiPrqO6rTS-fR7es5X6I9IPBwYxkPleufxL~Gi5dzHfhki0d~qEfJ2xeNsAOfin6aSWvT~E8Eumi7pbFbCW1QlliKtS2yfg9mIlbGc3bqFUIgZf1WbR-ybLqIxXq-M0AGi50TSsaJGU5GLQIKo04BuqmZFmo5KK0z2oJIHRE3k0Afo3QjAGkgD0ADyIdo739LqdgJDfY~Hd4LQXRAex17cs6~A__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4",
+          });
+
+          if (res.list.length > 0) {
+            console.log(res.list[0]);
+            setLatestOpenAssignment(res.list[0]);
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   useEffect(() => {
@@ -33,7 +60,7 @@ const DashboardScreen = ({ navigation }: Props) => {
     <QuranLoadView>
       <View>
         <Typography type="BodyLight" style={{ opacity: 0.5 }}>
-          As salam aleykum,
+          As-salamu aleykum,
         </Typography>
         <View
           style={{
@@ -42,13 +69,19 @@ const DashboardScreen = ({ navigation }: Props) => {
             justifyContent: "space-between",
           }}
         >
-          <Typography type="HeadlineHeavy">{user!.name}</Typography>
+          <Typography type="HeadlineHeavy">{user!.fullName}</Typography>
           <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
             <CogIcon width={18} height={18} color={Colors.Primary[1]} />
           </TouchableOpacity>
         </View>
       </View>
-      <LectureBox onLecturePress={() => navigation.navigate("Assignments")} />
+      {team && (
+        <LectureBox
+          team={team}
+          latestOpenAssignment={latestOpenAssignment}
+          onLecturePress={() => navigation.navigate("Assignments", {teamId: team.id})}
+        />
+      )}
       <View
         style={{
           flexDirection: "row",

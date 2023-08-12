@@ -7,8 +7,11 @@ import {
 } from "@expo-google-fonts/noto-sans";
 import Nav from "navigation/Nav";
 import { AuthProvider } from "contexts/auth";
+import * as SplashScreen from "expo-splash-screen";
 
 require("./src/locales/config");
+
+void SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const [fontsLoaded] = useFonts({

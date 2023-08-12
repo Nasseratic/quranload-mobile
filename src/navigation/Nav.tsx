@@ -6,39 +6,30 @@ import DashboardScreen from "screens/student/DashboardScreen";
 import AssignmentsScreen from "screens/student/AssignmentsScreen";
 import LoginScreen from "screens/auth/LoginScreen";
 import AuthContext from "contexts/auth";
-import QuranLoadView from "components/QuranLoadView";
-import { Text } from "react-native";
 import ProfileScreen from "screens/account/ProfileScreen";
 import AdvancedSettingsScreen from "screens/account/AdvancedSettings";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "screens/teacher/HomeScreen";
+import * as SplashScreen from "expo-splash-screen";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
 
 const Nav = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const { signed, user, handleSignIn } = useContext(AuthContext);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initialize = async () => {
+    async function initialize() {
       const accessToken = await AsyncStorage.getItem("accessToken");
-
       if (accessToken) {
         handleSignIn();
-        setIsLoading(false);
+      } else {
+        await SplashScreen.hideAsync();
       }
-      setIsLoading(false);
-    };
+    }
 
-    initialize();
+    void initialize();
   }, []);
-
-  if (isLoading)
-    return (
-      <QuranLoadView>
-        <Text>LOADING</Text>
-      </QuranLoadView>
-    );
 
   return (
     <NavigationContainer>
@@ -53,14 +44,14 @@ const Nav = () => {
       >
         {signed ? (
           <>
-            {user!.role == "Student" ? (
+            {user!.roles.indexOf("Student") >= 0 ? (
               <>
                 <Stack.Screen name="Dashboard" component={DashboardScreen} />
                 <Stack.Screen name="Assignments" component={AssignmentsScreen} />
               </>
             ) : (
               <>
-                <Stack.Screen name="TeacherHome" component={HomeScreen}/>
+                <Stack.Screen name="TeacherHome" component={HomeScreen} />
               </>
             )}
             <Stack.Screen name="Profile" component={ProfileScreen} />
