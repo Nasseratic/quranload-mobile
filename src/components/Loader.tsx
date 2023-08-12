@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import React, { FunctionComponent } from "react";
 import { Colors } from "constants/Colors";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";

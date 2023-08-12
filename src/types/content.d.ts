@@ -19,4 +19,16 @@ declare namespace Frontend.Content {
     description: string;
     endDate: string;
   }
+
+  export interface Subscription {
+    id: string;
+    name: string;
+    institution: string;
+    startDate: string;
+    expireDate: string;
+    nextPayment: string;
+    frequence: string;
+    amount: string;
+    image: string;
+  }
 }

@@ -7,10 +7,14 @@ import AssignmentsScreen from "screens/student/AssignmentsScreen";
 import LoginScreen from "screens/auth/LoginScreen";
 import AuthContext from "contexts/auth";
 import ProfileScreen from "screens/account/ProfileScreen";
-import AdvancedSettingsScreen from "screens/account/AdvancedSettings";
+import AdvancedSettingsScreen from "screens/account/advancedSettings/AdvancedSettingsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import HomeScreen from "screens/teacher/HomeScreen";
 import * as SplashScreen from "expo-splash-screen";
+import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswordScreen";
+import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguageScreen";
+import SubscriptionScreen from "screens/account/advancedSettings/SubscriptionsScreen";
+import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscriptionScreen";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
 
@@ -28,8 +32,8 @@ const Nav = () => {
       }
     }
 
-    void initialize();
-  }, []);
+    initialize().catch(console.error);
+  });
 
   return (
     <NavigationContainer>
@@ -42,9 +46,9 @@ const Nav = () => {
           },
         }}
       >
-        {signed ? (
+        {signed && user ? (
           <>
-            {user!.roles.indexOf("Student") >= 0 ? (
+            {user.roles.indexOf("Student") >= 0 ? (
               <>
                 <Stack.Screen name="Dashboard" component={DashboardScreen} />
                 <Stack.Screen name="Assignments" component={AssignmentsScreen} />
@@ -56,6 +60,10 @@ const Nav = () => {
             )}
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="AdvancedSettings" component={AdvancedSettingsScreen} />
+            <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+            <Stack.Screen name="ChangeLanguage" component={ChangeLanguageScreen} />
+            <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
+            <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
           </>
         ) : (
           <>

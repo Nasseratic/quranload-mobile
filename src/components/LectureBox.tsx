@@ -1,13 +1,11 @@
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import Typography from "components/Typography";
 import { Image } from "expo-image";
+import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
 import { LessonStatusFromTypeToEnum } from "types/Lessons";
-
-const BLURHASH = "U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xt";
 
 interface Props {
   team: Frontend.Content.Team;
@@ -20,12 +18,11 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPr
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
-        <View style={styles.institutionImageContainer}>
+        <View style={styles.institutionImage}>
           <Image
             style={styles.institutionImage}
             contentFit="contain"
             source={team.image}
-            placeholder={BLURHASH}
           />
         </View>
         <View style={styles.lectureDetails}>
@@ -73,13 +70,9 @@ const styles = StyleSheet.create({
     gap: GeneralConstants.Spacing.sm,
     alignItems: "center",
   },
-  institutionImageContainer: {
+  institutionImage: {
     width: 45,
     height: 45,
-  },
-  institutionImage: {
-    flex: 1,
-    width: "100%",
   },
   lectureDetails: {
     flex: 1,

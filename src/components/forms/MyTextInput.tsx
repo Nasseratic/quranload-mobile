@@ -1,7 +1,17 @@
 import { Colors } from "constants/Colors";
-import Typographies from "styles/typographies";
-import React, { FunctionComponent } from "react";
-import { StyleSheet, TextInput, Text, View, KeyboardTypeOptions } from "react-native";
+import React, { FunctionComponent, useState } from "react";
+import {
+  StyleSheet,
+  TextInput,
+  Text,
+  View,
+  KeyboardTypeOptions,
+  NativeSyntheticEvent,
+  TextInputFocusEventData,
+} from "react-native";
+import Typography from "components/Typography";
+import typographiesStyles from "styles/typographies";
+import GeneralConstants from "constants/GeneralConstants";
 
 interface OwnProps {
   label?: string;
@@ -10,11 +20,11 @@ interface OwnProps {
   value: string | undefined;
   autoCompleteType?: KeyboardTypeOptions | undefined;
   placeHolder: string;
-  handleBlur?: {
-    (e: React.FocusEvent<any, Element>): void;
+  onBlur?: {
+    (e: React.FocusEvent<Element, Element>): void;
     <T = any>(fieldOrEvent: T): T extends string ? (e: any) => void : void;
   };
-  handleChange: (name: string) => void;
+  onChange: (name: string) => void;
   editable?: boolean;
   autofocus?: boolean;
   textarea?: boolean;
@@ -27,17 +37,34 @@ const MyTextInput: FunctionComponent<Props> = ({
   editable,
   value,
   error,
-  handleChange,
+  onChange,
   touched,
-  handleBlur,
+  onBlur,
   autoCompleteType,
   placeHolder,
   autofocus,
   textarea,
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    setIsFocused(false);
+    onBlur?.(e);
+  };
+
   return (
     <View>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Typography
+          type="BodyHeavy"
+          style={{
+            marginBottom: GeneralConstants.Spacing.xs,
+            color: isFocused ? Colors.Primary[1] : Colors.Black[2],
+          }}
+        >
+          {label}
+        </Typography>
+      )}
 
       <TextInput
         keyboardType={autoCompleteType}
@@ -45,15 +72,10 @@ const MyTextInput: FunctionComponent<Props> = ({
         editable={editable}
         autoFocus={autofocus}
         placeholder={placeHolder}
-        onChangeText={handleChange}
-        onBlur={handleBlur}
-        style={[
-          styles.input,
-          {
-            height: textarea ? 100 : 50,
-          },
-          error && touched ? styles.error : null,
-        ]}
+        onChangeText={onChange}
+        onBlur={handleOnBlur}
+        onFocus={() => setIsFocused(true)}
+        style={[styles.input, error && touched ? styles.error : null, isFocused && styles.focused]}
         value={value}
         multiline={textarea}
         numberOfLines={textarea ? 10 : 1}
@@ -64,23 +86,21 @@ const MyTextInput: FunctionComponent<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  label: {
-    ...Typographies.CaptionLight,
-    color: Colors.White["1"],
-    fontSize: 14,
-    marginTop: 15,
-  },
   input: {
-    backgroundColor: Colors.White["1"],
-    borderRadius: 4,
-    color: Colors.Primary["1"],
-    borderWidth: 1,
-    borderColor: Colors.Gray["3"],
-    marginTop: 4,
-    paddingHorizontal: 10,
+    padding: GeneralConstants.Spacing.sm,
+    backgroundColor: Colors.White[1],
+    color: Colors.Black[2],
+    borderColor: Colors.Gray[1],
+    borderWidth: 2,
+    borderRadius: GeneralConstants.BorderRadius.xs,
+    ...typographiesStyles.CaptionLight,
+  },
+  focused: {
+    borderColor: Colors.Primary[1],
+    color: Colors.Primary[1],
   },
   error: {
-    borderColor: Colors.Error["1"],
+    borderColor: Colors.Error[1],
   },
 });
 
