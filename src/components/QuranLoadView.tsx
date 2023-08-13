@@ -1,7 +1,7 @@
 import React, { FunctionComponent, Children } from "react";
 import { View, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView, SafeAreaViewProps } from "react-native-safe-area-context";
+import { SafeAreaView, SafeAreaViewProps, useSafeAreaInsets } from "react-native-safe-area-context";
 import GeneralConstants from "constants/GeneralConstants";
 import AppBar from "components/AppBar";
 
@@ -10,6 +10,7 @@ interface Props extends SafeAreaViewProps {
 }
 
 const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) => {
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView
       edges={["top"]}
@@ -23,6 +24,9 @@ const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) 
       <ScrollView
         style={{
           paddingHorizontal: 16,
+        }}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 16,
         }}
       >
         {Children.map(children, (child, i) => {
