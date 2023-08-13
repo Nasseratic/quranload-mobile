@@ -74,6 +74,7 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
             style={{ alignItems: "center", marginTop: 15 }}
           >
             <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
+              {/* TODO: translate */}
               Allerede en konto? Log ind her
             </Typography>
           </TouchableOpacity>

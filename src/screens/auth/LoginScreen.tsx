@@ -75,6 +75,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
             style={{ alignItems: "center", marginTop: 15 }}
           >
             <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
+              {/* TODO: translate */}
               Glemt adgangskode?
             </Typography>
           </TouchableOpacity>
@@ -84,6 +85,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
             style={{ alignItems: "center", marginTop: 15 }}
           >
             <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+              {/* TODO: translate */}
               Ikke en konto? Opret konto
             </Typography>
           </TouchableOpacity>
