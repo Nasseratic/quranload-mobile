@@ -7,6 +7,8 @@ import chapters from "assets/data/chapters.json";
 import { FontMap } from "utils/FontMap";
 import { MushafPageSurahHeader } from "components/Mushaf/MushafPageSurahHeader";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
+import Bsml from "assets/bsml.svg";
+import { BsmlSvg } from "components/svgs/BsmlSvg";
 
 const Verses = verses as Record<
   string,
@@ -29,7 +31,6 @@ const QURAN_PAGE_WIDTH = SCREEN_WIDTH - QURAN_PAGE_PADDING * 2;
 export function MushafPage({ pageNumber }: { pageNumber: number }) {
   const [fontsLoaded] = Font.useFonts({
     [`page${pageNumber}`]: FontMap[`${pageNumber}` as keyof typeof FontMap],
-    bismillah: require("assets/fonts/QCF2BSML.ttf"),
   });
 
   const [isLayoutReady, setIsLayoutReady] = useState(false);
@@ -133,25 +134,14 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
               } else if (word == "BSML") {
                 return (
                   <View
-                    key={j}
                     style={{
-                      // backgroundColor: "teal",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      paddingTop: 5,
                       width: QURAN_PAGE_WIDTH,
+                      justifyContent: "center",
+                      alignItems: "center",
                     }}
                   >
-                    <Text
-                      style={{
-                        fontFamily: "bismillah",
-                        fontSize: 20,
-                        // width: "50%",
-                        // backgroundColor: "pink",
-                        textAlign: "center",
-                      }}
-                    >
-                      ﭑﭒﭓ
-                    </Text>
+                    <BsmlSvg key={j} width={QURAN_PAGE_WIDTH / 2} />
                   </View>
                 );
               } else {
