@@ -17,6 +17,7 @@ import SubscriptionScreen from "screens/account/advancedSettings/SubscriptionsSc
 import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscriptionScreen";
 import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import RegisterAccount from "screens/auth/RegisterAccount";
+import { RecordScreen } from "screens/student/RecordScreen/RecordScreen";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
 
@@ -55,6 +56,7 @@ const Nav = () => {
                 <Stack.Screen name="Assignments" component={AssignmentsScreen} />
                 <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
                 <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
+                <Stack.Screen name="Record" component={RecordScreen} />
               </>
             ) : (
               <>

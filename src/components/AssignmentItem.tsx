@@ -12,25 +12,6 @@ interface Props {
 }
 
 const AssignmentItem = ({ assignment, onPress }: Props) => {
-  const styles = StyleSheet.create({
-    assignmentItem: {
-      paddingHorizontal: GeneralConstants.Spacing.md,
-      paddingVertical: GeneralConstants.Spacing.sm,
-      borderWidth: 1,
-      borderColor: Colors.Gray[1],
-      borderRadius: GeneralConstants.BorderRadius.full,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: GeneralConstants.Spacing.md,
-    },
-    assignmentText: {
-      color: Colors.Primary[1],
-    },
-    deadline: {
-      color: Colors.Black[2],
-      marginLeft: "auto",
-    },
-  });
   return (
     <TouchableOpacity style={styles.assignmentItem} onPress={onPress} activeOpacity={0.65}>
       <AssignmentStatusCheckbox status={assignment.status} />
@@ -46,3 +27,23 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
 };
 
 export default AssignmentItem;
+
+const styles = StyleSheet.create({
+  assignmentItem: {
+    paddingHorizontal: GeneralConstants.Spacing.md,
+    paddingVertical: GeneralConstants.Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.Gray[1],
+    borderRadius: GeneralConstants.BorderRadius.full,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: GeneralConstants.Spacing.md,
+  },
+  assignmentText: {
+    color: Colors.Primary[1],
+  },
+  deadline: {
+    color: Colors.Black[2],
+    marginLeft: "auto",
+  },
+});

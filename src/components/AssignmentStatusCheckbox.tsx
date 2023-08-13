@@ -1,7 +1,8 @@
+import { useNavigation } from "@react-navigation/native";
 import { CheckmarkIcon, RejectedCrossIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { AssignmentStatusEnum, LessonStatusFromEnumToType } from "types/Lessons";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 const AssignmentStatusCheckbox = ({ status }: Props) => {
   return (
-    <View
+    <TouchableOpacity
       style={{
         height: 18.5,
         width: 18.5,
@@ -24,7 +25,7 @@ const AssignmentStatusCheckbox = ({ status }: Props) => {
         <CheckmarkIcon color={Colors.White[1]} />
       )}
       {status == AssignmentStatusEnum.rejected && <RejectedCrossIcon color={Colors.White[1]} />}
-    </View>
+    </TouchableOpacity>
   );
 };
 

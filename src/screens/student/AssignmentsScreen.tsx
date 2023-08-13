@@ -9,9 +9,10 @@ import { GetUserLesson } from "services/lessonsService";
 import Loader from "components/Loader";
 import TabBox from "components/TabBox";
 import { i18n } from "locales/config";
+import { useNavigation } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Assignments">;
-const AssignmentsScreen = ({ route }: Props) => {
+const AssignmentsScreen = ({ route, navigation }: Props) => {
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [assignments, setAssignments] = useState<Paginated<Frontend.Content.Assignment>>();
@@ -47,7 +48,11 @@ const AssignmentsScreen = ({ route }: Props) => {
         assignments && (
           <View style={styles.assignments}>
             {assignments.list.map((assignment, index) => (
-              <AssignmentItem key={index} assignment={assignment} onPress={() => null} />
+              <AssignmentItem
+                key={index}
+                assignment={assignment}
+                onPress={() => navigation.navigate("Record")}
+              />
             ))}
           </View>
         )

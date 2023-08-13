@@ -1,3 +1,4 @@
+import { Dimensions } from "react-native";
 export default {
   Spacing: {
     xxs: 4,
@@ -18,3 +19,5 @@ export default {
     full: 100,
   },
 };
+
+export const { width: SCREEN_WIDTH } = Dimensions.get("screen");

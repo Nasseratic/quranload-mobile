@@ -34,7 +34,8 @@
       {
         "checksVoidReturn": false
       }
-    ]
+    ],
+    "@typescript-eslint/no-floating-promises": false
   },
   "settings": {
     "react": {
