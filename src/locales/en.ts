@@ -6,7 +6,7 @@ const english = {
   username: "Username",
   password: "Password",
   createAccount: "Create Account",
-  hoursPerPage: "Hours per page",
+  timePerPage: "Time per page",
   pages: "Pages",
   read: "Read",
   profileScreen: {

@@ -77,7 +77,7 @@ const DashboardScreen = ({ navigation }: Props) => {
     <QuranLoadView>
       <View>
         <Typography type="BodyLight" style={{ opacity: 0.5 }}>
-          As-salamu aleykum,
+          Assalamu alykum,
         </Typography>
         <View
           style={{
@@ -109,7 +109,7 @@ const DashboardScreen = ({ navigation }: Props) => {
             >
               <StatsBox
                 icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
-                label={i18n.t("hoursPerPage")}
+                label={i18n.t("timePerPage")}
                 value={`${item.stats.timePerPage} min`}
                 backgroundColor={Colors.Primary[1]}
               />

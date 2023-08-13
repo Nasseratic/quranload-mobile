@@ -6,7 +6,7 @@ const danish = {
   username: "Brugernavn",
   password: "Adgangskode",
   createAccount: "Opret Konto",
-  hoursPerPage: "Tid pr. side",
+  timePerPage: "Tid pr. side",
   pages: "Sider",
   read: "Læs",
   profileScreen: {
