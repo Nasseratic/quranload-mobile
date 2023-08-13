@@ -5,7 +5,7 @@ import { Image } from "expo-image";
 import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
-import { LessonStatusFromTypeToEnum } from "types/Lessons";
+import { AssignmentStatusEnum } from "types/Lessons";
 
 interface Props {
   team: Frontend.Content.Team;
@@ -19,18 +19,14 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPr
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
         <View style={styles.institutionImage}>
-          <Image
-            style={styles.institutionImage}
-            contentFit="contain"
-            source={team.image}
-          />
+          <Image style={styles.institutionImage} contentFit="cover" source={team.image} />
         </View>
         <View style={styles.lectureDetails}>
           <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
             {team.title}
           </Typography>
           <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
-            {team.institution}
+            {team.organizationName}
           </Typography>
         </View>
         <View style={styles.lectureMissingAssignments}>
@@ -41,9 +37,7 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPr
       </TouchableOpacity>
       {latestOpenAssignment && (
         <TouchableOpacity style={styles.assignment} onPress={onAssignmentPress}>
-          <AssignmentStatusCheckbox
-            status={LessonStatusFromTypeToEnum(latestOpenAssignment.status)}
-          />
+          <AssignmentStatusCheckbox status={latestOpenAssignment.status} />
           <Typography type="BodyLight">{latestOpenAssignment.description}</Typography>
           <ChevronRightIcon
             style={{
@@ -73,6 +67,7 @@ const styles = StyleSheet.create({
   institutionImage: {
     width: 45,
     height: 45,
+    borderRadius: 25,
   },
   lectureDetails: {
     flex: 1,

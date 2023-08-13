@@ -1,6 +1,6 @@
-import React, { FunctionComponent, useContext } from "react";
+import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { FormikProvider, useFormik } from "formik";
@@ -8,31 +8,29 @@ import MyTextInput from "components/forms/MyTextInput";
 import ActionBtn from "components/buttons/ActionBtn";
 import AuthContext from "contexts/auth";
 import { i18n } from "locales/config";
+import FormErrorView from "components/forms/FormErrorView";
 import Typography from "components/Typography";
+import { Colors } from "constants/Colors";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Login">;
 
-const LoginScreen: FunctionComponent<Props> = () => {
+const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);
 
   const formik = useFormik({
     initialValues: {
-      username: "zaab",
-      password: "P@ssw0rd",
+      username: "kontakt@harunabdullah.dk",
+      password: "Harun123123",
       error: "",
     },
     onSubmit: (values, { setErrors }) => {
       setErrors({});
-      signIn(values.username, values.password)
-        .catch((err: ISignInErrorResponse) => {
-          console.log("error", err.response.data.message);
-          if (err.response?.data?.message) {
-            setErrors({ error: err.response.data.message });
-          }
-        })
-        .finally(() => {
-          formik.setSubmitting(false);
-        });
+      signIn(values.username, values.password).catch((err: ISignInErrorResponse) => {
+        if (err.response?.data?.message) {
+          setErrors({ error: err.response.data.message });
+        }
+        formik.setSubmitting(false);
+      });
     },
   });
 
@@ -43,7 +41,9 @@ const LoginScreen: FunctionComponent<Props> = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <Typography type="HeadlineHeavy">{i18n.t("signIn")}</Typography>
+      <View style={{ alignItems: "center" }}>
+        <Image source={require("../../assets/logo.png")} />
+      </View>
       <FormikProvider value={formik}>
         <MyTextInput
           placeHolder={i18n.t("username")}
@@ -63,14 +63,30 @@ const LoginScreen: FunctionComponent<Props> = () => {
           error={formik.errors.password}
           touched={formik.touched.password}
         />
-        {formik.errors.error && <Text style={{ color: "red" }}> {formik.errors.error} </Text>}
-
+        <FormErrorView error={formik.errors.error} />
         <View style={{ alignItems: "center", marginTop: 25 }}>
           <ActionBtn
             isLoading={formik.isSubmitting}
             title={i18n.t("signIn")}
             onPress={handleSubmit}
           />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ResetPassword")}
+            style={{ alignItems: "center", marginTop: 15 }}
+          >
+            <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
+              Glemt adgangskode?
+            </Typography>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate("RegisterAccount")}
+            style={{ alignItems: "center", marginTop: 15 }}
+          >
+            <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+              Ikke en konto? Opret konto
+            </Typography>
+          </TouchableOpacity>
         </View>
       </FormikProvider>
     </SafeAreaView>

@@ -1,9 +1,11 @@
 const danish = {
   welcome: "Velkommen",
+  save: "Gem",
   signIn: "Log ind",
   signOut: "Log ud",
   username: "Brugernavn",
   password: "Adgangskode",
+  createAccount: "Opret Konto",
   hoursPerPage: "Tid pr. side",
   pages: "Sider",
   read: "Læs",
@@ -14,6 +16,12 @@ const danish = {
     genderLabel: "Køn",
     emailLabel: "Email",
     advancedSettings: "Avanceret indstillinger",
+    profileUpdated: "Profil opdateret",
+  },
+  assignmentScreen: {
+    title: "Lektier",
+    all: "Alle",
+    pending: "Manglende",
   },
   advancedSettingsScreen: {
     title: "Avanceret indstillinger",
@@ -31,6 +39,7 @@ const danish = {
     enterNewPassword: "Indtast ny adgangskode",
     repeatNewPassword: "Indtast ny adgangskode igen",
     passwordsDoNotMatch: "Adgangskoderne matcher ikke",
+    passwordUpdated: "Adgangskoden blev opdateret",
   },
   changeLanguageScreen: {
     title: "Skift sprog",
@@ -40,6 +49,18 @@ const danish = {
   },
   cancelSubscriptionScreen: {
     title: "Afmeld medlemskab",
+    subscriptionCancelled: "abonnement annulleret",
+  },
+  studentDashboard: {
+    notAssociatedAnything: "Din konto er ikke tilknyttet nogle hold",
+  },
+  resetPassword: {
+    title: "Nulstil adgangskode",
+    codeSent: "Hvis brugernavn fundet i systemet, så er link til nulstilling blevet sendt afsted.",
+  },
+  form: {
+    required: "Skal udfyldes",
+    validEmail: "Skal være en gyldig mail",
   },
 };
 export default danish;

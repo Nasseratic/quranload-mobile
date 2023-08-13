@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import { FunctionComponent } from "react";
 import { Colors } from "constants/Colors";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
@@ -16,7 +16,7 @@ const Loader: FunctionComponent<Probs> = ({ light }) => {
         justifyContent: "center",
       }}
     >
-      <StatusBar style="light" />
+      <StatusBar style={light ? "dark" : "light"} />
       <ActivityIndicator color={light ? "#000" : "#fff"} size="large" />
     </View>
   );

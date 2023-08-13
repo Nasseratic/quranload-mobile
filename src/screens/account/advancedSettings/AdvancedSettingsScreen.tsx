@@ -1,26 +1,34 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
 import Menu from "components/menu/Menu";
-import { GlobeIcon, KeyIcon, SadFaceIcon } from "assets/icons";
+import { KeyIcon, SadFaceIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import { IMenuItemProps } from "components/menu/MenuItem";
+import ActionButton from "components/buttons/ActionBtn";
+import AuthContext from "contexts/auth";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
+  const { signOut } = useContext(AuthContext);
+
+  const handleSignout = async () => {
+    await signOut();
+  };
+
   const menuItems: IMenuItemProps[] = [
     {
       text: i18n.t("advancedSettingsScreen.changePassword"),
       onPress: () => navigation.navigate("ChangePassword"),
       icon: <KeyIcon color={Colors.Primary[1]} />,
     },
-    {
+    /*{
       text: i18n.t("advancedSettingsScreen.changeLanguage"),
       onPress: () => navigation.navigate("ChangeLanguage"),
       icon: <GlobeIcon color={Colors.Primary[1]} />,
-    },
+    },*/
     {
       text: i18n.t("advancedSettingsScreen.cancelSubscription"),
       onPress: () => navigation.navigate("Subscriptions"),
@@ -35,6 +43,11 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
       }}
     >
       <Menu menuItems={menuItems} />
+      <ActionButton
+        style={{ backgroundColor: Colors.Error["1"] }}
+        onPress={handleSignout}
+        title={i18n.t("signOut")}
+      />
     </QuranLoadView>
   );
 };

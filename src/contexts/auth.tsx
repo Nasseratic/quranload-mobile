@@ -1,7 +1,7 @@
 import { createContext, useState } from "react";
-import * as auth from "../api/authClient";
+import { signIn } from "api/authClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User, UserRole } from "types/User";
+import { User } from "types/User";
 import { GetUserProfile } from "services/profileService";
 import * as SplashScreen from "expo-splash-screen";
 
@@ -22,13 +22,13 @@ interface Props {
 export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
-
   const [user, setUser] = useState<User | undefined>();
 
-  const signIn = async (username: string, password: string) => {
-    const res = await auth.signIn({ username, password });
+  const trySignIn = async (username: string, password: string) => {
+    const res = await signIn({ username, password });
     if (res.data.accessToken) {
       await AsyncStorage.setItem("accessToken", res.data.accessToken);
+      await AsyncStorage.setItem("refreshToken", res.data.refreshToken);
       handleSignIn();
     }
   };
@@ -52,11 +52,21 @@ export const AuthProvider = ({ children }: Props) => {
   };
   const signOut = async () => {
     await AsyncStorage.removeItem("accessToken");
+    await AsyncStorage.removeItem("refreshToken");
     setSignedIn(false);
   };
 
   return (
-    <AuthContext.Provider value={{ initialized, signed: signedIn, signIn, user, handleSignIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        initialized,
+        signed: signedIn,
+        signIn: trySignIn,
+        user,
+        handleSignIn,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

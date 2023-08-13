@@ -1,34 +1,68 @@
-import { FunctionComponent, useContext } from "react";
+import { FunctionComponent, useEffect, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import { i18n } from "locales/config";
 import { useFormik } from "formik";
 import ActionButton from "components/buttons/ActionBtn";
-import AuthContext from "contexts/auth";
 import TextButton from "components/buttons/TextButton";
-import { StyleSheet } from "react-native";
+import { Alert, StyleSheet } from "react-native";
 import InputField from "components/forms/InputField";
+import { User } from "types/User";
+import Loader from "components/Loader";
+import { GetUserProfile, SaveUserProfile } from "services/profileService";
+import * as yup from "yup";
+
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Profile">;
 
 const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
-  const { signOut } = useContext(AuthContext);
+  const [userDetails, setUserDetails] = useState<User>();
 
-  const handleSignout = async () => {
-    await signOut();
-  };
+  useEffect(() => {
+    GetUserProfile()
+      .then((res) => {
+        formik.initialValues.emailAddress = res.emailAddress;
+        formik.initialValues.fullName = res.fullName;
+        formik.initialValues.gender = res.gender;
+        formik.initialValues.phoneNumber = res.phoneNumber ?? "";
+        setUserDetails(res);
+      })
+      .catch(() => {});
+  }, []);
 
   const formik = useFormik({
     initialValues: {
-      fullName: "Matin Kacar",
-      phoneNumber: "+45 22339966",
-      gender: "Male",
-      email: "matin@kacar.dk",
+      fullName: "",
+      phoneNumber: "",
+      gender: "",
+      emailAddress: "",
     },
+    validationSchema: yup.object().shape({
+      fullName: yup.string().required(i18n.t("form.required")),
+      emailAddress: yup.string().required(i18n.t("form.required")).email(i18n.t("form.validEmail")),
+      phoneNumber: yup.string().required(i18n.t("form.required")),
+    }),
+
     onSubmit(values) {
-      console.log(values);
+      SaveUserProfile(values)
+        .then(() => {
+          Alert.alert(i18n.t("profileScreen.profileUpdated"));
+          navigation.goBack();
+        })
+        .catch((error) => {
+          if (error.validation) {
+            formik.setErrors(error.validation);
+          }
+          console.log(error);
+        });
     },
   });
 
+  if (!userDetails)
+    return (
+      <QuranLoadView>
+        <Loader light />
+      </QuranLoadView>
+    );
   return (
     <QuranLoadView
       appBar={{
@@ -67,11 +101,11 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
 
       <InputField
         label={i18n.t("profileScreen.emailLabel")}
-        value={formik.values.email}
-        touched={formik.touched.email}
-        error={formik.errors.email}
-        placeholder={formik.values.email}
-        onChangeText={formik.handleChange("email")}
+        value={formik.values.emailAddress}
+        touched={formik.touched.emailAddress}
+        error={formik.errors.emailAddress}
+        placeholder={formik.values.emailAddress}
+        onChangeText={formik.handleChange("emailAddress")}
         keyboardType="email-address"
       />
 
@@ -81,7 +115,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
       >
         {i18n.t("profileScreen.advancedSettings")}
       </TextButton>
-      <ActionButton onPress={handleSignout} title={i18n.t("signOut")} />
+      <ActionButton disabled={!formik.isValid} onPress={formik.submitForm} title={i18n.t("save")} />
     </QuranLoadView>
   );
 };

@@ -1,7 +1,6 @@
 import { CheckmarkIcon, RejectedCrossIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import React from "react";
 import { StyleSheet, View } from "react-native";
 import { AssignmentStatusEnum, LessonStatusFromEnumToType } from "types/Lessons";
 
@@ -10,7 +9,6 @@ interface Props {
 }
 
 const AssignmentStatusCheckbox = ({ status }: Props) => {
-  const statusNormal = LessonStatusFromEnumToType(status);
   return (
     <View
       style={{
@@ -19,11 +17,13 @@ const AssignmentStatusCheckbox = ({ status }: Props) => {
         borderRadius: GeneralConstants.BorderRadius.xxs * 1.2,
         justifyContent: "center",
         alignItems: "center",
-        ...styles[statusNormal],
+        ...styles[LessonStatusFromEnumToType(status) as Frontend.Content.AssignmentStatus],
       }}
     >
-      {statusNormal === "done" && <CheckmarkIcon color={Colors.White[1]} />}
-      {statusNormal === "rejected" && <RejectedCrossIcon color={Colors.White[1]} />}
+      {(status === AssignmentStatusEnum.submitted || status == AssignmentStatusEnum.accepted) && (
+        <CheckmarkIcon color={Colors.White[1]} />
+      )}
+      {status == AssignmentStatusEnum.rejected && <RejectedCrossIcon color={Colors.White[1]} />}
     </View>
   );
 };
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.Success[1],
   },
-  done: {
+  submitted: {
     backgroundColor: Colors.Success[1],
   },
   rejected: {

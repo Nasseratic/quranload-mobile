@@ -14,6 +14,7 @@ export type Team = {
   name: string;
   fee: number;
   studentCount: number;
+  organizationName: string;
   duration: 0;
   description: string;
   isActive: boolean;

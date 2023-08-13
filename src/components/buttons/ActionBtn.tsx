@@ -34,8 +34,8 @@ const ActionButton: FunctionComponent<Props> = ({
 }) => {
   if (isLoading) {
     return (
-      <View>
-        <ActivityIndicator style={{ backgroundColor: Colors.Accent["1"] }} />
+      <View style={[styles.button, disabled ? styles.disabled : undefined, style]}>
+        <ActivityIndicator color="#fff" />
       </View>
     );
   }

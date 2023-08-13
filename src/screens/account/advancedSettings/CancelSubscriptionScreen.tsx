@@ -1,18 +1,33 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
 import Typography from "components/Typography";
 import Card from "components/Card";
-import { View, StyleSheet } from "react-native";
+import { View, Alert } from "react-native";
 import GeneralConstants from "constants/GeneralConstants";
 import ActionButton from "components/buttons/ActionBtn";
 import { Colors } from "constants/Colors";
+import { fDate } from "utils/formatTime";
+import { cancelSubscription } from "services/profileService";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "CancelSubscription">;
 
-const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route }) => {
+const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route, navigation }) => {
   const { subscription } = route.params;
+  const [submitting, setSubmitting] = useState(false);
+  const handleCancelSubscription = () => {
+    setSubmitting(true);
+    cancelSubscription(subscription.teamId)
+      .then(() => {
+        Alert.alert(i18n.t("cancelSubscriptionScreen.subscriptionCancelled"));
+        navigation.goBack();
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+      .finally(() => setSubmitting(false));
+  };
   return (
     <QuranLoadView
       appBar={{
@@ -20,16 +35,17 @@ const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route }) => {
       }}
     >
       <Card style={{ padding: GeneralConstants.Spacing.md, gap: GeneralConstants.Spacing.xxs }}>
-        <TextRow label="Name" value={subscription.name} />
-        <TextRow label="Organization" value={subscription.institution} />
-        <TextRow label="Start date" value={subscription.startDate} />
-        <TextRow label="Expires" value={subscription.expireDate} />
-        <TextRow label="Next payment" value={subscription.nextPayment} />
-        <TextRow label="Frequence" value={subscription.frequence} />
-        <TextRow label="Amount" value={subscription.amount} />
+        <TextRow label="Name" value={subscription.teamName} />
+        <TextRow label="Organization" value={subscription.organizationName} />
+        <TextRow label="Start date" value={fDate(subscription.enrollmentDate)} />
+        <TextRow label="Expires" value={fDate(subscription.expiredAtDate)} />
+        <TextRow label="Next payment" value={fDate(subscription.renewalDate)} />
+        {/*<TextRow label="Frequence" value={subscription.frequence} />*/}
+        <TextRow label="Amount" value={`${subscription.paidAmount} DKK`} />
         <ActionButton
+          isLoading={submitting}
           style={{ backgroundColor: Colors.Error[1], marginTop: GeneralConstants.Spacing.xxs }}
-          onPress={() => null}
+          onPress={handleCancelSubscription}
           title={"Cancel subscription"}
         />
       </Card>

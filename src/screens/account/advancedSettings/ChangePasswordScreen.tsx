@@ -1,57 +1,53 @@
-import { FunctionComponent, useMemo } from "react";
+import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
 import InputField from "components/forms/InputField";
 import ActionButton from "components/buttons/ActionBtn";
 import { useFormik } from "formik";
+import { changePassword } from "services/profileService";
+import * as Yup from "yup";
+import FormErrorView from "components/forms/FormErrorView";
+import { Alert } from "react-native";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "ChangePassword">;
-interface FormValues {
-  currentPassword: string;
-  newPassword: string;
-  newPasswordAgain: string;
-}
 const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
   const formik = useFormik({
     initialValues: {
       currentPassword: "",
       newPassword: "",
       newPasswordAgain: "",
-    } as FormValues,
-    onSubmit(values) {
-      console.log(values);
+      error: "",
+    },
+    validationSchema: Yup.object().shape({
+      newPassword: Yup.string()
+        .required("No password provided.")
+        .min(6, "Password is too short - should be 8 chars minimum."),
+      newPasswordAgain: Yup.string().oneOf([Yup.ref("newPassword")], "Passwords must match"),
+    }),
+    onSubmit(values, { setErrors }) {
+      console.log("FORM SUBMIT VALUES", values);
+      changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+        confirmNewPassword: values.newPasswordAgain,
+      })
+        .then(() => {
+          Alert.alert(i18n.t("changePasswordScreen.passwordUpdated"));
+          navigation.goBack();
+        })
+        .catch((error) => {
+          if (error.validation) {
+            formik.setErrors(error.validation);
+          }
+          if (error.message) {
+            setErrors({ error: error.message });
+          }
+          console.log("ERROORORO", error);
+        })
+        .finally(() => formik.setSubmitting(false));
     },
     validateOnBlur: true,
-    validate: (values) => {
-      const errors: FormValues = {
-        currentPassword: "",
-        newPassword: "",
-        newPasswordAgain: "",
-      };
-
-      if (!values.currentPassword) {
-        errors.currentPassword = i18n.t("changePasswordScreen.enterCurrentPassword");
-      }
-
-      if (!values.newPassword) {
-        errors.newPassword = i18n.t("changePasswordScreen.enterNewPassword");
-      }
-
-      if (!values.newPasswordAgain) {
-        errors.newPasswordAgain = i18n.t("changePasswordScreen.repeatNewPassword");
-      }
-
-      if (
-        values.newPassword.length > 0 &&
-        values.newPasswordAgain.length > 0 &&
-        values.newPassword !== values.newPasswordAgain
-      ) {
-        errors.newPasswordAgain = i18n.t("changePasswordScreen.passwordsDoNotMatch");
-      }
-
-      return errors;
-    },
   });
 
   return (
@@ -90,8 +86,12 @@ const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
         onChangeText={formik.handleChange("newPasswordAgain")}
         onBlur={formik.handleBlur("newPasswordAgain")}
       />
+      <FormErrorView error={formik.errors.error} />
+
       <ActionButton
-        onPress={() => console.log("update password")}
+        disabled={!formik.isValid}
+        isLoading={formik.isSubmitting}
+        onPress={formik.handleSubmit}
         title={i18n.t("changePasswordScreen.updatePassword")}
       />
     </QuranLoadView>

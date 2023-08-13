@@ -4,10 +4,7 @@ import { StyleSheet, TouchableOpacity } from "react-native";
 import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "./AssignmentStatusCheckbox";
-import { LessonStatusFromTypeToEnum } from "types/Lessons";
-import { fDateTime, fToNow } from "utils/formatTime";
-import { addDays } from "date-fns";
-import Da from "locales/da";
+import { fDateTime } from "utils/formatTime";
 
 interface Props {
   assignment: Frontend.Content.Assignment;
@@ -34,10 +31,9 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
       marginLeft: "auto",
     },
   });
-
   return (
     <TouchableOpacity style={styles.assignmentItem} onPress={onPress} activeOpacity={0.65}>
-      <AssignmentStatusCheckbox status={LessonStatusFromTypeToEnum(assignment.status)} />
+      <AssignmentStatusCheckbox status={assignment.status} />
       <Typography style={styles.assignmentText} type="BodyHeavy">
         {assignment.description}
       </Typography>

@@ -12,41 +12,53 @@ import Loader from "components/Loader";
 import { i18n } from "locales/config";
 import AuthContext from "contexts/auth";
 import { GetUserLesson } from "services/lessonsService";
+import AccountNotAssociated from "components/AccountNotAssociated";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
 
+interface DashboardTeams {
+  team: Frontend.Content.Team;
+  latestOpenAssignment?: Frontend.Content.Assignment;
+  stats: {
+    timePerPage: number;
+    totalPages: number;
+  };
+}
+
 const DashboardScreen = ({ navigation }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [team, setTeam] = useState<Frontend.Content.Team>();
-  const [latestOpenAssignment, setLatestOpenAssignment] = useState<Frontend.Content.Assignment>();
+  const [teams, setTeams] = useState<DashboardTeams[]>([]);
   const { user } = useContext(AuthContext);
 
   const getData = () => {
-    setIsLoading(false);
-
-    if (user?.teams && user.teams.length > 0) {
-      GetUserLesson({
-        teamId: user.teams[0].id,
-        lessonState: 0,
-      })
-        .then((res) => {
-          setTeam({
-            id: user.teams[0].id,
-            title: user.teams[0].name,
-            institution: user.teams[0].description,
-            assignments: 50,
-            image:
-              "https://s3-alpha-sig.figma.com/img/3569/704f/4eadebbdb061c627ee3560b99fccffcc?Expires=1684108800&Signature=kWeltpIz8rXtqGjmlmtXM6YT287tuDwqUhxAolPLMajP5iNP2566ZIMk1PcdGw80M80-oi4PG3kr8~lWTUifYcH4GYQxSqp2C36P81vRKp-05nM4V1CySHDWRYXfaiPrqO6rTS-fR7es5X6I9IPBwYxkPleufxL~Gi5dzHfhki0d~qEfJ2xeNsAOfin6aSWvT~E8Eumi7pbFbCW1QlliKtS2yfg9mIlbGc3bqFUIgZf1WbR-ybLqIxXq-M0AGi50TSsaJGU5GLQIKo04BuqmZFmo5KK0z2oJIHRE3k0Afo3QjAGkgD0ADyIdo739LqdgJDfY~Hd4LQXRAex17cs6~A__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4",
-          });
-
-          if (res.list.length > 0) {
-            console.log(res.list[0]);
-            setLatestOpenAssignment(res.list[0]);
-          }
+    const toAddTeams: DashboardTeams[] = [];
+    if (user?.teams != undefined) {
+      for (let i = 0; i < user.teams.length; i++) {
+        console.log(user.teams[i]);
+        GetUserLesson({
+          teamId: user.teams[0].id,
         })
-        .catch((err) => {
-          console.log(err);
-        });
+          .then((res) => {
+            toAddTeams.push({
+              team: {
+                id: user.teams[i].id,
+                title: user.teams[i].name,
+                organizationName: user.teams[i].organizationName,
+                assignments: res.list.length,
+                image:
+                  "https://quranload-lp-dev-app.azurewebsites.net/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fmosque.d8bc985e.jpg&w=384&q=75",
+              },
+              latestOpenAssignment: res.list.length > 0 ? res.list[0] : undefined,
+              stats: {
+                totalPages: 10,
+                timePerPage: 2.5,
+              },
+            });
+            setTeams([...teams, ...toAddTeams]);
+          })
+          .catch(() => null)
+          .finally(() => setIsLoading(false));
+      }
     }
   };
 
@@ -54,7 +66,12 @@ const DashboardScreen = ({ navigation }: Props) => {
     getData();
   }, []);
 
-  if (isLoading) return <Loader />;
+  if (isLoading)
+    return (
+      <QuranLoadView>
+        <Loader light />
+      </QuranLoadView>
+    );
 
   return (
     <QuranLoadView>
@@ -69,38 +86,45 @@ const DashboardScreen = ({ navigation }: Props) => {
             justifyContent: "space-between",
           }}
         >
-          <Typography type="HeadlineHeavy">{user!.fullName}</Typography>
+          <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
           <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
             <CogIcon width={18} height={18} color={Colors.Primary[1]} />
           </TouchableOpacity>
         </View>
       </View>
-      {team && (
-        <LectureBox
-          team={team}
-          latestOpenAssignment={latestOpenAssignment}
-          onLecturePress={() => navigation.navigate("Assignments", {teamId: team.id})}
-        />
+      {teams.length > 0 ? (
+        teams.map((item, index) => (
+          <View key={index}>
+            <LectureBox
+              team={item.team}
+              latestOpenAssignment={item.latestOpenAssignment}
+              onLecturePress={() => navigation.navigate("Assignments", { teamId: item.team.id })}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                marginTop: 15,
+                gap: GeneralConstants.Spacing.md,
+              }}
+            >
+              <StatsBox
+                icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
+                label={i18n.t("hoursPerPage")}
+                value={`${item.stats.timePerPage} min`}
+                backgroundColor={Colors.Primary[1]}
+              />
+              <StatsBox
+                icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
+                label={i18n.t("pages")}
+                value={`${item.stats.totalPages}`}
+                backgroundColor={Colors.Success[1]}
+              />
+            </View>
+          </View>
+        ))
+      ) : (
+        <AccountNotAssociated />
       )}
-      <View
-        style={{
-          flexDirection: "row",
-          gap: GeneralConstants.Spacing.md,
-        }}
-      >
-        <StatsBox
-          icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
-          label={i18n.t("hoursPerPage")}
-          value="2.5 min"
-          backgroundColor={Colors.Primary[1]}
-        />
-        <StatsBox
-          icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
-          label={i18n.t("pages")}
-          value="193"
-          backgroundColor={Colors.Success[1]}
-        />
-      </View>
     </QuranLoadView>
   );
 };

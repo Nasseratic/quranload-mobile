@@ -8,6 +8,8 @@ declare namespace Frontend.Navigation {
     Profile: undefined;
     Record: undefined;
     RecordSettings: undefined;
+    ResetPassword: undefined;
+    RegisterAccount: undefined;
     AdvancedSettings: undefined;
     ChangePassword: undefined;
     ChangeLanguage: undefined;

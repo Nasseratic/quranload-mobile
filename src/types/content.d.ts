@@ -8,27 +8,40 @@ declare namespace Frontend.Content {
     id: string;
     title: string;
     image: string;
-    institution: string;
+    organizationName: string;
     assignments: number;
   }
 
-  export type AssignmentStatus = "done" | "pending" | "rejected";
-
+  export type AssignmentStatus = "submitted" | "pending" | "rejected";
+  enum AssignmentStatusEnum {
+    s,
+    a,
+    p,
+    4,
+  }
   export interface Assignment {
-    status: AssignmentStatus;
+    status: AssignmentStatusEnum;
     description: string;
     endDate: string;
   }
 
+  export interface ApiError {
+    code: string;
+    errors: never;
+    message: string;
+  }
+
   export interface Subscription {
     id: string;
-    name: string;
-    institution: string;
-    startDate: string;
-    expireDate: string;
-    nextPayment: string;
-    frequence: string;
-    amount: string;
+    teamId: string;
+    teamName: string;
+    organizationName: string;
+    enrollmentDate: Date;
+    paidUntil: Date;
+    createdAt: Date;
+    renewalDate: Date;
+    paidAmount: number;
+    expiredAtDate: Date;
     image: string;
   }
 }

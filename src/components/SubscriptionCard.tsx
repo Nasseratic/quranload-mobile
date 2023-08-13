@@ -3,6 +3,7 @@ import GeneralConstants from "constants/GeneralConstants";
 import { FunctionComponent } from "react";
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import Typography from "./Typography";
+import { fDate } from "utils/formatTime";
 
 interface Props {
   subscription: Frontend.Content.Subscription;
@@ -15,18 +16,18 @@ const SubscriptionCard: FunctionComponent<Props> = ({ subscription, onPress }) =
       <Image
         style={styles.institutionImage}
         source={{
-          uri: subscription.image,
+          uri: "https://quranload-lp-dev-app.azurewebsites.net/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fmosque.d8bc985e.jpg&w=384&q=75",
         }}
       />
       <View style={styles.institutionInfo}>
         <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
-          {subscription.name}
+          {subscription.teamName}
         </Typography>
         <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
-          {subscription.institution}
+          {subscription.organizationName}
         </Typography>
         <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
-          Expires: {subscription.expireDate}
+          Renews at: {fDate(subscription.renewalDate)}
         </Typography>
       </View>
     </TouchableOpacity>
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
   institutionImage: {
     width: 45,
     height: 45,
+    borderRadius: 25,
   },
   institutionInfo: {
     flexShrink: 1,

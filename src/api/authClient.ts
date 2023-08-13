@@ -14,3 +14,7 @@ export async function signIn(data: {
 }): Promise<ISignInResponse> {
   return await authClient.post("Account/GetToken", data);
 }
+
+export async function refreshToken(data: { refreshToken: string }): Promise<IRefreshTokenResponse> {
+  return await authClient.post("Account/RefreshToken", data);
+}

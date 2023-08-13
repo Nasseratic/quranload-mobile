@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { Colors } from "constants/Colors";
@@ -15,12 +15,13 @@ import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswor
 import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguageScreen";
 import SubscriptionScreen from "screens/account/advancedSettings/SubscriptionsScreen";
 import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscriptionScreen";
+import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
+import RegisterAccount from "screens/auth/RegisterAccount";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
 
 const Nav = () => {
   const { signed, user, handleSignIn } = useContext(AuthContext);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function initialize() {
@@ -33,7 +34,7 @@ const Nav = () => {
     }
 
     initialize().catch(console.error);
-  });
+  }, []);
 
   return (
     <NavigationContainer>
@@ -52,6 +53,8 @@ const Nav = () => {
               <>
                 <Stack.Screen name="Dashboard" component={DashboardScreen} />
                 <Stack.Screen name="Assignments" component={AssignmentsScreen} />
+                <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
+                <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
               </>
             ) : (
               <>
@@ -62,12 +65,12 @@ const Nav = () => {
             <Stack.Screen name="AdvancedSettings" component={AdvancedSettingsScreen} />
             <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
             <Stack.Screen name="ChangeLanguage" component={ChangeLanguageScreen} />
-            <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
-            <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
           </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+            <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
           </>
         )}
       </Stack.Navigator>
