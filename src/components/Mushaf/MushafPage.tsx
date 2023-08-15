@@ -134,6 +134,7 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
               } else if (word == "BSML") {
                 return (
                   <View
+                    key={j}
                     style={{
                       paddingTop: 5,
                       width: QURAN_PAGE_WIDTH,
@@ -141,7 +142,7 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
                       alignItems: "center",
                     }}
                   >
-                    <BsmlSvg key={j} width={QURAN_PAGE_WIDTH / 2} />
+                    <BsmlSvg width={QURAN_PAGE_WIDTH / 2} />
                   </View>
                 );
               } else {
