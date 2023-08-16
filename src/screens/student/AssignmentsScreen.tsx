@@ -10,39 +10,30 @@ import Loader from "components/Loader";
 import TabBox from "components/TabBox";
 import { i18n } from "locales/config";
 import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
+import { AssignmentStatusEnum } from "types/Lessons";
+
+const tabs = ["all", "pending"] as const;
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Assignments">;
 const AssignmentsScreen = ({ route, navigation }: Props) => {
-  const [loading, setLoading] = useState(true);
-  const [index, setIndex] = useState(0);
-  const [assignments, setAssignments] = useState<Paginated<Frontend.Content.Assignment>>();
-  const getUserAssignmentList = () => {
-    setLoading(true);
-    GetUserLesson({ teamId: route.params.teamId, lessonState: index == 0 ? undefined : 0 })
-      .then((res) => {
-        setAssignments(res);
-        console.log(res.list);
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
+  const [tabKey, setTabKey] = useState<(typeof tabs)[number]>("all");
 
-  useEffect(() => {
-    getUserAssignmentList();
-  }, [index]);
+  const { data: assignments, isLoading } = useQuery(["assignments", tabKey], () =>
+    GetUserLesson({
+      teamId: route.params.teamId,
+      lessonState: tabKey === "pending" ? AssignmentStatusEnum.pending : undefined,
+    })
+  );
 
   return (
     <QuranLoadView appBar={{ title: i18n.t("assignmentScreen.title") }}>
       <TabBox
         list={[i18n.t("assignmentScreen.all"), i18n.t("assignmentScreen.pending")]}
-        index={index}
-        setIndex={setIndex}
+        index={tabs.indexOf(tabKey)}
+        setIndex={(index) => setTabKey(tabs[index])}
       />
-      {loading ? (
+      {isLoading ? (
         <Loader light />
       ) : (
         assignments && (

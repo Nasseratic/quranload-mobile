@@ -8,8 +8,12 @@ import {
 import Nav from "navigation/Nav";
 import { AuthProvider } from "contexts/auth";
 import * as SplashScreen from "expo-splash-screen";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 require("./src/locales/config");
+
+// Create a client
+const queryClient = new QueryClient();
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -23,8 +27,10 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <Nav />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Nav />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
