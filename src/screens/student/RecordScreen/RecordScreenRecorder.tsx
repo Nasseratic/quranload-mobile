@@ -5,6 +5,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingIcon } from "components/icons/RecordingIcon";
 import * as Linking from "expo-linking";
+import Animated, {
+  useAnimatedStyle,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import { IconButton } from "components/buttons/IconButton";
+import { Colors } from "constants/Colors";
+import { Checkmark } from "components/icons/CheckmarkIcon";
+import { CrossIcon } from "components/icons/CrossIcon";
+import * as Haptics from "expo-haptics";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -13,11 +24,12 @@ const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 10 * 1000;
 const METERING_CHECK_INTERVAL = 300;
 
+type RecordingState = "idle" | "recording" | "paused";
+
 export function RecordScreenRecorder() {
   const insets = useSafeAreaInsets();
   const [uriOutput, setUriOutput] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
 
   async function startRecording() {
     const { granted } = await Audio.requestPermissionsAsync();
@@ -39,7 +51,8 @@ export function RecordScreenRecorder() {
     }
 
     try {
-      setIsRecording(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setRecordingState("recording");
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -48,17 +61,19 @@ export function RecordScreenRecorder() {
       await startRecordingWith1MinuteInterval();
     } catch (err) {
       console.log(err);
-      setIsRecording(false);
+      setRecordingState("idle");
     }
   }
 
-  async function stopRecording() {
+  async function stopRecording({ isEnding } = { isEnding: false }) {
+    setRecordingState(isEnding ? "idle" : "paused");
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     if (!currentRecording) return;
+    currentRecording.pauseAsync;
     await currentRecording.stopAndUnloadAsync();
     const uri = currentRecording.getURI();
     if (uri) recordings.push(uri);
     currentRecording = null;
-    setIsRecording(false);
 
     // TODO: concat and compress audio files
     setUriOutput(recordings[0]);
@@ -101,34 +116,13 @@ export function RecordScreenRecorder() {
     }
   }
 
-  if (isSubmitted && uriOutput)
-    return (
-      <View
-        style={[
-          styles.container,
-          {
-            paddingBottom: insets.bottom,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => {
-            setIsSubmitted(false);
-            setUriOutput(null);
-          }}
-          style={{
-            padding: 6,
-            paddingHorizontal: 12,
-            borderRadius: 8,
-            // danger
-            backgroundColor: "rgba(229, 80, 90, 1)",
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "500", color: "#fff" }}>Delete</Text>
-        </TouchableOpacity>
-        <Player uri={uriOutput} />
-      </View>
-    );
+  useEffect(() => {
+    return () => {
+      if (currentRecording) {
+        currentRecording.stopAndUnloadAsync();
+      }
+    };
+  }, []);
 
   return (
     <View
@@ -139,35 +133,36 @@ export function RecordScreenRecorder() {
         },
       ]}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-        {(isRecording || uriOutput) && (
-          <TouchableOpacity
-            style={{
-              padding: 6,
-              paddingHorizontal: 12,
-              borderRadius: 8,
-              backgroundColor: "rgba(1, 178, 135, 1)",
+      <View>
+        {recordingState !== "idle" && (
+          <IconButton
+            bg={Colors.Black[2]}
+            icon={<CrossIcon />}
+            onPress={() => {
+              stopRecording({ isEnding: true });
+              setUriOutput(null);
             }}
-            onPress={() => setIsSubmitted(true)}
-          >
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>Submit</Text>
-          </TouchableOpacity>
+          />
         )}
-        <RecordingTimer isRunning={isRecording} />
       </View>
+
       <TouchableOpacity
-        onPress={isRecording ? stopRecording : startRecording}
-        style={styles.recordButton}
+        onPress={recordingState === "recording" ? () => stopRecording() : startRecording}
         activeOpacity={0.9}
       >
-        {isRecording ? <RecordingIcon /> : <RecordIcon />}
+        <RecordingButton recordingState={recordingState} />
       </TouchableOpacity>
+      <View>
+        {recordingState !== "idle" && (
+          <IconButton
+            bg={Colors.Success[1]}
+            icon={<Checkmark />}
+            onPress={() => {
+              stopRecording({ isEnding: true });
+            }}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -188,13 +183,16 @@ const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
     <View style={styles.recordingTimerContainer}>
       <View
         style={{
-          width: 6,
-          height: 6,
-          borderRadius: 6,
-          backgroundColor: "#E5505A",
+          width: 1,
+          height: 20,
+          backgroundColor: "#fff",
         }}
       />
-      <Text style={{ fontSize: 14, fontWeight: "600" }} adjustsFontSizeToFit>
+      <Text
+        style={{ fontSize: 16, fontWeight: "600", color: "white" }}
+        ellipsizeMode="clip"
+        numberOfLines={1}
+      >
         {formatDuration(seconds)}
       </Text>
     </View>
@@ -206,44 +204,6 @@ const formatDuration = (seconds: number) => {
   const secondsLeft = seconds % 60;
   return `${minutes}:${secondsLeft < 10 ? "0" : ""}${secondsLeft}`;
 };
-
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 8,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  recordButton: {
-    width: 50,
-    height: 50,
-    backgroundColor: "#E5505A",
-    borderRadius: 58,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  recordingTimerContainer: {
-    paddingHorizontal: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "rgba(194, 201, 209, 1)",
-    width: 58,
-    height: 24,
-    borderRadius: 8,
-  },
-});
 
 const Player = ({ uri }: { uri: string }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -292,7 +252,9 @@ const Player = ({ uri }: { uri: string }) => {
             fontSize: 16,
             fontWeight: "500",
             textAlign: "center",
+            flex: 1,
           }}
+          numberOfLines={1}
         >
           {isPlaying ? "Playing..." : "Play"}
         </Text>
@@ -300,3 +262,76 @@ const Player = ({ uri }: { uri: string }) => {
     </View>
   );
 };
+
+const RecordingButton = ({ recordingState }: { recordingState: RecordingState }) => {
+  const isExpanded = recordingState === "recording" || recordingState === "paused";
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      width: isExpanded ? withSpring(150) : withTiming(50),
+      transform: [
+        {
+          scale:
+            recordingState === "recording"
+              ? withSequence(withSpring(0.97), withSpring(1))
+              : recordingState === "paused"
+              ? withSequence(withSpring(1.03), withSpring(1))
+              : 1,
+        },
+      ],
+    };
+  }, [recordingState]);
+
+  const animatedTextStyle = useAnimatedStyle(() => {
+    return {
+      opacity: withTiming(isExpanded ? 1 : 0),
+      width: withTiming(isExpanded ? 58 : 0),
+      marginLeft: withTiming(isExpanded ? 12 : 0),
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.recordingButton, animatedStyle]}>
+      {recordingState === "recording" ? <RecordingIcon /> : <RecordIcon />}
+
+      <Animated.View style={[animatedTextStyle]}>
+        {recordingState !== "idle" && <RecordingTimer isRunning={recordingState === "recording"} />}
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+const styles = StyleSheet.create({
+  recordingButton: {
+    width: 50,
+    height: 50,
+    backgroundColor: "#E5505A",
+    borderRadius: 58,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  container: {
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 8,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  recordingTimerContainer: {
+    gap: 12,
+    paddingHorizontal: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+});
