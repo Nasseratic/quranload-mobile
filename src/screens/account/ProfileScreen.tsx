@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import { i18n } from "locales/config";
@@ -11,42 +11,40 @@ import { User } from "types/User";
 import Loader from "components/Loader";
 import { GetUserProfile, SaveUserProfile } from "services/profileService";
 import * as yup from "yup";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Profile">;
 
+const profileQueryKey = "userProfile";
 const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
-  const [userDetails, setUserDetails] = useState<User>();
+  const { data, isLoading } = useQuery([profileQueryKey], GetUserProfile);
 
-  useEffect(() => {
-    GetUserProfile()
-      .then((res) => {
-        formik.initialValues.emailAddress = res.emailAddress;
-        formik.initialValues.fullName = res.fullName;
-        formik.initialValues.gender = res.gender;
-        formik.initialValues.phoneNumber = res.phoneNumber ?? "";
-        setUserDetails(res);
-      })
-      .catch(() => {});
-  }, []);
+  const initialValues = useMemo(
+    () =>
+      data ?? {
+        fullName: "",
+        phoneNumber: "",
+        gender: "",
+        emailAddress: "",
+      },
+    [data]
+  );
+
+  const queryClint = useQueryClient();
 
   const formik = useFormik({
-    initialValues: {
-      fullName: "",
-      phoneNumber: "",
-      gender: "",
-      emailAddress: "",
-    },
+    initialValues,
+    enableReinitialize: true,
     validationSchema: yup.object().shape({
       fullName: yup.string().required(i18n.t("form.required")),
       emailAddress: yup.string().required(i18n.t("form.required")).email(i18n.t("form.validEmail")),
       phoneNumber: yup.string().required(i18n.t("form.required")),
     }),
-
     onSubmit(values) {
       SaveUserProfile(values)
         .then(() => {
+          queryClint.invalidateQueries([profileQueryKey]);
           Alert.alert(i18n.t("profileScreen.profileUpdated"));
-          navigation.goBack();
         })
         .catch((error) => {
           if (error.validation) {
@@ -57,12 +55,13 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
     },
   });
 
-  if (!userDetails)
+  if (isLoading)
     return (
       <QuranLoadView>
         <Loader light />
       </QuranLoadView>
     );
+
   return (
     <QuranLoadView
       appBar={{
