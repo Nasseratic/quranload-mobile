@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecordIcon } from "components/icons/RecordIcon";
-import { RecordingIcon } from "components/icons/RecordingIcon";
+import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
 import * as Linking from "expo-linking";
 import Animated, {
   useAnimatedStyle,
@@ -292,7 +292,7 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
 
   return (
     <Animated.View style={[styles.recordingButton, animatedStyle]}>
-      {recordingState === "recording" ? <RecordingIcon /> : <RecordIcon />}
+      {recordingState === "recording" ? <RecordingPauseIcon /> : <RecordIcon />}
 
       <Animated.View style={[animatedTextStyle]}>
         {recordingState !== "idle" && <RecordingTimer isRunning={recordingState === "recording"} />}
