@@ -8,7 +8,7 @@ import TextButton from "components/buttons/TextButton";
 import { Alert, StyleSheet } from "react-native";
 import InputField from "components/forms/InputField";
 import { User } from "types/User";
-import Loader from "components/Loader";
+import { Loader } from "components/Loader";
 import { GetUserProfile, SaveUserProfile } from "services/profileService";
 import * as yup from "yup";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,12 +55,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
     },
   });
 
-  if (isLoading)
-    return (
-      <QuranLoadView>
-        <Loader light />
-      </QuranLoadView>
-    );
+  if (isLoading) return <Loader />;
 
   return (
     <QuranLoadView

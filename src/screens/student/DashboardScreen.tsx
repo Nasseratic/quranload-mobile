@@ -8,7 +8,7 @@ import GeneralConstants from "constants/GeneralConstants";
 import LectureBox from "components/LectureBox";
 import Typography from "components/Typography";
 import { BookIcon, ClockIcon, CogIcon } from "assets/icons";
-import Loader from "components/Loader";
+import { Loader } from "components/Loader";
 import { i18n } from "locales/config";
 import AuthContext from "contexts/auth";
 import { GetUserLesson } from "services/lessonsService";
@@ -66,12 +66,7 @@ const DashboardScreen = ({ navigation }: Props) => {
     getData();
   }, []);
 
-  if (isLoading)
-    return (
-      <QuranLoadView>
-        <Loader light />
-      </QuranLoadView>
-    );
+  if (isLoading) return <Loader />;
 
   return (
     <QuranLoadView>

@@ -4,7 +4,7 @@ import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
 import SubscriptionCard from "components/SubscriptionCard";
 import { GetSubscriptions } from "services/profileService";
-import Loader from "components/Loader";
+import { Loader } from "components/Loader";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Subscriptions">;
 const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
@@ -25,12 +25,7 @@ const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
       .finally(() => setIsLoading(false));
   }, []);
 
-  if (isLoading)
-    return (
-      <QuranLoadView>
-        <Loader light />
-      </QuranLoadView>
-    );
+  if (isLoading) return <Loader />;
 
   return (
     <QuranLoadView

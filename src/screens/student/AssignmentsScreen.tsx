@@ -6,7 +6,7 @@ import { StyleSheet, View } from "react-native";
 import GeneralConstants from "constants/GeneralConstants";
 import Paginated from "types/Paginated";
 import { GetUserLesson } from "services/lessonsService";
-import Loader from "components/Loader";
+import { Loader } from "components/Loader";
 import TabBox from "components/TabBox";
 import { i18n } from "locales/config";
 import { useNavigation } from "@react-navigation/native";
@@ -34,7 +34,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
         setIndex={(index) => setTabKey(tabs[index])}
       />
       {isLoading ? (
-        <Loader light />
+        <Loader />
       ) : (
         assignments && (
           <View style={styles.assignments}>
