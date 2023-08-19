@@ -19,7 +19,11 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPr
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
         <View style={styles.institutionImage}>
-          <Image style={styles.institutionImage} contentFit="cover" source={team.image} />
+          <Image
+            style={styles.institutionImage}
+            contentFit="cover"
+            source={team.organizationLogo}
+          />
         </View>
         <View style={styles.lectureDetails}>
           <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
@@ -68,6 +72,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 25,
+    backgroundColor: "#f1f1f1",
   },
   lectureDetails: {
     flex: 1,

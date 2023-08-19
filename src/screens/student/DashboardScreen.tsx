@@ -45,8 +45,9 @@ const DashboardScreen = ({ navigation }: Props) => {
                 title: user.teams[i].name,
                 organizationName: user.teams[i].organizationName,
                 assignments: res.list.length,
-                image:
-                  "https://quranload-lp-dev-app.azurewebsites.net/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fmosque.d8bc985e.jpg&w=384&q=75",
+                organizationLogo: user.teams[i].organizationLogo
+                  ? user.teams[i].organizationLogo
+                  : "https://quranload-lp-dev-app.azurewebsites.net/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fmosque.d8bc985e.jpg&w=384&q=75",
               },
               latestOpenAssignment: res.list.length > 0 ? res.list[0] : undefined,
               stats: {
@@ -88,35 +89,42 @@ const DashboardScreen = ({ navigation }: Props) => {
         </View>
       </View>
       {teams.length > 0 ? (
-        teams.map((item, index) => (
-          <View key={index}>
-            <LectureBox
-              team={item.team}
-              latestOpenAssignment={item.latestOpenAssignment}
-              onLecturePress={() => navigation.navigate("Assignments", { teamId: item.team.id })}
-            />
-            <View
-              style={{
-                flexDirection: "row",
-                marginTop: 15,
-                gap: GeneralConstants.Spacing.md,
-              }}
-            >
-              <StatsBox
-                icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
-                label={i18n.t("timePerPage")}
-                value={`${item.stats.timePerPage} min`}
-                backgroundColor={Colors.Primary[1]}
+        teams.map((item, index) => {
+          // console.log(item.latestOpenAssignment);
+          return (
+            <View key={index}>
+              <LectureBox
+                team={item.team}
+                latestOpenAssignment={item.latestOpenAssignment}
+                onLecturePress={() => navigation.navigate("Assignments", { teamId: item.team.id })}
+                onAssignmentPress={() =>
+                  item.latestOpenAssignment &&
+                  navigation.navigate("Record", { assignment: item.latestOpenAssignment })
+                }
               />
-              <StatsBox
-                icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
-                label={i18n.t("pages")}
-                value={`${item.stats.totalPages}`}
-                backgroundColor={Colors.Success[1]}
-              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  marginTop: 15,
+                  gap: GeneralConstants.Spacing.md,
+                }}
+              >
+                <StatsBox
+                  icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
+                  label={i18n.t("timePerPage")}
+                  value={`${item.stats.timePerPage} min`}
+                  backgroundColor={Colors.Primary[1]}
+                />
+                <StatsBox
+                  icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
+                  label={i18n.t("pages")}
+                  value={`${item.stats.totalPages}`}
+                  backgroundColor={Colors.Success[1]}
+                />
+              </View>
             </View>
-          </View>
-        ))
+          );
+        })
       ) : (
         <AccountNotAssociated />
       )}

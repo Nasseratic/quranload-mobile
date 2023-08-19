@@ -10,6 +10,7 @@ export type User = {
 };
 
 export type Team = {
+  organizationLogo: string;
   id: string;
   name: string;
   fee: number;

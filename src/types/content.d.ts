@@ -7,9 +7,9 @@ declare namespace Frontend.Content {
   export interface Team {
     id: string;
     title: string;
-    image: string;
     organizationName: string;
     assignments: number;
+    organizationLogo: string;
   }
 
   export type AssignmentStatus = "submitted" | "pending" | "rejected";
