@@ -5,7 +5,7 @@ import AssignmentItem from "components/AssignmentItem";
 import { StyleSheet, View } from "react-native";
 import GeneralConstants from "constants/GeneralConstants";
 import Paginated from "types/Paginated";
-import { GetUserLesson } from "services/lessonsService";
+import { fetchUserLessons } from "services/lessonsService";
 import { Loader } from "components/Loader";
 import TabBox from "components/TabBox";
 import { i18n } from "locales/config";
@@ -20,7 +20,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
   const [tabKey, setTabKey] = useState<(typeof tabs)[number]>("all");
 
   const { data: assignments, isLoading } = useQuery(["assignments", tabKey], () =>
-    GetUserLesson({
+    fetchUserLessons({
       teamId: route.params.teamId,
       lessonState: tabKey === "pending" ? AssignmentStatusEnum.pending : undefined,
     })

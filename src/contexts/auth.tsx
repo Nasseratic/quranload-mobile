@@ -1,9 +1,9 @@
 import { createContext, useState } from "react";
-import { signIn } from "api/authClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "types/User";
-import { GetUserProfile } from "services/profileService";
+import { fetchUserProfile } from "services/profileService";
 import * as SplashScreen from "expo-splash-screen";
+import { signIn } from "services/authService";
 
 interface AuthContextData {
   initialized: boolean;
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: Props) => {
   };
 
   const handleSignIn = () => {
-    GetUserProfile()
+    fetchUserProfile()
       .then((res) => {
         console.log(res);
         setUser(res);

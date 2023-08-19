@@ -2,7 +2,7 @@ import apiClient from "api/apiClient";
 import qs from "qs";
 import Paginated from "types/Paginated";
 import { AssignmentStatusEnum } from "types/Lessons";
-export const GetUserLesson = async (data: {
+export const fetchUserLessons = async (data: {
   teamId: string;
   lessonState?: AssignmentStatusEnum;
   pageNumber?: number;

@@ -3,7 +3,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
 import SubscriptionCard from "components/SubscriptionCard";
-import { GetSubscriptions } from "services/profileService";
+import { fetchSubscriptions } from "services/profileService";
 import { Loader } from "components/Loader";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Subscriptions">;
@@ -17,7 +17,7 @@ const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    void GetSubscriptions()
+    void fetchSubscriptions()
       .then((res) => {
         setSubscriptions(res.list);
         console.log(res.list);

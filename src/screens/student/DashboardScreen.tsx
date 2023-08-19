@@ -11,7 +11,7 @@ import { BookIcon, ClockIcon, CogIcon } from "assets/icons";
 import { Loader } from "components/Loader";
 import { i18n } from "locales/config";
 import AuthContext from "contexts/auth";
-import { GetUserLesson } from "services/lessonsService";
+import { fetchUserLessons } from "services/lessonsService";
 import AccountNotAssociated from "components/AccountNotAssociated";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
@@ -35,7 +35,7 @@ const DashboardScreen = ({ navigation }: Props) => {
     if (user?.teams != undefined) {
       for (let i = 0; i < user.teams.length; i++) {
         console.log(user.teams[i]);
-        GetUserLesson({
+        fetchUserLessons({
           teamId: user.teams[0].id,
         })
           .then((res) => {

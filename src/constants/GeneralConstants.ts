@@ -20,4 +20,4 @@ export default {
   },
 };
 
-export const { width: SCREEN_WIDTH } = Dimensions.get("screen");
+export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");

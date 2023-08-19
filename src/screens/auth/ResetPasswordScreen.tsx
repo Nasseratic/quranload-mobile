@@ -7,7 +7,7 @@ import MyTextInput from "components/forms/MyTextInput";
 import ActionBtn from "components/buttons/ActionBtn";
 import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
-import { forgotPassword } from "services/profileService";
+import { forgotPassword } from "services/authService";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "ResetPassword">;
 

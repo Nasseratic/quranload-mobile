@@ -12,11 +12,11 @@ interface Props extends SafeAreaViewProps {
 const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) => {
   const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView
-      edges={["top"]}
+    <View
       style={{
         backgroundColor: "transparent",
         flex: 1,
+        paddingTop: insets.top, // 16 is the default padding
       }}
       {...rest}
     >
@@ -27,6 +27,7 @@ const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) 
         }}
         contentContainerStyle={{
           paddingBottom: insets.bottom + 16,
+          flexGrow: 1,
         }}
       >
         {Children.map(children, (child, i) => {
@@ -42,7 +43,7 @@ const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) 
         })}
       </ScrollView>
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -63,5 +63,20 @@ const english = {
     required: "Field required",
     validEmail: "Must be a valid email",
   },
+  registerAccountScreen: {
+    password: "Password",
+    confirmPassword: "Confirm password",
+    dateOfBirth: "Date of birth",
+    email: "Email",
+    firstName: "First name",
+    lastName: "Last name",
+    passwordRules:
+      "Password must be at least 8 characters, contain a capital letter, a number and a special character",
+    successDescription: "Please check your inbox. You will receive a link to verify your email.",
+    success: "Account created successfully!",
+    resendEmail: "Resend email",
+    emailResent: "Email resent",
+    backToLogin: "Back to login",
+  },
 };
 export default english;

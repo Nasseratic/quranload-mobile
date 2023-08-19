@@ -9,7 +9,7 @@ import { Alert, StyleSheet } from "react-native";
 import InputField from "components/forms/InputField";
 import { User } from "types/User";
 import { Loader } from "components/Loader";
-import { GetUserProfile, SaveUserProfile } from "services/profileService";
+import { fetchUserProfile, updateUserProfile } from "services/profileService";
 import * as yup from "yup";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -17,7 +17,7 @@ type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Pro
 
 const profileQueryKey = "userProfile";
 const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
-  const { data, isLoading } = useQuery([profileQueryKey], GetUserProfile);
+  const { data, isLoading } = useQuery([profileQueryKey], fetchUserProfile);
 
   const initialValues = useMemo(
     () =>
@@ -41,7 +41,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
       phoneNumber: yup.string().required(i18n.t("form.required")),
     }),
     onSubmit(values) {
-      SaveUserProfile(values)
+      updateUserProfile(values)
         .then(() => {
           queryClint.invalidateQueries([profileQueryKey]);
           Alert.alert(i18n.t("profileScreen.profileUpdated"));
