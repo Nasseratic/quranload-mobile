@@ -38,13 +38,16 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
       ) : (
         assignments && (
           <View style={styles.assignments}>
-            {assignments.list.map((assignment, index) => (
-              <AssignmentItem
-                key={index}
-                assignment={assignment}
-                onPress={() => navigation.navigate("Record")}
-              />
-            ))}
+            {assignments.list.map((assignment, index) => {
+              // console.log(assignment);
+              return (
+                <AssignmentItem
+                  key={index}
+                  assignment={assignment}
+                  onPress={() => navigation.navigate("Record", { assignment })}
+                />
+              );
+            })}
           </View>
         )
       )}

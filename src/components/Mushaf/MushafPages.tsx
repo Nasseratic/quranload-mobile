@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MushafPage } from "./MushafPage";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 
-export function MushafPages() {
+export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: number }) {
   return (
     <SafeAreaView
       edges={["top"]}
@@ -23,7 +23,7 @@ export function MushafPages() {
           length: SCREEN_WIDTH,
           offset: SCREEN_WIDTH * index,
         })}
-        data={[260, 261, 262, 263, 264]}
+        data={Array.from({ length: pageTo - pageFrom + 1 }, (_, i) => pageFrom + i)}
         renderItem={({ item: pageNumber }) => <MushafPage pageNumber={pageNumber} />}
       />
     </SafeAreaView>

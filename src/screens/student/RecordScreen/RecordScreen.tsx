@@ -6,10 +6,13 @@ import { RecordScreenRecorder } from "./RecordScreenRecorder";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Record">;
 
-export const RecordScreen: FunctionComponent<Props> = () => {
+export const RecordScreen: FunctionComponent<Props> = ({ route }) => {
   return (
     <View style={{ flex: 1 }}>
-      <MushafPages />
+      <MushafPages
+        pageFrom={route.params.assignment.startPage}
+        pageTo={route.params.assignment.endPage}
+      />
       <RecordScreenRecorder />
     </View>
   );

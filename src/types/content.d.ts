@@ -23,6 +23,8 @@ declare namespace Frontend.Content {
     status: AssignmentStatusEnum;
     description: string;
     endDate: string;
+    startPage: number;
+    endPage: number;
   }
 
   export interface ApiError {
