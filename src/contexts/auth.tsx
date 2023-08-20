@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "types/User";
 import { fetchUserProfile } from "services/profileService";
@@ -15,6 +15,11 @@ interface AuthContextData {
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+
+export const useUser = () => {
+  const { user } = useContext(AuthContext);
+  return user;
+};
 
 interface Props {
   children: React.ReactNode;

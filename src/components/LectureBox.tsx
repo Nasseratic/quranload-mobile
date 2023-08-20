@@ -5,16 +5,23 @@ import { Image } from "expo-image";
 import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
-import { AssignmentStatusEnum } from "types/Lessons";
+import { Team } from "types/User";
 
 interface Props {
-  team: Frontend.Content.Team;
+  team: Team;
   latestOpenAssignment?: Frontend.Content.Assignment;
   onLecturePress: () => void;
   onAssignmentPress?: () => void;
+  pendingAssignmentsCount: number;
 }
 
-const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPress }: Props) => {
+const LectureBox = ({
+  team,
+  latestOpenAssignment,
+  onLecturePress,
+  onAssignmentPress,
+  pendingAssignmentsCount,
+}: Props) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
@@ -27,7 +34,7 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPr
         </View>
         <View style={styles.lectureDetails}>
           <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
-            {team.title}
+            {team.name}
           </Typography>
           <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
             {team.organizationName}
@@ -35,7 +42,7 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, onAssignmentPr
         </View>
         <View style={styles.lectureMissingAssignments}>
           <Typography type="SmallHeavy" style={{ color: Colors.White[1] }}>
-            {team.assignments}
+            {pendingAssignmentsCount}
           </Typography>
         </View>
       </TouchableOpacity>

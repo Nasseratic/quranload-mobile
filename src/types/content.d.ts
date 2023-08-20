@@ -4,27 +4,22 @@ declare namespace Frontend.Content {
     disableGoBack?: boolean;
   }
 
-  export interface Team {
-    id: string;
-    title: string;
-    organizationName: string;
-    assignments: number;
-    organizationLogo: string;
+  export type AssignmentStatus = "submitted" | "pending" | "rejected";
+
+  enum AssignmentStatusEnum {
+    pending,
+    rejected,
+    accepted,
+    submitted,
   }
 
-  export type AssignmentStatus = "submitted" | "pending" | "rejected";
-  enum AssignmentStatusEnum {
-    s,
-    a,
-    p,
-    4,
-  }
   export interface Assignment {
     status: AssignmentStatusEnum;
     description: string;
     endDate: string;
     startPage: number;
     endPage: number;
+    teamId: string;
   }
 
   export interface ApiError {

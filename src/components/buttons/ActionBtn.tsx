@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: GeneralConstants.BorderRadius.sm,
     borderCurve: "continuous",
+    paddingHorizontal: GeneralConstants.Spacing.xl,
   },
   disabled: {
     backgroundColor: Colors.Gray["1"],

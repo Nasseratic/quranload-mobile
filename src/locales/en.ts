@@ -52,7 +52,8 @@ const english = {
     subscriptionCancelled: "Subscription canceled",
   },
   studentDashboard: {
-    notAssociatedAnything: "You're account is not associated a team.",
+    notEnrolled: "You are not enrolled in any classes yet",
+    enroll: "Enroll",
   },
   resetPassword: {
     title: "Reset password",

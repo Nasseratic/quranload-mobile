@@ -1,29 +1,45 @@
 import { Colors } from "constants/Colors";
-import GeneralConstants from "constants/GeneralConstants";
+import GeneralConstants, { SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Typography from "components/Typography";
-import { i18n } from "locales/config";
+import { t } from "locales/config";
+import { EmptySvg } from "components/svgs/EmptySvg";
+import ActionButton from "./buttons/ActionBtn";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Linking from "expo-linking";
 
 const AccountNotAssociated = () => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.errorWrapper} onPress={() => null}>
-        <View style={styles.errorDetail}>
-          <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
-            {i18n.t("studentDashboard.notAssociatedAnything")}
-          </Typography>
-        </View>
-      </TouchableOpacity>
+      <EmptySvg size={SCREEN_WIDTH * 0.5} />
+      <View style={styles.errorDetail}>
+        <Typography
+          type="TitleLight"
+          style={{
+            color: Colors.Black[2],
+            textAlign: "center",
+            width: 280,
+          }}
+        >
+          {t("studentDashboard.notEnrolled")}
+        </Typography>
+      </View>
+      <View>
+        <ActionButton
+          title={t("studentDashboard.enroll")}
+          onPress={() => Linking.openURL("https://www.quranload.com")}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    borderRadius: GeneralConstants.BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: Colors.Error[1],
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 124,
+    gap: GeneralConstants.Spacing.xl,
   },
   errorWrapper: {
     padding: GeneralConstants.Spacing.lg,

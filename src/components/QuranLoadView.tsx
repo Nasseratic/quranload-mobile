@@ -22,12 +22,12 @@ const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) 
     >
       {appBar && <AppBar {...appBar} />}
       <ScrollView
+        alwaysBounceVertical={false}
         style={{
           paddingHorizontal: 16,
         }}
         contentContainerStyle={{
           paddingBottom: insets.bottom + 16,
-          flexGrow: 1,
         }}
       >
         {Children.map(children, (child, i) => {
