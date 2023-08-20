@@ -54,9 +54,10 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
               style={{
                 fontFamily: `page${pageNumber}`,
                 fontSize: 30,
-                lineHeight: 45,
+                lineHeight: pageNumber == 1 || pageNumber == 2 ? 50 : 45,
                 paddingHorizontal: 3,
                 width: QURAN_PAGE_WIDTH,
+                textAlign: "center",
               }}
               adjustsFontSizeToFit
               numberOfLines={1}
