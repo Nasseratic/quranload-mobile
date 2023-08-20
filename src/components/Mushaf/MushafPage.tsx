@@ -1,27 +1,13 @@
-import { ActivityIndicator, Dimensions, StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import * as Font from "expo-font";
-import React, { useCallback, useEffect, useState } from "react";
-import { XSpacer } from "components/Spacer";
-import verses from "assets/data/verses.json";
-import chapters from "assets/data/chapters.json";
+import React, { useCallback, useState } from "react";
 import { FontMap } from "utils/FontMap";
 import { MushafPageSurahHeader } from "components/Mushaf/MushafPageSurahHeader";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { BsmlSvg } from "components/svgs/BsmlSvg";
 import { match, P } from "ts-pattern";
 import { Loader } from "components/Loader";
-
-const Verses = verses as Record<
-  string,
-  {
-    verses: {
-      verse_key: string;
-      words: { code_v2: string; line_number: number }[];
-    }[];
-  }
->;
-
-const Chapters = chapters as { bismillah_pre: boolean }[];
+import QuranPages from "assets/data/preprocessedQuranPages.json";
 
 const lineExtraWidthMap: Record<number, number> = {};
 
@@ -46,36 +32,7 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
 
   if (!fontsLoaded) return <Loader />;
 
-  const lines: Record<number, Array<string>> = {};
-
-  Verses[pageNumber].verses
-    .flatMap((verse) => {
-      const verseKey = verse["verse_key"].split(":");
-      const surahNumber = parseInt(verseKey[0]);
-      const isFirstAyahInSurah = verseKey[1] === "1";
-      const bismillahPre = Chapters[surahNumber - 1].bismillah_pre && isFirstAyahInSurah;
-      const beginnings = [];
-      if (bismillahPre) {
-        beginnings.push({
-          code_v2: `SURH-${surahNumber}`,
-          line_number: verse.words[0].line_number - 2,
-        });
-        beginnings.push({
-          code_v2: "BSML",
-          line_number: verse.words[0].line_number - 1,
-        });
-      } else if (isFirstAyahInSurah) {
-        beginnings.push({
-          code_v2: `SURH-${surahNumber}`,
-          line_number: verse.words[0].line_number - 1,
-        });
-      }
-      return [...beginnings, ...verse.words];
-    })
-    .forEach((word) => {
-      if (!lines[word.line_number]) lines[word.line_number] = [];
-      lines[word.line_number].push(word.code_v2);
-    });
+  const lines = QuranPages[`${pageNumber}` as keyof typeof QuranPages];
 
   return (
     <>
