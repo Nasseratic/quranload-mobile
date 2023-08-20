@@ -60,11 +60,12 @@ const ActionButton: FunctionComponent<Props> = ({
 const styles = StyleSheet.create({
   button: {
     width: "100%",
-    height: 55,
+    paddingVertical: GeneralConstants.Spacing.sm,
     backgroundColor: Colors.Success["1"],
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: GeneralConstants.BorderRadius.xs,
+    borderRadius: GeneralConstants.BorderRadius.sm,
+    borderCurve: "continuous",
   },
   disabled: {
     backgroundColor: Colors.Gray["1"],
