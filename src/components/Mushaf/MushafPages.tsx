@@ -23,8 +23,7 @@ export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: nu
           length: SCREEN_WIDTH,
           offset: SCREEN_WIDTH * index,
         })}
-        // data={Array.from({ length: pageTo - pageFrom + 1 }, (_, i) => pageFrom + i)}
-        data={[1, 2, 3, 4, 5]}
+        data={Array.from({ length: pageTo - pageFrom + 1 }, (_, i) => pageFrom + i)}
         renderItem={({ item: pageNumber }) => <MushafPage pageNumber={pageNumber} />}
       />
     </SafeAreaView>
