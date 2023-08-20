@@ -8,6 +8,7 @@ import { BsmlSvg } from "components/svgs/BsmlSvg";
 import { match, P } from "ts-pattern";
 import { Loader } from "components/Loader";
 import QuranPages from "assets/data/preprocessedQuranPages.json";
+import { XSpacer } from "components/Spacer";
 
 const lineExtraWidthMap: Record<number, number> = {};
 
@@ -117,13 +118,10 @@ const Word = React.memo(
     isMiddle: boolean;
   }) {
     return (
-      <Text
-        style={{
-          marginRight: isLast ? 0 : 2,
-          marginLeft: isMiddle || isLast ? 0 : lineExtraWidthMap[index] ?? 0,
-        }}
-      >
+      <Text>
+        {(isMiddle || isLast) && <XSpacer space={lineExtraWidthMap[index] ?? 0} />}
         {word}
+        {isLast ? null : <XSpacer space={2} />}
       </Text>
     );
   },
