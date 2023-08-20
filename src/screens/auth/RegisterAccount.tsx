@@ -15,7 +15,7 @@ import { AxiosError } from "axios";
 import { subYears } from "date-fns";
 import * as Yup from "yup";
 import { MailBoxSvg } from "components/svgs/MailBox";
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
+import GeneralConstants, { SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
 import { YSpacer } from "components/Spacer";
 import TextButton from "components/buttons/TextButton";
 import ActionButton from "components/buttons/ActionBtn";
@@ -127,56 +127,58 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
         <Image source={require("../../assets/logo.png")} />
       </View>
       <FormikProvider value={formik}>
-        <InputField
-          value={formik.values.firstName}
-          touched={formik.touched.firstName}
-          error={formik.errors.firstName}
-          placeholder={formik.values.firstName}
-          label={t("registerAccountScreen.firstName")}
-          onChangeText={formik.handleChange("firstName")}
-          onBlur={formik.handleBlur("firstName")}
-        />
+        <View style={{ gap: GeneralConstants.Spacing.md }}>
+          <InputField
+            value={formik.values.firstName}
+            touched={formik.touched.firstName}
+            error={formik.errors.firstName}
+            placeholder={formik.values.firstName}
+            label={t("registerAccountScreen.firstName")}
+            onChangeText={formik.handleChange("firstName")}
+            onBlur={formik.handleBlur("firstName")}
+          />
 
-        <InputField
-          value={formik.values.lastName}
-          touched={formik.touched.lastName}
-          error={formik.errors.lastName}
-          placeholder={formik.values.lastName}
-          label={t("registerAccountScreen.lastName")}
-          onChangeText={formik.handleChange("lastName")}
-          onBlur={formik.handleBlur("lastName")}
-        />
+          <InputField
+            value={formik.values.lastName}
+            touched={formik.touched.lastName}
+            error={formik.errors.lastName}
+            placeholder={formik.values.lastName}
+            label={t("registerAccountScreen.lastName")}
+            onChangeText={formik.handleChange("lastName")}
+            onBlur={formik.handleBlur("lastName")}
+          />
 
-        <InputField
-          value={formik.values.email}
-          touched={formik.touched.email}
-          error={formik.errors.email}
-          placeholder={formik.values.email}
-          label={t("registerAccountScreen.email")}
-          onChangeText={formik.handleChange("email")}
-          onBlur={formik.handleBlur("email")}
-        />
+          <InputField
+            value={formik.values.email}
+            touched={formik.touched.email}
+            error={formik.errors.email}
+            placeholder={formik.values.email}
+            label={t("registerAccountScreen.email")}
+            onChangeText={formik.handleChange("email")}
+            onBlur={formik.handleBlur("email")}
+          />
 
-        <InputField
-          value={formik.values.password}
-          touched={formik.touched.password}
-          error={formik.errors.password}
-          placeholder={formik.values.password}
-          secureTextEntry={true}
-          label={t("registerAccountScreen.password")}
-          onChangeText={formik.handleChange("password")}
-          onBlur={formik.handleBlur("password")}
-        />
-        <InputField
-          value={formik.values.confirmPassword}
-          touched={formik.touched.confirmPassword}
-          error={formik.errors.confirmPassword}
-          placeholder={formik.values.confirmPassword}
-          secureTextEntry={true}
-          label={t("registerAccountScreen.confirmPassword")}
-          onChangeText={formik.handleChange("confirmPassword")}
-          onBlur={formik.handleBlur("confirmPassword")}
-        />
+          <InputField
+            value={formik.values.password}
+            touched={formik.touched.password}
+            error={formik.errors.password}
+            placeholder={formik.values.password}
+            secureTextEntry={true}
+            label={t("registerAccountScreen.password")}
+            onChangeText={formik.handleChange("password")}
+            onBlur={formik.handleBlur("password")}
+          />
+          <InputField
+            value={formik.values.confirmPassword}
+            touched={formik.touched.confirmPassword}
+            error={formik.errors.confirmPassword}
+            placeholder={formik.values.confirmPassword}
+            secureTextEntry={true}
+            label={t("registerAccountScreen.confirmPassword")}
+            onChangeText={formik.handleChange("confirmPassword")}
+            onBlur={formik.handleBlur("confirmPassword")}
+          />
+        </View>
         <FormErrorView error={error as AxiosError} />
         <View style={{ alignItems: "center", marginTop: 25 }}>
           <ActionBtn
