@@ -57,6 +57,7 @@ const DashboardScreen = ({ navigation }: Props) => {
               <LectureBox
                 pendingAssignmentsCount={teamAssignments.length}
                 team={team}
+                latestOpenAssignment={teamAssignments[0]}
                 onLecturePress={() => navigation.navigate("Assignments", { teamId: team.id })}
                 onAssignmentPress={() =>
                   teamAssignments &&
