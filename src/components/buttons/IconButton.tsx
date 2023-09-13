@@ -1,13 +1,13 @@
 import { StyleSheet, TouchableOpacity } from "react-native";
 
 export const IconButton = ({
-  bg,
+  bg = "#fff",
   icon,
   onPress,
 }: {
   icon: JSX.Element;
   onPress: () => void;
-  bg: string;
+  bg?: string;
 }) => {
   return (
     <TouchableOpacity

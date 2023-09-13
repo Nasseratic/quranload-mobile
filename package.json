@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start",
+    "start": "TAMAGUI_TARGET=native expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
@@ -17,8 +17,11 @@
     "@react-native-async-storage/async-storage": "1.18.2",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
+    "@tamagui/shorthands": "^1.52.9",
+    "@tamagui/themes": "^1.52.9",
     "@tanstack/react-query": "^4.32.6",
     "axios": "^1.4.0",
+    "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "date-fns": "^2.30.0",
     "expo": "^49.0.6",
     "expo-av": "~13.4.1",
@@ -42,6 +45,7 @@
     "react-native-segmented-control-tab": "^4.0.0",
     "react-native-svg": "13.9.0",
     "react-native-web": "~0.19.6",
+    "tamagui": "^1.52.9",
     "ts-pattern": "^5.0.5",
     "yup": "^1.2.0"
   },

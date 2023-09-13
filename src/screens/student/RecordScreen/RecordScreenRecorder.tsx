@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecordIcon } from "components/icons/RecordIcon";
@@ -16,6 +16,8 @@ import { Colors } from "constants/Colors";
 import { Checkmark } from "components/icons/CheckmarkIcon";
 import { CrossIcon } from "components/icons/CrossIcon";
 import * as Haptics from "expo-haptics";
+import { AudioPlayer } from "components/AudioPlayer";
+import { formatAudioDuration } from "utils/formatAudioDuration";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -124,6 +126,20 @@ export function RecordScreenRecorder() {
     };
   }, []);
 
+  if (uriOutput && recordingState === "idle")
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            paddingBottom: insets.bottom,
+          },
+        ]}
+      >
+        <AudioPlayer uri={uriOutput} />
+      </View>
+    );
+
   return (
     <View
       style={[
@@ -193,72 +209,8 @@ const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
         ellipsizeMode="clip"
         numberOfLines={1}
       >
-        {formatDuration(seconds)}
+        {formatAudioDuration(seconds)}
       </Text>
-    </View>
-  );
-};
-
-const formatDuration = (seconds: number) => {
-  const minutes = Math.floor(seconds / 60);
-  const secondsLeft = seconds % 60;
-  return `${minutes}:${secondsLeft < 10 ? "0" : ""}${secondsLeft}`;
-};
-
-const Player = ({ uri }: { uri: string }) => {
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  async function playSound() {
-    console.log("Loading Sound");
-    const { sound } = await Audio.Sound.createAsync({
-      uri,
-    });
-    setSound(sound);
-
-    console.log("Playing Sound");
-    sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.isPlaying) {
-        setIsPlaying(true);
-      } else setIsPlaying(false);
-    });
-  }
-
-  useEffect(() => {
-    return sound
-      ? () => {
-          console.log("Unloading Sound");
-          sound.unloadAsync();
-        }
-      : undefined;
-  }, [sound]);
-
-  return (
-    <View style={{ justifyContent: "center", alignItems: "center" }}>
-      <TouchableOpacity
-        style={{
-          padding: 6,
-          paddingHorizontal: 12,
-          borderRadius: 8,
-          backgroundColor: isPlaying ? "gray" : "rgba(1, 178, 135, 1)",
-        }}
-        disabled={isPlaying}
-        onPress={isPlaying ? undefined : playSound}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 16,
-            fontWeight: "500",
-            textAlign: "center",
-            flex: 1,
-          }}
-          numberOfLines={1}
-        >
-          {isPlaying ? "Playing..." : "Play"}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -326,6 +278,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
+    minHeight: 100,
   },
   recordingTimerContainer: {
     gap: 12,

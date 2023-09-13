@@ -1,3 +1,5 @@
+process.env.TAMAGUI_TARGET = 'native'
+
 module.exports = function (api) {
   api.cache(true);
   return {
@@ -18,6 +20,7 @@ module.exports = function (api) {
           },
         },
       ],
+      'transform-inline-environment-variables',
       "react-native-reanimated/plugin"
     ],
   };

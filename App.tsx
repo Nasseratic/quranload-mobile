@@ -9,6 +9,9 @@ import Nav from "navigation/Nav";
 import { AuthProvider } from "contexts/auth";
 import * as SplashScreen from "expo-splash-screen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TamaguiProvider } from "tamagui";
+
+import { tamaguiConfig } from "./tamagui.config";
 
 require("./src/locales/config");
 
@@ -27,10 +30,12 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Nav />
-      </AuthProvider>
-    </QueryClientProvider>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Nav />
+        </AuthProvider>
+      </QueryClientProvider>
+    </TamaguiProvider>
   );
 }
