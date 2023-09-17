@@ -17,7 +17,7 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "plugins": ["react", "@typescript-eslint", "react-hooks", "prettier"],
+  "plugins": ["react", "@typescript-eslint", "react-hooks", "prettier", "unused-imports"],
   "rules": {
     "indent": ["error", 2, { "SwitchCase": 1 }],
     "linebreak-style": ["error", "unix"],
@@ -35,7 +35,8 @@
         "checksVoidReturn": false
       }
     ],
-    "@typescript-eslint/no-floating-promises": false
+    "@typescript-eslint/no-floating-promises": "warn",
+    "unused-imports/no-unused-imports": "error"
   },
   "settings": {
     "react": {

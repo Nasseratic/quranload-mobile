@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { MushafPages } from "components/Mushaf/MushafPages";
 import { RecordScreenRecorder } from "./RecordScreenRecorder";
 

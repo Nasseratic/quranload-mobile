@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import { i18n } from "locales/config";
@@ -7,7 +7,6 @@ import ActionButton from "components/buttons/ActionBtn";
 import TextButton from "components/buttons/TextButton";
 import { Alert, StyleSheet } from "react-native";
 import InputField from "components/forms/InputField";
-import { User } from "types/User";
 import { Loader } from "components/Loader";
 import { fetchUserProfile, updateUserProfile } from "services/profileService";
 import * as yup from "yup";

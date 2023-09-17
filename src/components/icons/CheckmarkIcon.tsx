@@ -1,4 +1,3 @@
-import * as React from "react";
 import Svg, { Path } from "react-native-svg";
 
 export function Checkmark({ width = 17, height = 13, color = "#fff" }) {

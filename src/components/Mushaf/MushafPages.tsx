@@ -1,4 +1,4 @@
-import { Dimensions, FlatList } from "react-native";
+import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MushafPage } from "./MushafPage";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";

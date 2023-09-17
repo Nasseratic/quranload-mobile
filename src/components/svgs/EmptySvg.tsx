@@ -1,4 +1,3 @@
-import * as React from "react";
 import Svg, { Path, Circle } from "react-native-svg";
 
 export function EmptySvg({ size = 100 }: { size?: number }) {

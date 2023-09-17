@@ -1,7 +1,7 @@
-import React, { FunctionComponent, Children } from "react";
+import { FunctionComponent, Children } from "react";
 import { View, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView, SafeAreaViewProps, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaViewProps, useSafeAreaInsets } from "react-native-safe-area-context";
 import GeneralConstants from "constants/GeneralConstants";
 import AppBar from "components/AppBar";
 

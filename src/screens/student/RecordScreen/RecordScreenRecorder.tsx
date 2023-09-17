@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { useState, useEffect } from "react";
+import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecordIcon } from "components/icons/RecordIcon";

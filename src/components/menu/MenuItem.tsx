@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { FunctionComponent } from "react";
 import { ChevronRightIcon } from "assets/icons";
 import Typography from "components/Typography";

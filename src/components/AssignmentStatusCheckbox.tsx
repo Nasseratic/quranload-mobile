@@ -1,7 +1,7 @@
 import { CheckmarkIcon, RejectedCrossIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
 import { AssignmentStatusEnum, LessonStatusFromEnumToType } from "types/Lessons";
 
 interface Props {

@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Text } from "react-native";
 

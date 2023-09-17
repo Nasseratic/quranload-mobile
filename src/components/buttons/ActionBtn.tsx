@@ -1,9 +1,8 @@
-import React, { FunctionComponent } from "react";
+import { FunctionComponent } from "react";
 import {
   StyleProp,
   StyleSheet,
   TextStyle,
-  Text,
   TouchableOpacity,
   ViewStyle,
   ActivityIndicator,

@@ -49,4 +49,5 @@ export function MushafPageSurahHeader({
   );
 }
 
-const surahNameCharMap = `_123456789abcdefghijklmnopqrstuvwxABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzGHIJKLMNOPQRSTUVWXYZ123456789`;
+const surahNameCharMap =
+  "_123456789abcdefghijklmnopqrstuvwxABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzGHIJKLMNOPQRSTUVWXYZ123456789";

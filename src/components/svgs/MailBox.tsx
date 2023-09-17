@@ -1,4 +1,3 @@
-import * as React from "react";
 import Svg, { Path, Circle } from "react-native-svg";
 
 export function MailBoxSvg({ width }: { width: number }) {

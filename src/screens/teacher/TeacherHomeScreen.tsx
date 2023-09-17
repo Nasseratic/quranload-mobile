@@ -2,18 +2,14 @@ import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import Typography from "components/Typography";
-import ActionButton from "components/buttons/ActionBtn";
 import AuthContext from "contexts/auth";
 import { TeamItem } from "components/TeamItem";
-import { Card, Circle, Separator, Square, Stack, XStack } from "tamagui";
-import { IconButton } from "components/buttons/IconButton";
-import { CrossIcon } from "components/icons/CrossIcon";
+import { Card, Circle, Separator, Stack, XStack } from "tamagui";
 import { TouchableOpacity, View } from "react-native";
 import { Colors } from "constants/Colors";
 import { CogIcon } from "assets/icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAssignments } from "hooks/queries/assigemnts";
-import { AssignmentStatusEnum } from "types/Lessons";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "TeacherHome">;
 

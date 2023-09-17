@@ -1,11 +1,10 @@
 import { Colors } from "constants/Colors";
-import GeneralConstants, { SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import GeneralConstants, { SCREEN_WIDTH } from "constants/GeneralConstants";
+import { StyleSheet, View } from "react-native";
 import Typography from "components/Typography";
 import { t } from "locales/config";
 import { EmptySvg } from "components/svgs/EmptySvg";
 import ActionButton from "./buttons/ActionBtn";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Linking from "expo-linking";
 
 const AccountNotAssociated = () => {

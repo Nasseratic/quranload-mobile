@@ -1,4 +1,3 @@
-import React from "react";
 import {
   useFonts,
   NotoSans_700Bold,

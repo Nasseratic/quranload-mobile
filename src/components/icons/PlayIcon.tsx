@@ -1,4 +1,3 @@
-import * as React from "react";
 import Svg, { Path } from "react-native-svg";
 
 export function PlayIcon({ size = 24, fill = "#fff" }: { size?: number; fill?: string }) {
