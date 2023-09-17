@@ -9,8 +9,6 @@ import { fetchUserLessons } from "services/lessonsService";
 import { Loader } from "components/Loader";
 import TabBox from "components/TabBox";
 import { i18n } from "locales/config";
-import { useNavigation } from "@react-navigation/native";
-import { useQuery } from "@tanstack/react-query";
 import { AssignmentStatusEnum } from "types/Lessons";
 import { useAssignments } from "hooks/queries/assigemnts";
 

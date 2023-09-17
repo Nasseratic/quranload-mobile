@@ -6,7 +6,7 @@ declare namespace Frontend.Navigation {
     };
     Login: undefined;
     Profile: undefined;
-    Record: {assignment: Frontend.Content.Assignment};
+    Record: { assignment: Frontend.Content.Assignment };
     RecordSettings: undefined;
     ResetPassword: undefined;
     RegisterAccount: undefined;

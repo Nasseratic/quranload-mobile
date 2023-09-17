@@ -9,7 +9,6 @@ import AuthContext from "contexts/auth";
 import ProfileScreen from "screens/account/ProfileScreen";
 import AdvancedSettingsScreen from "screens/account/advancedSettings/AdvancedSettingsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import HomeScreen from "screens/teacher/HomeScreen";
 import * as SplashScreen from "expo-splash-screen";
 import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswordScreen";
 import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguageScreen";
@@ -18,8 +17,17 @@ import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSub
 import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import RegisterAccount from "screens/auth/RegisterAccount";
 import { RecordScreen } from "screens/student/RecordScreen/RecordScreen";
+import { TeacherHomeScreen } from "screens/teacher/TeacherHomeScreen";
 
 const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace ReactNavigation {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface RootParamList extends Frontend.Navigation.RootStackParamList {}
+  }
+}
 
 const Nav = () => {
   const { signed, user, handleSignIn } = useContext(AuthContext);
@@ -60,7 +68,7 @@ const Nav = () => {
               </>
             ) : (
               <>
-                <Stack.Screen name="TeacherHome" component={HomeScreen} />
+                <Stack.Screen name="TeacherHome" component={TeacherHomeScreen} />
               </>
             )}
             <Stack.Screen name="Profile" component={ProfileScreen} />

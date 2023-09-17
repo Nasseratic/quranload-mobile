@@ -1,4 +1,3 @@
-import { useNavigation } from "@react-navigation/native";
 import { CheckmarkIcon, RejectedCrossIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
