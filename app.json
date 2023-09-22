@@ -15,17 +15,33 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.quranloadapp.quranload"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.quranloadapp.quranload"
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
     },
-    "plugins": []
+    "plugins": [
+      [
+        "@config-plugins/ffmpeg-kit-react-native",
+        {
+          "package": "audio"
+        }
+      ],
+      "expo-build-properties"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0560d09e-9d38-44d5-b53c-743b6488c3a1"
+      }
+    },
+    "owner": "quranload-app"
   }
 }

@@ -1,0 +1,24 @@
+{
+  "cli": {
+    "version": ">= 4.1.2"
+  },
+  "build": {
+    "dev": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "dev-simulator": {
+      "extends": "dev",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {}
+  },
+  "submit": {
+    "production": {}
+  }
+}
