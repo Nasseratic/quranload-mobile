@@ -2,7 +2,7 @@ import { useContext, useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { Colors } from "constants/Colors";
-import DashboardScreen from "screens/student/DashboardScreen";
+import { StudentHomeScreen } from "screens/student/StudentHomeScreen";
 import AssignmentsScreen from "screens/student/AssignmentsScreen";
 import LoginScreen from "screens/auth/LoginScreen";
 import AuthContext from "contexts/auth";
@@ -48,7 +48,7 @@ const Nav = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={signed ? "Dashboard" : "Login"}
+        initialRouteName={signed ? "StudentHome" : "Login"}
         screenOptions={{
           headerShown: false,
           contentStyle: {
@@ -60,7 +60,7 @@ const Nav = () => {
           <>
             {user.roles.indexOf("Student") >= 0 ? (
               <>
-                <Stack.Screen name="Dashboard" component={DashboardScreen} />
+                <Stack.Screen name="StudentHome" component={StudentHomeScreen} />
                 <Stack.Screen name="Assignments" component={AssignmentsScreen} />
                 <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
                 <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />

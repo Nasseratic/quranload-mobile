@@ -1,6 +1,6 @@
 declare namespace Frontend.Navigation {
   export type RootStackParamList = {
-    Dashboard: undefined;
+    StudentHome: undefined;
     Assignments: {
       teamId: string;
     };

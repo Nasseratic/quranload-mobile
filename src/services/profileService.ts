@@ -28,3 +28,27 @@ export const changePassword = async (data: {
 export const cancelSubscription = async (teamId: string): Promise<void> => {
   return await apiClient.put(`teams/Unsubscribe?TeamId=${teamId}`, {});
 };
+
+type StudentStats = {
+  firstSubmission: string;
+  lastSubmission: string;
+  assignmentVelocities: [
+    {
+      lessonId: string;
+      submissionDate: string;
+      averagePageDuration: number;
+      totalNumberOfPagesRead: number;
+      totalRecordingHours: number;
+    }
+  ];
+  todaySpendMinutes: number;
+  totalRecordingHours: number;
+  totalNumberOfPagesRead: number;
+  averageTimePerPage: number;
+};
+
+export const fetchStudentStatistics = async ({
+  teamId,
+}: {
+  teamId: string;
+}): Promise<StudentStats> => await apiClient.get(`Lessons/StudentStats?teamId=${teamId}`);
