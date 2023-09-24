@@ -6,6 +6,9 @@ import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { Colors } from "constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { downloadAsync, documentDirectory } from "expo-file-system";
+import { IconButton } from "./buttons/IconButton";
 
 export const AudioPlayer = ({ uri }: { uri: string }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -15,14 +18,22 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
   const wasPlaying = useRef(false);
 
   async function playSound() {
-    if (durationMS === positionMS) sound?.setPositionAsync(0);
+    if (durationMS - positionMS < 0.3) sound?.setPositionAsync(0);
     sound?.playAsync();
   }
 
   useEffect(() => {
     (async () => {
+      if (!uri) return;
+
+      const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
+
+      let playableUri = isRemoteFile ? await downloadAudio(uri) : uri;
+
       const { sound, status } = await Audio.Sound.createAsync(
-        { uri },
+        {
+          uri: playableUri,
+        },
         { progressUpdateIntervalMillis: 300 },
         (status) => {
           if (status.isLoaded && status.isPlaying) {
@@ -51,19 +62,21 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
     );
 
   return (
-    <XStack jc="center" alignItems="center" gap="$4" px="$3">
-      <TouchableOpacity
+    <XStack jc="center" alignItems="center" gap="$2" f={1}>
+      <IconButton
+        size="sm"
         onPress={() => {
           if (isPlaying) sound?.pauseAsync();
           else playSound();
         }}
-      >
-        {isPlaying ? (
-          <RecordingPauseIcon fill={Colors.Black[2]} />
-        ) : (
-          <PlayIcon fill={Colors.Black[2]} />
-        )}
-      </TouchableOpacity>
+        icon={
+          isPlaying ? (
+            <RecordingPauseIcon fill={Colors.Black[2]} />
+          ) : (
+            <PlayIcon fill={Colors.Black[2]} />
+          )
+        }
+      />
       <YStack f={1} jc="center" alignItems="center" pt="$5" gap="$2">
         {/* For some reason types of the slider is not happy, ignoring it for now  */}
         {/* @ts-expect-error */}
@@ -109,4 +122,14 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
       </YStack>
     </XStack>
   );
+};
+
+const downloadAudio = async (uri: string) => {
+  const token = (await AsyncStorage.getItem("accessToken")) ?? "";
+  const file = await downloadAsync(uri, documentDirectory + "audio.mp3", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return file.uri;
 };

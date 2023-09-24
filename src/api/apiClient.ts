@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { refreshToken } from "./authClient";
+import { refreshToken } from "services/authService";
 
 const api = axios.create({
   baseURL: "https://quranload-be-dev-app.azurewebsites.net/api/",

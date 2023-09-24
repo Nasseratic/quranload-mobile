@@ -14,12 +14,14 @@ declare namespace Frontend.Content {
   }
 
   export interface Assignment {
+    id: string;
     status: AssignmentStatusEnum;
     description: string;
     endDate: string;
     startPage: number;
     endPage: number;
     teamId: string;
+    recordingUrl: string;
   }
 
   export interface ApiError {

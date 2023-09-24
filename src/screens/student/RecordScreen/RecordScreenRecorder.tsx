@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecordIcon } from "components/icons/RecordIcon";
@@ -11,27 +11,66 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { IconButton } from "components/buttons/IconButton";
 import { Colors } from "constants/Colors";
 import { Checkmark } from "components/icons/CheckmarkIcon";
 import { CrossIcon } from "components/icons/CrossIcon";
 import * as Haptics from "expo-haptics";
 import { AudioPlayer } from "components/AudioPlayer";
 import { formatAudioDuration } from "utils/formatAudioDuration";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { submitLessonRecording } from "services/lessonsService";
+import { concatAudioFragments } from "utils/concatAudioFragments";
+import { IconButton } from "components/buttons/IconButton";
+import { BinIcon } from "components/icons/BinIcon";
+import {
+  clearAudioRecordings,
+  getPersistentAudioRecordings,
+  persistAudioRecordings,
+} from "utils/persistAudioRecordings";
+import { sleep } from "utils/sleep";
+import { XStack } from "tamagui";
 
 let currentRecording: Audio.Recording | null = null;
 
-const recordings: string[] = [];
+let recordings: {
+  uri: string;
+  duration: number;
+}[] = [];
+
 const RECORDING_INTERVAL = 60 * 1000 * 2;
-const RECORDING_INTERVAL_TOLERANCE = 10 * 1000;
+const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
 const METERING_CHECK_INTERVAL = 300;
+
+declare global {
+  interface FormData {
+    append(name: string, value: FormDataValue, fileName?: string): void;
+  }
+}
 
 type RecordingState = "idle" | "recording" | "paused";
 
-export function RecordScreenRecorder() {
+export function RecordScreenRecorder({
+  lessonId,
+  existingRecording,
+}: {
+  lessonId: string;
+  existingRecording?: string;
+}) {
+  const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
   const insets = useSafeAreaInsets();
-  const [uriOutput, setUriOutput] = useState<string | null>(null);
+  const [uriOutput, setUriOutput] = useState<string | null>(
+    existingRecording
+      ? `https://quranload-be-dev-app.azurewebsites.net/api/LessonSubmission/recording/file?LessonId=${lessonId}&FileName=${existingRecording}`
+      : null
+  );
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+
+  const queryClient = useQueryClient();
+  const { mutate, isLoading: isSubmitting } = useMutation(submitLessonRecording, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["assignments"]);
+    },
+  });
 
   async function startRecording() {
     const { granted } = await Audio.requestPermissionsAsync();
@@ -60,38 +99,86 @@ export function RecordScreenRecorder() {
         playsInSilentModeIOS: true,
       });
 
-      await startRecordingWith1MinuteInterval();
+      await startRecordingWithAutoFragmenting();
     } catch (err) {
       console.log(err);
       setRecordingState("idle");
     }
   }
 
-  async function stopRecording({ isEnding } = { isEnding: false }) {
-    setRecordingState(isEnding ? "idle" : "paused");
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  const cutRecording = async () => {
     if (!currentRecording) return;
-    currentRecording.pauseAsync;
+    const { durationMillis } = await currentRecording.getStatusAsync();
     await currentRecording.stopAndUnloadAsync();
     const uri = currentRecording.getURI();
-    if (uri) recordings.push(uri);
+    if (uri) {
+      recordings.push({
+        uri,
+        duration: durationMillis,
+      });
+      persistAudioRecordings({ lessonId, recordings });
+    }
     currentRecording = null;
+  };
 
-    // TODO: concat and compress audio files
-    setUriOutput(recordings[0]);
+  const pauseRecording = async () => {
+    setRecordingState("paused");
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    await cutRecording();
+  };
+
+  function discardRecording() {
+    recordings = [];
+    setRecordingState("idle");
+    setUriOutput(null);
+    clearAudioRecordings({ lessonId });
   }
 
-  async function startRecordingWith1MinuteInterval() {
+  const submitRecording = async () => {
+    setRecordingState("idle");
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    await cutRecording();
+
+    setIsConcatenatingAudio(true);
+    const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
+    setIsConcatenatingAudio(false);
+
+    if (!uri) return;
+
+    mutate(
+      {
+        lessonId,
+        file: {
+          uri,
+          name: "test.mp3",
+          type: "audio/mpeg",
+        },
+        duration: 100,
+      },
+      {
+        onSuccess: () => {
+          setUriOutput(uri);
+          recordings = [];
+          clearAudioRecordings({ lessonId });
+        },
+        onError: () => {
+          setRecordingState("paused");
+        },
+      }
+    );
+  };
+
+  async function startRecordingWithAutoFragmenting() {
     try {
       const { recording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.LOW_QUALITY
       );
       currentRecording = recording;
 
-      await new Promise((resolve) => setTimeout(resolve, RECORDING_INTERVAL));
+      await sleep(RECORDING_INTERVAL);
 
       await Promise.race([
-        new Promise((resolve) => setTimeout(resolve, RECORDING_INTERVAL_TOLERANCE)),
+        sleep(RECORDING_INTERVAL_TOLERANCE),
         (async () => {
           while (true) {
             const status = await recording.getStatusAsync();
@@ -100,35 +187,54 @@ export function RecordScreenRecorder() {
               console.log("Metering is too low, stopping recording");
               break;
             } else console.log("Metering is", status.metering);
-            await new Promise((resolve) => setTimeout(resolve, METERING_CHECK_INTERVAL));
+            sleep(METERING_CHECK_INTERVAL);
           }
         })(),
       ]);
 
-      const status = await recording.getStatusAsync();
-
-      if (status.isRecording) {
-        await recording.stopAndUnloadAsync();
-        startRecordingWith1MinuteInterval();
-        const uri = recording.getURI();
-        if (uri) recordings.push(uri);
-      }
+      await cutRecording();
+      startRecordingWithAutoFragmenting();
     } catch (err) {
       console.error("Failed to start recording", err);
     }
   }
 
   useEffect(() => {
+    getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {
+      if (savedRecordings.length > 0) {
+        recordings = savedRecordings;
+        setRecordingState("paused");
+      }
+    });
     return () => {
+      recordings = [];
+      clearAudioRecordings({ lessonId });
       if (currentRecording) {
         currentRecording.stopAndUnloadAsync();
       }
     };
-  }, []);
+  }, [lessonId]);
+
+  if (isSubmitting || isConcatenatingAudio)
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            paddingBottom: insets.bottom,
+            justifyContent: "center",
+          },
+        ]}
+      >
+        <ActivityIndicator />
+      </View>
+    );
 
   if (uriOutput && recordingState === "idle")
     return (
-      <View
+      <XStack
+        px="$4"
+        gap="$4"
         style={[
           styles.container,
           {
@@ -137,7 +243,15 @@ export function RecordScreenRecorder() {
         ]}
       >
         <AudioPlayer uri={uriOutput} />
-      </View>
+        <IconButton
+          onPress={() => {
+            setUriOutput(null);
+          }}
+          bg={Colors.Black[2]}
+          icon={<BinIcon size={20} color="white" />}
+          size="sm"
+        />
+      </XStack>
     );
 
   return (
@@ -151,32 +265,19 @@ export function RecordScreenRecorder() {
     >
       <View>
         {recordingState !== "idle" && (
-          <IconButton
-            bg={Colors.Black[2]}
-            icon={<CrossIcon />}
-            onPress={() => {
-              stopRecording({ isEnding: true });
-              setUriOutput(null);
-            }}
-          />
+          <IconButton bg={Colors.Black[2]} icon={<CrossIcon />} onPress={discardRecording} />
         )}
       </View>
 
       <TouchableOpacity
-        onPress={recordingState === "recording" ? () => stopRecording() : startRecording}
+        onPress={recordingState === "recording" ? () => pauseRecording() : startRecording}
         activeOpacity={0.9}
       >
         <RecordingButton recordingState={recordingState} />
       </TouchableOpacity>
       <View>
         {recordingState !== "idle" && (
-          <IconButton
-            bg={Colors.Success[1]}
-            icon={<Checkmark />}
-            onPress={() => {
-              stopRecording({ isEnding: true });
-            }}
-          />
+          <IconButton bg={Colors.Success[1]} icon={<Checkmark />} onPress={submitRecording} />
         )}
       </View>
     </View>
@@ -184,7 +285,9 @@ export function RecordScreenRecorder() {
 }
 
 const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
-  const [seconds, setSeconds] = useState(0);
+  const [seconds, setSeconds] = useState(
+    Math.round(recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000)
+  );
 
   useEffect(() => {
     if (isRunning) {
