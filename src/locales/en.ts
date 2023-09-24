@@ -9,6 +9,13 @@ const english = {
   timePerPage: "Time per page",
   pages: "Pages",
   read: "Read",
+  cancel: "Cancel",
+  delete: "Delete",
+  feedback: "Feedback",
+  recordingScreen: {
+    deleteRecording: "Delete recording",
+    deleteRecordingDescription: "Are you sure you want to delete this recording?",
+  },
   profileScreen: {
     title: "Profile",
     fullNameLabel: "Full name",
@@ -37,7 +44,7 @@ const english = {
     updatePassword: "Update password",
     enterCurrentPassword: "Enter current password",
     enterNewPassword: "Enter new password",
-    repeatNewPassword: "Repeant new password",
+    repeatNewPassword: "Repeat new password",
     passwordsDoNotMatch: "Passwords doesn't match",
     passwordUpdated: "Password updated",
   },

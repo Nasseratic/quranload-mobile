@@ -16,9 +16,10 @@ const typographiesStyles = StyleSheet.create({
   SubHeaderHeavy: { fontFamily: fontFamily.NSBold, fontSize: 16 },
   SubHeaderLight: { fontFamily: fontFamily.NSRegular, fontSize: 16 },
   BodyHeavy: { fontFamily: fontFamily.NSBold, fontSize: 14 },
+  Body: { fontFamily: fontFamily.NSSemibold, fontSize: 14 },
   BodyLight: { fontFamily: fontFamily.NSRegular, fontSize: 14 },
-  CaptionHeavy: { fontFamily: fontFamily.NSBold, fontSize: 16 },
-  CaptionLight: { fontFamily: fontFamily.NSRegular, fontSize: 16 },
+  CaptionHeavy: { fontFamily: fontFamily.NSBold, fontSize: 12 },
+  CaptionLight: { fontFamily: fontFamily.NSRegular, fontSize: 12 },
   SmallHeavy: { fontFamily: fontFamily.NSBold, fontSize: 10 },
   SmallLight: { fontFamily: fontFamily.NSRegular, fontSize: 10 },
 });

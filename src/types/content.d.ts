@@ -22,6 +22,7 @@ declare namespace Frontend.Content {
     endPage: number;
     teamId: string;
     recordingUrl: string;
+    feedbackUrl: string;
   }
 
   export interface ApiError {

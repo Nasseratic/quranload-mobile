@@ -18,7 +18,11 @@ import * as Haptics from "expo-haptics";
 import { AudioPlayer } from "components/AudioPlayer";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitLessonRecording } from "services/lessonsService";
+import {
+  deleteLessonSubmission,
+  getRecordingUrl,
+  submitLessonRecording,
+} from "services/lessonsService";
 import { concatAudioFragments } from "utils/concatAudioFragments";
 import { IconButton } from "components/buttons/IconButton";
 import { BinIcon } from "components/icons/BinIcon";
@@ -29,6 +33,8 @@ import {
 } from "utils/persistAudioRecordings";
 import { sleep } from "utils/sleep";
 import { XStack } from "tamagui";
+import { t } from "locales/config";
+import { useUser } from "contexts/auth";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -51,17 +57,17 @@ type RecordingState = "idle" | "recording" | "paused";
 
 export function RecordScreenRecorder({
   lessonId,
-  existingRecording,
+  recordingId,
 }: {
   lessonId: string;
-  existingRecording?: string;
+  recordingId?: string;
 }) {
+  const user = useUser();
+
   const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
   const insets = useSafeAreaInsets();
   const [uriOutput, setUriOutput] = useState<string | null>(
-    existingRecording
-      ? `https://quranload-be-dev-app.azurewebsites.net/api/LessonSubmission/recording/file?LessonId=${lessonId}&FileName=${existingRecording}`
-      : null
+    recordingId ? getRecordingUrl({ lessonId, recordingId: recordingId }) : null
   );
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
 
@@ -180,6 +186,7 @@ export function RecordScreenRecorder({
       await Promise.race([
         sleep(RECORDING_INTERVAL_TOLERANCE),
         (async () => {
+          // eslint-disable-next-line no-constant-condition
           while (true) {
             const status = await recording.getStatusAsync();
             if (!status.isRecording) break;
@@ -187,7 +194,7 @@ export function RecordScreenRecorder({
               console.log("Metering is too low, stopping recording");
               break;
             } else console.log("Metering is", status.metering);
-            sleep(METERING_CHECK_INTERVAL);
+            await sleep(METERING_CHECK_INTERVAL);
           }
         })(),
       ]);
@@ -244,11 +251,27 @@ export function RecordScreenRecorder({
       >
         <AudioPlayer uri={uriOutput} />
         <IconButton
-          onPress={() => {
-            setUriOutput(null);
-          }}
-          bg={Colors.Black[2]}
-          icon={<BinIcon size={20} color="white" />}
+          onPress={() =>
+            Alert.alert(
+              t("recordingScreen.deleteRecording"),
+              t("recordingScreen.deleteRecordingDescription"),
+              [
+                {
+                  text: t("cancel"),
+                  style: "cancel",
+                },
+                {
+                  text: t("delete"),
+                  style: "destructive",
+                  onPress: () => {
+                    deleteLessonSubmission({ lessonId, studentId: user!.id });
+                    setUriOutput(null);
+                  },
+                },
+              ]
+            )
+          }
+          icon={<BinIcon size={20} color={Colors.Black[2]} />}
           size="sm"
         />
       </XStack>

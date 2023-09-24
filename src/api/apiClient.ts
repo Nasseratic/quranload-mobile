@@ -2,10 +2,12 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { refreshToken } from "services/authService";
 
-const api = axios.create({
-  baseURL: "https://quranload-be-dev-app.azurewebsites.net/api/",
-});
+export const BASE_URL = "https://quranload-be-dev-app.azurewebsites.net/api/";
 
+const api = axios.create({
+  baseURL: BASE_URL,
+});
+AsyncStorage.getItem("accessToken").then(console.log);
 api.interceptors.request.use(async (conf) => {
   const token = await AsyncStorage.getItem("accessToken");
   console.info("request sent to", conf.baseURL, conf.url);
@@ -84,9 +86,14 @@ const responseBody = <T>(response: AxiosResponse<T>) => {
 
 const request = {
   get: <T>(url: string) => api.get<T>(url).then(responseBody),
-  post: <T>(url: string, body: {}) => api.post<T>(url, body).then(responseBody),
-  put: <T>(url: string, body: {}) => api.put<T>(url, body).then(responseBody),
-  delete: <T>(url: string) => api.delete<T>(url).then(responseBody),
+  post: <T>(url: string, body: object) => api.post<T>(url, body).then(responseBody),
+  put: <T>(url: string, body: object) => api.put<T>(url, body).then(responseBody),
+  delete: <T>(url: string, body?: object) =>
+    api
+      .delete<T>(url, {
+        data: body,
+      })
+      .then(responseBody),
 };
 
 const apiClient = {

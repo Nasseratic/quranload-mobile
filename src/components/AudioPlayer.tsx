@@ -1,6 +1,6 @@
 import { Audio } from "expo-av";
 import { useState, useRef, useEffect } from "react";
-import { ActivityIndicator, TouchableOpacity } from "react-native";
+import { ActivityIndicator } from "react-native";
 import { XStack, YStack, Slider, Text } from "tamagui";
 import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
@@ -17,18 +17,20 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
   const [positionMS, setPositionMS] = useState(0);
   const wasPlaying = useRef(false);
 
-  async function playSound() {
+  function playSound() {
     if (durationMS - positionMS < 0.3) sound?.setPositionAsync(0);
     sound?.playAsync();
   }
 
   useEffect(() => {
+    let soundToClean: Audio.Sound | null = null;
+
     (async () => {
       if (!uri) return;
 
       const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
 
-      let playableUri = isRemoteFile ? await downloadAudio(uri) : uri;
+      const playableUri = isRemoteFile ? await downloadAudio(uri) : uri;
 
       const { sound, status } = await Audio.Sound.createAsync(
         {
@@ -43,13 +45,12 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
         }
       );
       if (!status.isLoaded) return;
-
+      soundToClean = sound;
       setSound(sound);
       setDurationMS((status.durationMillis ?? 0) / 1000);
     })();
-
     return function cleanUpSound() {
-      sound?.unloadAsync();
+      soundToClean?.unloadAsync();
     };
   }, [uri]);
 
@@ -79,9 +80,9 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
       />
       <YStack f={1} jc="center" alignItems="center" pt="$5" gap="$2">
         {/* For some reason types of the slider is not happy, ignoring it for now  */}
-        {/* @ts-expect-error */}
+        {/* @ts-expect-error for some reason Slider is always not happy */}
         <Slider
-          onSlideMove={async (_, value) => {
+          onSlideMove={(_, value) => {
             if (value < 0 || value > durationMS) return;
             setPositionMS(value);
             sound?.getStatusAsync().then((status) => {
@@ -91,7 +92,7 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
               }
             });
           }}
-          onSlideEnd={(value) => {
+          onSlideEnd={() => {
             sound?.setPositionAsync(positionMS * 1000);
             if (wasPlaying.current) {
               sound?.playAsync();
@@ -103,13 +104,13 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
           min={0}
           max={durationMS}
           step={0.5}
-          // @ts-expect-error
+          // @ts-expect-error for some reason Slider is always not happy
           w="100%"
         >
           <Slider.Track h={2} bg="$gray8">
             <Slider.TrackActive h={2} bg="$gray11" />
           </Slider.Track>
-          <Slider.Thumb hitSlop={20} circular bg="$gray12" index={0} borderWidth={0} size="$0.75" />
+          <Slider.Thumb hitSlop={20} circular bg="$gray12" index={0} borderWidth={0} size={14} />
         </Slider>
         <XStack gap="$3" jc="space-between" alignItems="center" w="100%">
           <Text style={{ color: Colors.Black[2] }}>

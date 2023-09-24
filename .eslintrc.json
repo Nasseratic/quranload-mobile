@@ -19,7 +19,7 @@
   },
   "plugins": ["react", "@typescript-eslint", "react-hooks", "prettier", "unused-imports"],
   "rules": {
-    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "indent": "off",
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "double"],
     "semi": ["error", "always"],
@@ -35,7 +35,7 @@
         "checksVoidReturn": false
       }
     ],
-    "@typescript-eslint/no-floating-promises": "warn",
+    "@typescript-eslint/no-floating-promises": "off",
     "unused-imports/no-unused-imports": "error"
   },
   "settings": {

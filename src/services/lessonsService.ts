@@ -2,6 +2,7 @@ import apiClient from "api/apiClient";
 import qs from "qs";
 import Paginated from "types/Paginated";
 import { AssignmentStatusEnum } from "types/Lessons";
+import { BASE_URL } from "api/apiClient";
 
 export const fetchUserLessons = async (data: {
   teamId: string;
@@ -33,4 +34,30 @@ export const submitLessonRecording = async ({
   form.append("RecordingDuration", `${duration}`);
 
   return apiClient.post("LessonSubmission/recording", form);
+};
+
+export const deleteLessonSubmission = async (body: { lessonId: string; studentId: string }) =>
+  apiClient.delete("LessonSubmission/recording", body);
+
+export const getRecordingUrl = ({
+  lessonId,
+  recordingId,
+}: {
+  lessonId: string;
+  recordingId: string;
+}) => `${BASE_URL}LessonSubmission/recording/file?LessonId=${lessonId}&FileName=${recordingId}`;
+
+export const getFeedbackUrl = ({
+  lessonId,
+  feedbackId,
+  studentId,
+}: {
+  lessonId: string;
+  feedbackId: string;
+  studentId: string;
+}) => {
+  console.log(
+    `${BASE_URL}LessonSubmission/feedback/file?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`
+  );
+  return `${BASE_URL}LessonSubmission/feedback/file?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`;
 };
