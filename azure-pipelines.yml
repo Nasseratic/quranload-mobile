@@ -20,5 +20,5 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    npx eas-cli update --branch main -m $(Build.SourceVersionMessage) 
+    npx eas-cli update --branch main -m "$(Build.SourceVersionMessage)" 
   displayName: "Publish update"
