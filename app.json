@@ -3,6 +3,7 @@
     "name": "quranload",
     "slug": "quranload",
     "version": "1.0.0",
+    "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,9 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quranloadapp.quranload"
@@ -42,6 +41,10 @@
         "projectId": "0560d09e-9d38-44d5-b53c-743b6488c3a1"
       }
     },
-    "owner": "quranload-app"
+    "owner": "quranload-app",
+    "updates": {
+      "fallbackToCacheTimeout": 5000,
+      "url": "https://u.expo.dev/0560d09e-9d38-44d5-b53c-743b6488c3a1"
+    }
   }
 }
