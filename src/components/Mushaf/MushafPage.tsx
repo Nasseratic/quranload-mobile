@@ -14,6 +14,8 @@ const lineExtraWidthMap: Record<number, number> = {};
 
 const QURAN_PAGE_PADDING = 12;
 
+const APPBAR_HEIGHT = 54;
+
 const QURAN_PAGE_WIDTH = SCREEN_WIDTH - QURAN_PAGE_PADDING * 2;
 
 export function MushafPage({ pageNumber }: { pageNumber: number }) {
@@ -44,6 +46,7 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
           flex: 1,
           paddingHorizontal: QURAN_PAGE_PADDING,
           width: SCREEN_WIDTH,
+          paddingTop: APPBAR_HEIGHT,
         }}
         onLayout={onLayoutRootView}
       >
@@ -53,8 +56,8 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
               key={i}
               style={{
                 fontFamily: `page${pageNumber}`,
-                fontSize: 30,
-                lineHeight: pageNumber == 1 || pageNumber == 2 ? 50 : 45,
+                fontSize: 20,
+                lineHeight: pageNumber == 1 || pageNumber == 2 ? 48 : 40,
                 paddingHorizontal: 3,
                 width: QURAN_PAGE_WIDTH,
                 textAlign: "center",

@@ -22,6 +22,8 @@ const danish = {
     title: "Lektier",
     all: "Alle",
     pending: "Manglende",
+    page: "Side",
+    outOf: "af"
   },
   advancedSettingsScreen: {
     title: "Avanceret indstillinger",

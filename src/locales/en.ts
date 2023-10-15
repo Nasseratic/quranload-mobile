@@ -33,6 +33,8 @@ const english = {
     title: "Homework",
     all: "All",
     pending: "Pending",
+    page: "Page",
+    outOf: "out of"
   },
   advancedSettingsScreen: {
     title: "Advanced settings",

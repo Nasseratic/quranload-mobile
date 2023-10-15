@@ -35,7 +35,7 @@ export function MushafPageSurahHeader({
           >
             <Text
               style={{
-                fontSize: 55,
+                fontSize: 48,
                 fontFamily: surahNumber > 59 ? "surahName2" : "surahName1",
               }}
             >
