@@ -108,9 +108,6 @@ export function RecordScreenRecorder({
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setRecordingState("recording");
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-      });
 
       await startRecordingWithAutoFragmenting();
     } catch (err) {
@@ -140,18 +137,23 @@ export function RecordScreenRecorder({
     await cutRecording();
   };
 
-  function discardRecording() {
+  async function discardRecording() {
     recordings = [];
     setRecordingState("idle");
     setUriOutput(null);
     clearAudioRecordings({ lessonId });
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+    });
   }
 
   const submitRecording = async () => {
     setRecordingState("idle");
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     await cutRecording();
-
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+    });
     setIsConcatenatingAudio(true);
     const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
     setIsConcatenatingAudio(false);
@@ -183,8 +185,11 @@ export function RecordScreenRecorder({
 
   async function startRecordingWithAutoFragmenting() {
     try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+      });
       const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.LOW_QUALITY
+        Audio.RecordingOptionsPresets.HEIGH_QUALITY
       );
       currentRecording = recording;
 

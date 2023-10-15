@@ -14,7 +14,7 @@ export const concatAudioFragments = async (audioFiles: string[]) => {
 
   return new Promise<string>((resolve, reject) => {
     FFmpegKit.execute(
-      `${audioInputFilesString} ${concatFilesCommand} -filter:a "volume=2"  ${outputFile}`
+      `${audioInputFilesString} ${concatFilesCommand} -codec:a libmp3lame -q:a 7 ${outputFile}`
     ).then(async (session) => {
       const returnCode = await session.getReturnCode();
       session.getOutput();

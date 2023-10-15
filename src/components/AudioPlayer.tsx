@@ -20,7 +20,10 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
   const [positionSec, setPositionSec] = useState(0);
   const wasPlaying = useRef(false);
 
-  function playSound() {
+  async function playSound() {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+    });
     if (durationSec - positionSec < 0.3) sound?.setPositionAsync(0);
     sound?.playAsync();
   }
