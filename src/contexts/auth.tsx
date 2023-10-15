@@ -16,6 +16,10 @@ interface AuthContextData {
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
+
 export const useUser = () => {
   const { user } = useContext(AuthContext);
   return user;

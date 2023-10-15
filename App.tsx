@@ -11,7 +11,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TamaguiProvider } from "tamagui";
 
 import { tamaguiConfig } from "./tamagui.config";
-
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 require("./src/locales/config");
 
 // Create a client
@@ -29,12 +31,18 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Nav />
-        </AuthProvider>
-      </QueryClientProvider>
-    </TamaguiProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+          <BottomSheetModalProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <Nav />
+              </AuthProvider>
+            </QueryClientProvider>
+          </BottomSheetModalProvider>
+        </TamaguiProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

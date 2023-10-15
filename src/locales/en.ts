@@ -12,6 +12,10 @@ const english = {
   cancel: "Cancel",
   delete: "Delete",
   feedback: "Feedback",
+  enable: "Enable",
+  enableNotifications: "Enable Notifications",
+  enableNotificationsDescription:
+    "Get notified when you have new assignments or when your teacher sends you a feedback",
   recordingScreen: {
     deleteRecording: "Delete recording",
     deleteRecordingDescription: "Are you sure you want to delete this recording?",
