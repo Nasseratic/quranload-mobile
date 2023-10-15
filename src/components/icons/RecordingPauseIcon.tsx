@@ -1,8 +1,8 @@
 import Svg, { Path } from "react-native-svg";
 
-export function RecordingPauseIcon({ fill = "#fff" }: { fill?: string }) {
+export function RecordingPauseIcon({ fill = "#fff", size = 24 }: { fill?: string; size?: number }) {
   return (
-    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         fillRule="evenodd"
         clipRule="evenodd"

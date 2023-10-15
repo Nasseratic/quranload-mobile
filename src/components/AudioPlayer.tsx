@@ -1,7 +1,7 @@
 import { Audio } from "expo-av";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { ActivityIndicator } from "react-native";
-import { XStack, YStack, Slider, Text } from "tamagui";
+import { XStack, YStack, Text } from "tamagui";
 import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { formatAudioDuration } from "utils/formatAudioDuration";
@@ -9,16 +9,19 @@ import { Colors } from "constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { downloadAsync, documentDirectory } from "expo-file-system";
 import { IconButton } from "./buttons/IconButton";
+import { ForwardIcon } from "components/icons/ForwerdIcon";
+import Slider from "./Slider";
+const downloadedAudioFiles: Record<string, string> = {};
 
-export const AudioPlayer = ({ uri }: { uri: string }) => {
+export const AudioPlayer = memo(({ uri }: { uri: string }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [durationMS, setDurationMS] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [positionMS, setPositionMS] = useState(0);
+  const [positionSec, setPositionSec] = useState(0);
   const wasPlaying = useRef(false);
 
   function playSound() {
-    if (durationMS - positionMS < 0.3) sound?.setPositionAsync(0);
+    if (durationSec - positionSec < 0.3) sound?.setPositionAsync(0);
     sound?.playAsync();
   }
 
@@ -29,8 +32,11 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
       if (!uri) return;
 
       const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
+      const playableUri = isRemoteFile
+        ? downloadedAudioFiles[uri] ?? (await downloadAudio(uri))
+        : uri;
 
-      const playableUri = isRemoteFile ? await downloadAudio(uri) : uri;
+      downloadedAudioFiles[uri] = playableUri;
 
       const { sound, status } = await Audio.Sound.createAsync(
         {
@@ -40,14 +46,14 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
         (status) => {
           if (status.isLoaded && status.isPlaying) {
             setIsPlaying(true);
-            setPositionMS((status.positionMillis ?? 0) / 1000);
+            setPositionSec((status.positionMillis ?? 0) / 1000);
           } else setIsPlaying(false);
         }
       );
       if (!status.isLoaded) return;
       soundToClean = sound;
       setSound(sound);
-      setDurationMS((status.durationMillis ?? 0) / 1000);
+      setDurationSec((status.durationMillis ?? 0) / 1000);
     })();
     return function cleanUpSound() {
       soundToClean?.unloadAsync();
@@ -55,7 +61,7 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
   }, [uri]);
 
   // sound did load yet
-  if (durationMS === 0)
+  if (durationSec === 0)
     return (
       <XStack f={1} jc="center" ai="center">
         <ActivityIndicator />
@@ -63,28 +69,20 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
     );
 
   return (
-    <XStack jc="center" alignItems="center" gap="$2" f={1}>
-      <IconButton
-        size="sm"
-        onPress={() => {
-          if (isPlaying) sound?.pauseAsync();
-          else playSound();
-        }}
-        icon={
-          isPlaying ? (
-            <RecordingPauseIcon fill={Colors.Black[2]} />
-          ) : (
-            <PlayIcon fill={Colors.Black[2]} />
-          )
-        }
-      />
-      <YStack f={1} jc="center" alignItems="center" pt="$5" gap="$2">
-        {/* For some reason types of the slider is not happy, ignoring it for now  */}
-        {/* @ts-expect-error for some reason Slider is always not happy */}
+    <YStack pointerEvents="box-none" jc="center" alignItems="center" w="100%" gap="$2" p="$4">
+      <YStack w="100%" gap="$2">
         <Slider
-          onSlideMove={(_, value) => {
-            if (value < 0 || value > durationMS) return;
-            setPositionMS(value);
+          step={durationSec / 100}
+          style={{
+            width: "100%",
+            height: 1,
+          }}
+          value={positionSec}
+          minimumValue={0}
+          maximumValue={durationSec}
+          onValueChange={(value: number) => {
+            if (value < 0 || value > durationSec) return;
+            setPositionSec(value);
             sound?.getStatusAsync().then((status) => {
               if (status.isLoaded && status.isPlaying) {
                 sound?.pauseAsync();
@@ -92,45 +90,83 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
               }
             });
           }}
-          onSlideEnd={() => {
-            sound?.setPositionAsync(positionMS * 1000);
+          useNativeDriver={true}
+          onSlidingStart={() => {
+            sound?.getStatusAsync().then((status) => {
+              if (status.isLoaded && status.isPlaying) {
+                sound?.pauseAsync();
+                wasPlaying.current = true;
+              }
+            });
+          }}
+          onSlidingComplete={() => {
+            sound?.setPositionAsync(positionSec * 1000);
             if (wasPlaying.current) {
               sound?.playAsync();
               wasPlaying.current = false;
             }
           }}
-          defaultValue={[0]}
-          value={[positionMS]}
-          min={0}
-          max={durationMS}
-          step={0.5}
-          // @ts-expect-error for some reason Slider is always not happy
-          w="100%"
-        >
-          <Slider.Track h={2} bg="$gray8">
-            <Slider.TrackActive h={2} bg="$gray11" />
-          </Slider.Track>
-          <Slider.Thumb hitSlop={20} circular bg="$gray12" index={0} borderWidth={0} size={14} />
-        </Slider>
+        />
         <XStack gap="$3" jc="space-between" alignItems="center" w="100%">
           <Text style={{ color: Colors.Black[2] }}>
-            {formatAudioDuration(Math.floor(positionMS))}
+            {formatAudioDuration(Math.floor(positionSec))}
           </Text>
           <Text style={{ color: Colors.Black[2] }}>
-            {formatAudioDuration(Math.floor(durationMS))}
+            {formatAudioDuration(Math.floor(durationSec))}
           </Text>
         </XStack>
       </YStack>
-    </XStack>
+      <XStack
+        style={{
+          transform: [{ translateY: -4 }],
+        }}
+        gap="$3"
+      >
+        <IconButton
+          size="sm"
+          onPress={() => {
+            sound?.setPositionAsync((positionSec - 3) * 1000);
+            setPositionSec(positionSec - 3);
+          }}
+          icon={<ForwardIcon backward />}
+        />
+        <IconButton
+          size="sm"
+          onPress={() => {
+            if (isPlaying) sound?.pauseAsync();
+            else playSound();
+          }}
+          icon={
+            isPlaying ? (
+              <RecordingPauseIcon fill={Colors.Gray[1]} size={40} />
+            ) : (
+              <PlayIcon size={35} />
+            )
+          }
+        />
+        <IconButton
+          size="sm"
+          onPress={() => {
+            sound?.setPositionAsync((positionSec + 3) * 1000);
+            setPositionSec(positionSec + 3);
+          }}
+          icon={<ForwardIcon />}
+        />
+      </XStack>
+    </YStack>
   );
-};
+});
 
 const downloadAudio = async (uri: string) => {
   const token = (await AsyncStorage.getItem("accessToken")) ?? "";
-  const file = await downloadAsync(uri, documentDirectory + "audio.mp3", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const file = await downloadAsync(
+    uri,
+    documentDirectory + Math.random().toString(36).substring(7) + ".mp3",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
   return file.uri;
 };

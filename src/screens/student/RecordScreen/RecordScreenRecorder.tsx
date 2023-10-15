@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,6 +6,7 @@ import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
 import * as Linking from "expo-linking";
 import Animated, {
+  interpolate,
   useAnimatedStyle,
   withSequence,
   withSpring,
@@ -20,6 +21,7 @@ import { formatAudioDuration } from "utils/formatAudioDuration";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   deleteLessonSubmission,
+  getFeedbackUrl,
   getRecordingUrl,
   submitLessonRecording,
 } from "services/lessonsService";
@@ -32,9 +34,12 @@ import {
   persistAudioRecordings,
 } from "utils/persistAudioRecordings";
 import { sleep } from "utils/sleep";
-import { XStack } from "tamagui";
+import { Stack, XStack } from "tamagui";
 import { t } from "locales/config";
 import { useUser } from "contexts/auth";
+import { Switch } from "components/AnimatedSwitch";
+import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
+import { SCREEN_WIDTH } from "constants/GeneralConstants";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -58,12 +63,15 @@ type RecordingState = "idle" | "recording" | "paused";
 export function RecordScreenRecorder({
   lessonId,
   recordingId,
+  feedbackId,
 }: {
   lessonId: string;
   recordingId?: string;
+  feedbackId?: string;
 }) {
   const user = useUser();
-
+  const carouselRef = useRef<ICarouselInstance>(null);
+  const [showFeedback, setShowFeedback] = useState(!!feedbackId);
   const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
   const insets = useSafeAreaInsets();
   const [uriOutput, setUriOutput] = useState<string | null>(
@@ -222,11 +230,26 @@ export function RecordScreenRecorder({
     };
   }, [lessonId]);
 
+  const animationStyle = useCallback((value: number) => {
+    "worklet";
+
+    const zIndex = interpolate(value, [-1, 0, 1], [10, 20, 30]);
+    const scale = interpolate(value, [-1, 0, 1], [1.25, 1, 0.25]);
+    const opacity = interpolate(value, [-0.75, 0, 1], [0, 1, 0]);
+
+    return {
+      transform: [{ scale }],
+      zIndex,
+      opacity,
+    };
+  }, []);
+
   if (isSubmitting || isConcatenatingAudio)
     return (
       <View
         style={[
           styles.container,
+          styles.shadow,
           {
             paddingBottom: insets.bottom,
             justifyContent: "center",
@@ -239,48 +262,86 @@ export function RecordScreenRecorder({
 
   if (uriOutput && recordingState === "idle")
     return (
-      <XStack
-        px="$4"
-        gap="$4"
+      <Stack
         style={[
-          styles.container,
+          styles.shadow,
           {
+            backgroundColor: "#fff",
             paddingBottom: insets.bottom,
           },
         ]}
       >
-        <AudioPlayer uri={uriOutput} />
-        <IconButton
-          onPress={() =>
-            Alert.alert(
-              t("recordingScreen.deleteRecording"),
-              t("recordingScreen.deleteRecordingDescription"),
-              [
-                {
-                  text: t("cancel"),
-                  style: "cancel",
-                },
-                {
-                  text: t("delete"),
-                  style: "destructive",
-                  onPress: () => {
-                    deleteLessonSubmission({ lessonId, studentId: user!.id });
-                    setUriOutput(null);
-                  },
-                },
-              ]
-            )
-          }
-          icon={<BinIcon size={20} color={Colors.Black[2]} />}
-          size="sm"
-        />
-      </XStack>
+        <Stack pt="$3" px="$4" jc="flex-end" ai="center">
+          <Carousel
+            data={
+              feedbackId
+                ? [
+                    getFeedbackUrl({
+                      lessonId,
+                      feedbackId: feedbackId,
+                      studentId: user!.id,
+                    }),
+                    uriOutput,
+                  ]
+                : [uriOutput]
+            }
+            width={SCREEN_WIDTH}
+            height={40 + insets.bottom}
+            renderItem={({ item }) => <AudioPlayer uri={item} />}
+            ref={carouselRef}
+            loop={false}
+            vertical
+            customAnimation={animationStyle}
+            enabled={false}
+          />
+          <XStack jc="space-between" pointerEvents="box-none" position="absolute" w="100%">
+            <View>
+              {feedbackId && (
+                <Switch
+                  value={showFeedback}
+                  onChange={(value) => {
+                    setShowFeedback(value);
+                    carouselRef.current?.scrollTo({ index: value ? 0 : 1, animated: true });
+                  }}
+                />
+              )}
+            </View>
+            {!showFeedback && (
+              <IconButton
+                onPress={() =>
+                  Alert.alert(
+                    t("recordingScreen.deleteRecording"),
+                    t("recordingScreen.deleteRecordingDescription"),
+                    [
+                      {
+                        text: t("cancel"),
+                        style: "cancel",
+                      },
+                      {
+                        text: t("delete"),
+                        style: "destructive",
+                        onPress: () => {
+                          deleteLessonSubmission({ lessonId, studentId: user!.id });
+                          setUriOutput(null);
+                        },
+                      },
+                    ]
+                  )
+                }
+                icon={<BinIcon size={20} color={Colors.Black[2]} />}
+                size="sm"
+              />
+            )}
+          </XStack>
+        </Stack>
+      </Stack>
     );
 
   return (
     <View
       style={[
         styles.container,
+        styles.shadow,
         {
           paddingBottom: insets.bottom,
         },
@@ -393,9 +454,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 8,
-    paddingHorizontal: 16,
     flexDirection: "row",
+    minHeight: 100,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+  },
+  shadow: {
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -404,7 +468,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
-    minHeight: 100,
   },
   recordingTimerContainer: {
     gap: 12,

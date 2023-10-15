@@ -56,8 +56,5 @@ export const getFeedbackUrl = ({
   feedbackId: string;
   studentId: string;
 }) => {
-  console.log(
-    `${BASE_URL}LessonSubmission/feedback/file?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`
-  );
   return `${BASE_URL}LessonSubmission/feedback/file?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`;
 };

@@ -16,6 +16,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route }) => {
       <RecordScreenRecorder
         lessonId={route.params.assignment.id}
         recordingId={route.params.assignment.recordingUrl}
+        feedbackId={route.params.assignment.feedbackUrl}
       />
     </View>
   );
