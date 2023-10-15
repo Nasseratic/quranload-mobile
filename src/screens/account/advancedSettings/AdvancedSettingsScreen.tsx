@@ -8,7 +8,8 @@ import { Colors } from "constants/Colors";
 import { IMenuItemProps } from "components/menu/MenuItem";
 import ActionButton from "components/buttons/ActionBtn";
 import AuthContext from "contexts/auth";
-
+import Typography from "components/Typography";
+import * as Updates from "expo-updates";
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
@@ -48,6 +49,10 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
         onPress={handleSignout}
         title={i18n.t("signOut")}
       />
+
+      <Typography style={{ alignSelf: "flex-end", fontSize: 10, color: Colors.Black[2] }}>
+        Version: {(Updates.updateId ?? "").slice(0, 7)}
+      </Typography>
     </QuranLoadView>
   );
 };
