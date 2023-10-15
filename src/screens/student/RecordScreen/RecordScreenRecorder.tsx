@@ -110,7 +110,6 @@ export function RecordScreenRecorder({
       setRecordingState("recording");
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
       });
 
       await startRecordingWithAutoFragmenting();

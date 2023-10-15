@@ -43,7 +43,7 @@
     },
     "owner": "quranload-app",
     "updates": {
-      "fallbackToCacheTimeout": 5000,
+      "fallbackToCacheTimeout": 7000,
       "url": "https://u.expo.dev/0560d09e-9d38-44d5-b53c-743b6488c3a1"
     }
   }

@@ -13,7 +13,12 @@ import { tamaguiConfig } from "./tamagui.config";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { Audio } from "expo-av";
 require("./src/locales/config");
+
+Audio.setAudioModeAsync({
+  playsInSilentModeIOS: true,
+});
 
 // Create a client
 const queryClient = new QueryClient();
