@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, TouchableOpacity, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import StatsBox from "components/StatsBox";
@@ -15,7 +15,9 @@ import { useAssignments } from "hooks/queries/assigemnts";
 import { AssignmentStatusEnum } from "types/Lessons";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentStatistics } from "services/profileService";
-import { Stack, XStack } from "tamagui";
+import { Stack, XStack, YStack } from "tamagui";
+import LineChartWithTooltips from "components/LineChartWithTooltips";
+import { fDateDashed } from "utils/formatTime";
 
 type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
 
@@ -72,19 +74,70 @@ const StatusSection = ({ teamId }: { teamId: string }) => {
   if (isLoading) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
 
   return (
-    <XStack gap="$3">
-      <StatsBox
-        icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
-        label={i18n.t("timePerPage")}
-        value={`${data?.averageTimePerPage} min`}
-        backgroundColor={Colors.Primary[1]}
-      />
-      <StatsBox
-        icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
-        label={i18n.t("pages")}
-        value={`${data?.totalNumberOfPagesRead}`}
-        backgroundColor={Colors.Success[1]}
-      />
-    </XStack>
+    <YStack>
+      <XStack gap="$3">
+        <StatsBox
+          icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
+          label={i18n.t("timePerPage")}
+          value={`${data?.averageTimePerPage?.toFixed(2)} min`}
+          backgroundColor={Colors.Primary[1]}
+        />
+        <StatsBox
+          icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
+          label={i18n.t("pages")}
+          value={`${data?.totalNumberOfPagesRead}`}
+          backgroundColor={Colors.Success[1]}
+        />
+      </XStack>
+      {data?.assignmentVelocities && data.assignmentVelocities.length > 2 && (
+        <>
+          <Typography style={{ opacity: 0.5, marginTop: 16 }}>
+            {i18n.t("homeScreen.readingTime")}
+          </Typography>
+          <LineChartWithTooltips
+            // @ts-expect-error
+            data={{
+              labels: data?.assignmentVelocities.map((a) => fDateDashed(a.submissionDate)),
+              datasets: [
+                {
+                  data:
+                    data?.assignmentVelocities?.map((a) =>
+                      Number(a.averagePageDuration).toFixed(2)
+                    ) ?? [],
+                },
+              ],
+            }}
+            width={Dimensions.get("window").width - 32} // from react-native
+            height={220}
+            yAxisSuffix=" min"
+            yAxisInterval={1} // optional, defaults to 1
+            chartConfig={{
+              backgroundColor: "#fff",
+              backgroundGradientFrom: "#fff",
+              backgroundGradientTo: "#fff",
+              decimalPlaces: 1, // optional, defaults to 2dp
+              color: (opacity = 0.9) => `rgba(1, 178, 135, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              style: {
+                borderRadius: 16,
+              },
+              propsForDots: {
+                r: "3",
+                strokeWidth: "0",
+                stroke: "#fff",
+              },
+            }}
+            withInnerLines={false}
+            withOuterLines={false}
+            withVerticalLabels={false}
+            bezier
+            style={{
+              marginVertical: 8,
+              borderRadius: 16,
+            }}
+          />
+        </>
+      )}
+    </YStack>
   );
 };

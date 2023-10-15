@@ -20,6 +20,9 @@ const english = {
     deleteRecording: "Delete recording",
     deleteRecordingDescription: "Are you sure you want to delete this recording?",
   },
+  homeScreen:{
+    readingTime: "Reading time per page in minutes",
+  },
   profileScreen: {
     title: "Profile",
     fullNameLabel: "Full name",

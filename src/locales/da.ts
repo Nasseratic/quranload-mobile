@@ -9,6 +9,9 @@ const danish = {
   timePerPage: "Tid pr. side",
   pages: "Sider",
   read: "Læs",
+  homeScreen:{
+    readingTime: "Læsetid pr. side i minutter",
+  },
   profileScreen: {
     title: "Profil",
     fullNameLabel: "Fulde navn",
