@@ -8,3 +8,4 @@ export { default as RejectedCrossIcon } from "./RejectedCross.svg";
 export { default as KeyIcon } from "./Key.svg";
 export { default as GlobeIcon } from "./Globe.svg";
 export { default as SadFaceIcon } from "./SadFace.svg";
+export { default as EditIcon } from "./Edit.svg";

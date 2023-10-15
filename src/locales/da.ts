@@ -67,5 +67,9 @@ const danish = {
     required: "Skal udfyldes",
     validEmail: "Skal være en gyldig mail",
   },
+  teacherHomeScreen: {
+    submitted: "Afleveret",
+    pagesRead: "Sider læst",
+  },
 };
 export default danish;

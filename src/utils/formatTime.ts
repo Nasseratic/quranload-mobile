@@ -4,6 +4,7 @@ import { da } from "date-fns/locale";
 // ----------------------------------------------------------------------
 
 type InputValue = Date | string | number | null;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export function fDate(date: InputValue | string | number, newFormat?: string) {
   const fm = newFormat || "dd MMM yyyy";
@@ -33,4 +34,10 @@ export function fDateTimeSuffix(date: InputValue | string | number) {
 export function fToNow(date: InputValue | string | number) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call
   return date ? formatDistanceToNow(new Date(date), { addSuffix: true, locale: da }) : "";
+}
+
+export function diffInDays(a: Date, b: Date) {
+  const aUTC = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+  const bUTC = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.floor((bUTC - aUTC) / MS_PER_DAY);
 }

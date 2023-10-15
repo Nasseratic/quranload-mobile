@@ -13,13 +13,14 @@ import AuthContext from "contexts/auth";
 import AccountNotAssociated from "components/AccountNotAssociated";
 import { useAssignments } from "hooks/queries/assigemnts";
 import { AssignmentStatusEnum } from "types/Lessons";
+import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentStatistics } from "services/profileService";
 import { Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
 import { fDateDashed } from "utils/formatTime";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Dashboard">;
+type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "StudentHome">;
 
 export const StudentHomeScreen = ({ navigation }: Props) => {
   const { user } = useContext(AuthContext);
@@ -31,17 +32,7 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
 
   return (
     <QuranLoadView>
-      <View>
-        <Typography type="BodyLight" style={{ opacity: 0.5 }}>
-          Assalamu alykum,
-        </Typography>
-        <XStack ai="center" jc="space-between">
-          <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
-          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-            <CogIcon width={18} height={18} color={Colors.Primary[1]} />
-          </TouchableOpacity>
-        </XStack>
-      </View>
+      <UserHeader />
       {user.teams.length > 0 ? (
         user.teams.map((team, index) => {
           const teamAssignments = assignments[team.id];

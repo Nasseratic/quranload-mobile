@@ -2,6 +2,10 @@ declare namespace Frontend.Content {
   export interface AppBar {
     title: string;
     disableGoBack?: boolean;
+    action?: {
+      icon: React.ReactElement;
+      onPress?: () => void;
+    };
   }
 
   export type AssignmentStatus = "submitted" | "pending" | "rejected";
@@ -43,5 +47,22 @@ declare namespace Frontend.Content {
     paidAmount: number;
     expiredAtDate: Date;
     image: string;
+  }
+
+  export interface Homework {
+    description: string;
+    startDate: Date;
+    endDate: Date;
+    totalRegisteredStudents: number;
+    totalSubmittedStudents: number;
+    teamId: string;
+    feedbackGivenCount: number;
+    submissions: Submission[];
+  }
+
+  export interface Submission {
+    fullname: string;
+    submittedAtDate?: Date;
+    isFeedbackGiven: boolean;
   }
 }

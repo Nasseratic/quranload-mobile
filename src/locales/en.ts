@@ -95,5 +95,9 @@ const english = {
     emailResent: "Email resent",
     backToLogin: "Back to login",
   },
+  teacherHomeScreen: {
+    submitted: "Submitted",
+    pagesRead: "Pages read",
+  },
 };
 export default english;

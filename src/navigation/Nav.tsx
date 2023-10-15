@@ -17,6 +17,10 @@ import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import RegisterAccount from "screens/auth/RegisterAccount";
 import { RecordScreen } from "screens/student/RecordScreen/RecordScreen";
 import { TeacherHomeScreen } from "screens/teacher/TeacherHomeScreen";
+import { TeacherHomeworkScreen } from "screens/teacher/TeacherHomeworkScreen";
+import { TeacherSubmissionsScreen } from "screens/teacher/TeacherSubmissionsScreen";
+import { TeacherCreateHomeworkScreen } from "screens/teacher/TeacherCreateHomeworkScreen";
+import { TeacherAutoHomeworkScreen } from "screens/teacher/TeacherAutoHomeworkScreen";
 import { useAuth } from "contexts/auth";
 import { NotificationsBottomSheet } from "components/NotificationsBottomSheet";
 
@@ -72,6 +76,13 @@ const Nav = () => {
               ) : (
                 <>
                   <Stack.Screen name="TeacherHome" component={TeacherHomeScreen} />
+                  <Stack.Screen name="TeacherHomework" component={TeacherHomeworkScreen} />
+                  <Stack.Screen name="TeacherSubmissions" component={TeacherSubmissionsScreen} />
+                  <Stack.Screen
+                    name="TeacherCreateHomework"
+                    component={TeacherCreateHomeworkScreen}
+                  />
+                  <Stack.Screen name="TeacherAutoHomework" component={TeacherAutoHomeworkScreen} />
                 </>
               )}
               <Stack.Screen name="Profile" component={ProfileScreen} />

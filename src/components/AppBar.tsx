@@ -10,7 +10,7 @@ const APPBAR_HEIGHT = 50;
 
 type Props = Frontend.Content.AppBar;
 
-const AppBar = ({ title, disableGoBack }: Props) => {
+const AppBar = ({ title, disableGoBack, action }: Props) => {
   const navigation = useNavigation();
   const canGoBack = useMemo(
     () => !disableGoBack && navigation.canGoBack(),
@@ -45,6 +45,11 @@ const AppBar = ({ title, disableGoBack }: Props) => {
       <Typography style={styles.title} type="HeadlineHeavy">
         {title}
       </Typography>
+      {action && (
+        <TouchableOpacity onPress={action.onPress} style={{ marginLeft: "auto" }}>
+          {action.icon}
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

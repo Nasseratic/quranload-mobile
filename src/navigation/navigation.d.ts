@@ -18,5 +18,9 @@ declare namespace Frontend.Navigation {
       subscription: Frontend.Content.Subscription;
     };
     TeacherHome: undefined;
+    TeacherHomework: { teamId: string };
+    TeacherSubmissions: { homework: Frontend.Content.Homework };
+    TeacherCreateHomework: undefined;
+    TeacherAutoHomework: undefined;
   };
 }

@@ -16,7 +16,7 @@ interface OwnProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
-  onPress: () => void;
+  onPress?: () => void;
   title: string;
   isLoading?: boolean;
 }
@@ -48,7 +48,10 @@ const ActionButton: FunctionComponent<Props> = ({
     >
       <Typography
         type="CaptionHeavy"
-        style={[{ color: disabled ? Colors.Black[2] : Colors.White[1] }, textStyle]}
+        style={[
+          { color: disabled ? Colors.Black[2] : Colors.White[1], textAlign: "center" },
+          textStyle,
+        ]}
       >
         {title}
       </Typography>
@@ -61,8 +64,6 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: GeneralConstants.Spacing.sm,
     backgroundColor: Colors.Success["1"],
-    justifyContent: "center",
-    alignItems: "center",
     borderRadius: GeneralConstants.BorderRadius.sm,
     borderCurve: "continuous",
     paddingHorizontal: GeneralConstants.Spacing.xl,
