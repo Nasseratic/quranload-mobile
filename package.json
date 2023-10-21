@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "cross-env TAMAGUI_TARGET=native expo start",
+    "start": "npm run gen:api && cross-env TAMAGUI_TARGET=native expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint --ext .tsx --ext .ts ./src",
     "lint-fix": "eslint ./src --fix",
-    "prettier-check": "prettier --check ./src"
+    "prettier-check": "prettier --check ./src",
+    "pull:api": "curl \"https://quranload-be-dev-app.azurewebsites.net/swagger/v1/swagger.json\" -o src/__generated/schema.json && npx replace --quiet \"QD.Application.\" \"\" src/__generated/schema.json",
+    "gen:client": "npx openapi-typescript-codegen -i src/__generated/schema.json -o src/__generated/api.ts --exportCore false --exportServices false",
+    "gen:api": "npm run pull:api && npm run gen:client"
   },
   "dependencies": {
     "@config-plugins/ffmpeg-kit-react-native": "^6.0.0",
@@ -71,6 +74,8 @@
     "yup": "^1.2.0"
   },
   "devDependencies": {
+    "openapi-typescript-codegen": "^0.25.0",
+    "replace": "^1.2.2",
     "@babel/core": "^7.20.0",
     "@tsconfig/react-native": "^2.0.3",
     "@types/body-parser": "^1.19.2",
