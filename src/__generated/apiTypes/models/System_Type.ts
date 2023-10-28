@@ -1,0 +1,90 @@
+/* generated using openapi-typescript-codegen -- do no edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+
+import type { System_Reflection_Assembly } from './System_Reflection_Assembly';
+import type { System_Reflection_ConstructorInfo } from './System_Reflection_ConstructorInfo';
+import type { System_Reflection_CustomAttributeData } from './System_Reflection_CustomAttributeData';
+import type { System_Reflection_GenericParameterAttributes } from './System_Reflection_GenericParameterAttributes';
+import type { System_Reflection_MemberTypes } from './System_Reflection_MemberTypes';
+import type { System_Reflection_MethodBase } from './System_Reflection_MethodBase';
+import type { System_Reflection_Module } from './System_Reflection_Module';
+import type { System_Reflection_TypeAttributes } from './System_Reflection_TypeAttributes';
+import type { System_Runtime_InteropServices_StructLayoutAttribute } from './System_Runtime_InteropServices_StructLayoutAttribute';
+import type { System_RuntimeTypeHandle } from './System_RuntimeTypeHandle';
+
+export type System_Type = {
+    readonly name?: string | null;
+    readonly customAttributes?: Array<System_Reflection_CustomAttributeData> | null;
+    readonly isCollectible?: boolean;
+    readonly metadataToken?: number;
+    readonly isInterface?: boolean;
+    memberType?: System_Reflection_MemberTypes;
+    readonly namespace?: string | null;
+    readonly assemblyQualifiedName?: string | null;
+    readonly fullName?: string | null;
+    assembly?: System_Reflection_Assembly;
+    module?: System_Reflection_Module;
+    readonly isNested?: boolean;
+    declaringType?: System_Type;
+    declaringMethod?: System_Reflection_MethodBase;
+    reflectedType?: System_Type;
+    underlyingSystemType?: System_Type;
+    readonly isTypeDefinition?: boolean;
+    readonly isArray?: boolean;
+    readonly isByRef?: boolean;
+    readonly isPointer?: boolean;
+    readonly isConstructedGenericType?: boolean;
+    readonly isGenericParameter?: boolean;
+    readonly isGenericTypeParameter?: boolean;
+    readonly isGenericMethodParameter?: boolean;
+    readonly isGenericType?: boolean;
+    readonly isGenericTypeDefinition?: boolean;
+    readonly isSZArray?: boolean;
+    readonly isVariableBoundArray?: boolean;
+    readonly isByRefLike?: boolean;
+    readonly hasElementType?: boolean;
+    readonly genericTypeArguments?: Array<System_Type> | null;
+    readonly genericParameterPosition?: number;
+    genericParameterAttributes?: System_Reflection_GenericParameterAttributes;
+    attributes?: System_Reflection_TypeAttributes;
+    readonly isAbstract?: boolean;
+    readonly isImport?: boolean;
+    readonly isSealed?: boolean;
+    readonly isSpecialName?: boolean;
+    readonly isClass?: boolean;
+    readonly isNestedAssembly?: boolean;
+    readonly isNestedFamANDAssem?: boolean;
+    readonly isNestedFamily?: boolean;
+    readonly isNestedFamORAssem?: boolean;
+    readonly isNestedPrivate?: boolean;
+    readonly isNestedPublic?: boolean;
+    readonly isNotPublic?: boolean;
+    readonly isPublic?: boolean;
+    readonly isAutoLayout?: boolean;
+    readonly isExplicitLayout?: boolean;
+    readonly isLayoutSequential?: boolean;
+    readonly isAnsiClass?: boolean;
+    readonly isAutoClass?: boolean;
+    readonly isUnicodeClass?: boolean;
+    readonly isCOMObject?: boolean;
+    readonly isContextful?: boolean;
+    readonly isEnum?: boolean;
+    readonly isMarshalByRef?: boolean;
+    readonly isPrimitive?: boolean;
+    readonly isValueType?: boolean;
+    readonly isSignatureType?: boolean;
+    readonly isSecurityCritical?: boolean;
+    readonly isSecuritySafeCritical?: boolean;
+    readonly isSecurityTransparent?: boolean;
+    structLayoutAttribute?: System_Runtime_InteropServices_StructLayoutAttribute;
+    typeInitializer?: System_Reflection_ConstructorInfo;
+    typeHandle?: System_RuntimeTypeHandle;
+    readonly guid?: string;
+    baseType?: System_Type;
+    readonly isSerializable?: boolean;
+    readonly containsGenericParameters?: boolean;
+    readonly isVisible?: boolean;
+};
+

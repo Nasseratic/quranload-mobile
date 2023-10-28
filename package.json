@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "npm run gen:api && cross-env TAMAGUI_TARGET=native expo start",
+    "start": "cross-env TAMAGUI_TARGET=native expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint --ext .tsx --ext .ts ./src",
     "lint-fix": "eslint ./src --fix",
     "prettier-check": "prettier --check ./src",
-    "pull:api": "curl \"https://quranload-be-dev-app.azurewebsites.net/swagger/v1/swagger.json\" -o src/__generated/schema.json && npx replace --quiet \"QD.Application.\" \"\" src/__generated/schema.json",
+    "pull:api": "curl \"https://quranload-be-dev-app.azurewebsites.net/swagger/v1/swagger.json\" -o src/__generated/schema.json && npx replace --quiet \"QD.Application.\" \"\" src/__generated/schema.json && npx replace --quiet \"QD.Domain.\" \"\" src/__generated/schema.json && npx replace --quiet \"Enumerations\" \"Enum\" src/__generated/schema.json",
     "gen:client": "npx openapi-typescript-codegen -i src/__generated/schema.json -o src/__generated/apiTypes --exportCore false --exportServices false",
     "gen:api": "npm run pull:api && npm run gen:client"
   },
