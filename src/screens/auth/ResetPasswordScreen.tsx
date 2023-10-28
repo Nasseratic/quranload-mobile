@@ -8,8 +8,9 @@ import ActionBtn from "components/buttons/ActionBtn";
 import { i18n } from "locales/config";
 import QuranLoadView from "components/QuranLoadView";
 import { forgotPassword } from "services/authService";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "ResetPassword">;
+type Props = NativeStackScreenProps<RootStackParamList, "ResetPassword">;
 
 const ResetPasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
   const formik = useFormik({

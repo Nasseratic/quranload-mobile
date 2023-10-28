@@ -3,16 +3,24 @@ import qs from "qs";
 import Paginated from "types/Paginated";
 import { AssignmentStatusEnum } from "types/Lessons";
 import { BASE_URL } from "api/apiClient";
+import {
+  Lessons_Dto_LessonDetailResponse,
+  Lessons_Dto_LessonGetResponse,
+} from "__generated/apiTypes";
 
 export const fetchUserLessons = async (data: {
   teamId: string;
   lessonState?: AssignmentStatusEnum;
   pageNumber?: number;
   pageSize?: number;
-}): Promise<Paginated<Frontend.Content.Assignment>> => {
-  return await apiClient.get<Paginated<Frontend.Content.Assignment>>(
+}) => {
+  return await apiClient.get<Paginated<Lessons_Dto_LessonGetResponse>>(
     `lessons?${qs.stringify(data)}`
   );
+};
+
+export const fetchLessonDetails = async ({ lessonId }: { lessonId: string }) => {
+  return await apiClient.get<Lessons_Dto_LessonDetailResponse>(`Lessons/${lessonId}`);
 };
 
 export const submitLessonRecording = async ({

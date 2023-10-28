@@ -8,11 +8,12 @@ import { Loader } from "components/Loader";
 import TabBox from "components/TabBox";
 import { i18n } from "locales/config";
 import { AssignmentStatusEnum } from "types/Lessons";
-import { useAssignments } from "hooks/queries/assigemnts";
+import { useAssignments } from "hooks/queries/assignments";
+import { RootStackParamList } from "navigation/navigation";
 
 const tabs = ["pending", "all"] as const;
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Assignments">;
+type Props = NativeStackScreenProps<RootStackParamList, "Assignments">;
 const AssignmentsScreen = ({ route, navigation }: Props) => {
   const [tabKey, setTabKey] = useState<(typeof tabs)[number]>("pending");
 

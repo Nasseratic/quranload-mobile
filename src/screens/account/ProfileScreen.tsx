@@ -11,8 +11,9 @@ import { Loader } from "components/Loader";
 import { fetchUserProfile, updateUserProfile } from "services/profileService";
 import * as yup from "yup";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Profile">;
+type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
 const profileQueryKey = "userProfile";
 const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {

@@ -11,8 +11,9 @@ import { i18n } from "locales/config";
 import FormErrorView from "components/forms/FormErrorView";
 import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Login">;
+type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
 const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);

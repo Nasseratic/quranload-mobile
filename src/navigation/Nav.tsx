@@ -23,14 +23,14 @@ import { TeacherCreateHomeworkScreen } from "screens/teacher/TeacherCreateHomewo
 import { TeacherAutoHomeworkScreen } from "screens/teacher/TeacherAutoHomeworkScreen";
 import { useAuth } from "contexts/auth";
 import { NotificationsBottomSheet } from "components/NotificationsBottomSheet";
+import { RootStackParamList } from "./navigation";
 
-const Stack = createNativeStackNavigator<Frontend.Navigation.RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace ReactNavigation {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface RootParamList extends Frontend.Navigation.RootStackParamList {}
+    interface RootParamList extends RootStackParamList {}
   }
 }
 

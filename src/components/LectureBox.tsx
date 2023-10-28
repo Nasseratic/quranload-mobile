@@ -6,10 +6,11 @@ import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
 import { Team } from "types/User";
+import { Assignment } from "hooks/queries/assignments";
 
 interface Props {
   team: Team;
-  latestOpenAssignment?: Frontend.Content.Assignment;
+  latestOpenAssignment?: Assignment;
   onLecturePress: () => void;
   onAssignmentPress?: () => void;
   pendingAssignmentsCount: number;

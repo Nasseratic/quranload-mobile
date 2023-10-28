@@ -3,11 +3,9 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import { Form, Input, Label, TextArea, View } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<
-  Frontend.Navigation.RootStackParamList,
-  "TeacherCreateHomework"
->;
+type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
 
 //TODO: Create custom tamagui compatible button
 export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = () => {

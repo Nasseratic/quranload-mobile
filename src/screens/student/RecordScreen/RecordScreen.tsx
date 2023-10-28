@@ -3,8 +3,9 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { View } from "react-native";
 import { MushafPages } from "components/Mushaf/MushafPages";
 import { RecordScreenRecorder } from "./RecordScreenRecorder";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Record">;
+type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
 export const RecordScreen: FunctionComponent<Props> = ({ route }) => {
   return (
@@ -15,8 +16,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route }) => {
       />
       <RecordScreenRecorder
         lessonId={route.params.assignment.id}
-        recordingId={route.params.assignment.recordingUrl}
-        feedbackId={route.params.assignment.feedbackUrl}
+        recordingId={route.params.assignment.recordingUrl ?? undefined}
+        feedbackId={route.params.assignment.feedbackUrl ?? undefined}
       />
     </View>
   );

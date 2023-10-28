@@ -25,20 +25,21 @@ api.interceptors.response.use(
     const { data, status } = error.response!;
     const originalRequest = error.config as RetryConfig;
     if (status === 400) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newError: any = {};
       if (data != null && data.errors) {
         for (const key in data.errors) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           console.log("DATA KEY ERROR: ", key);
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          if (data.errors[key]) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+          if ((data.errors as any)[key]) {
             let newKey = key.replace("Request.", "");
             newKey = newKey.replace("$.", "");
             newKey = newKey.replace("request.", "");
             newKey = camelize(newKey);
             console.log(newKey);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
-            newError[newKey] = data.errors[key].join(". ");
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+            newError[newKey] = (data.errors as any)[key].join(". ");
           }
         }
       }
@@ -60,6 +61,7 @@ api.interceptors.response.use(
             return api(originalRequest);
           })
           .catch((error) => {
+            console.error("Failed to refresh token", error);
             return Promise.reject({
               status: status,
               error: "We could not acknowledge your account. Please sign out and sign in again.",

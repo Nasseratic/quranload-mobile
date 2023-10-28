@@ -31,7 +31,7 @@ declare namespace Frontend.Content {
 
   export interface ApiError {
     code: string;
-    errors: never;
+    errors: unknown;
     message: string;
   }
 
@@ -47,17 +47,6 @@ declare namespace Frontend.Content {
     paidAmount: number;
     expiredAtDate: Date;
     image: string;
-  }
-
-  export interface Homework {
-    description: string;
-    startDate: Date;
-    endDate: Date;
-    totalRegisteredStudents: number;
-    totalSubmittedStudents: number;
-    teamId: string;
-    feedbackGivenCount: number;
-    submissions: Submission[];
   }
 
   export interface Submission {

@@ -11,7 +11,7 @@ const FormErrorView: FunctionComponent<{
   const errorMsg = match(error)
     .with(P.string, (error) => error)
     .with({ response: { data: { message: P.select(P.string) } } }, (message) => {
-      console.log(error?.response?.data);
+      console.error(error);
       return message;
     })
     .otherwise(() => null);

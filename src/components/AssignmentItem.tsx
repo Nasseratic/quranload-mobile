@@ -6,9 +6,10 @@ import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "./AssignmentStatusCheckbox";
 import { fDateTime } from "utils/formatTime";
 import { t } from "locales/config";
+import { Assignment } from "hooks/queries/assignments";
 
 interface Props {
-  assignment: Frontend.Content.Assignment;
+  assignment: Assignment;
   onPress: () => void;
 }
 
@@ -32,7 +33,7 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
         </Typography>
       )}
       <Typography style={styles.deadline} type="CaptionLight">
-        {fDateTime(assignment.endDate)}
+        {fDateTime(assignment.endDate!)}
       </Typography>
       <ChevronRightIcon color={Colors.Primary[1]} />
     </TouchableOpacity>

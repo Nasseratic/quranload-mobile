@@ -4,8 +4,9 @@ import QuranLoadView from "components/QuranLoadView";
 import { Form, Input, Label, View, XGroup } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import LetterCheckbox from "components/forms/LetterCheckbox";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "TeacherAutoHomework">;
+type Props = NativeStackScreenProps<RootStackParamList, "TeacherAutoHomework">;
 
 //TODO: Create custom tamagui compatible button
 export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = () => {

@@ -25,12 +25,14 @@ export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: nu
         flex: 1,
       }}
     >
-      <MushafPagesHeader
-        surahName={surahName}
-        currentPageNumber={currentPageNumber}
-        pageOrderInHW={pageOrderInHW}
-        numberOfPagesInHW={pageTo - pageFrom + 1}
-      />
+      {surahName && (
+        <MushafPagesHeader
+          surahName={surahName}
+          currentPageNumber={currentPageNumber}
+          pageOrderInHW={pageOrderInHW}
+          numberOfPagesInHW={pageTo - pageFrom + 1}
+        />
+      )}
       <FlatList
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.toString()}

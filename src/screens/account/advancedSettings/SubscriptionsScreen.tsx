@@ -5,8 +5,9 @@ import QuranLoadView from "components/QuranLoadView";
 import SubscriptionCard from "components/SubscriptionCard";
 import { fetchSubscriptions } from "services/profileService";
 import { Loader } from "components/Loader";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "Subscriptions">;
+type Props = NativeStackScreenProps<RootStackParamList, "Subscriptions">;
 const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<Frontend.Content.Subscription[]>();

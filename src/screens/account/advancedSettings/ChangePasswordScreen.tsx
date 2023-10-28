@@ -9,8 +9,9 @@ import { changePassword } from "services/profileService";
 import * as Yup from "yup";
 import FormErrorView from "components/forms/FormErrorView";
 import { Alert } from "react-native";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "ChangePassword">;
+type Props = NativeStackScreenProps<RootStackParamList, "ChangePassword">;
 const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
   const formik = useFormik({
     initialValues: {

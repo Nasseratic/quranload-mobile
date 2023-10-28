@@ -1,7 +1,7 @@
-import { FunctionComponent, useContext } from "react";
+import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
-import AuthContext from "contexts/auth";
+import { useAuth } from "contexts/auth";
 import UserHeader from "components/UserHeader";
 import TeacherLectureBox from "components/teacher/TeacherLectureBox";
 import { Stack, XStack } from "tamagui";
@@ -12,12 +12,13 @@ import { t } from "locales/config";
 import { fetchTeacherStats } from "services/teacherService";
 import { useQuery } from "@tanstack/react-query";
 import { ActivityIndicator } from "react-native";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "TeacherHome">;
+type Props = NativeStackScreenProps<RootStackParamList, "TeacherHome">;
 
 export const TeacherHomeScreen: FunctionComponent<Props> = () => {
-  const { user } = useContext(AuthContext);
-  console.log(user?.teams);
+  const { user } = useAuth();
+
   return (
     <QuranLoadView>
       <UserHeader />

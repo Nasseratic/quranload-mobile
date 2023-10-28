@@ -1,5 +1,3 @@
-import { Frontend } from "types/content";
-
 export enum AssignmentStatusEnum {
   pending,
   rejected,

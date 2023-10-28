@@ -10,8 +10,9 @@ import ActionButton from "components/buttons/ActionBtn";
 import { Colors } from "constants/Colors";
 import { fDate } from "utils/formatTime";
 import { cancelSubscription } from "services/profileService";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "CancelSubscription">;
+type Props = NativeStackScreenProps<RootStackParamList, "CancelSubscription">;
 
 const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route, navigation }) => {
   const { subscription } = route.params;

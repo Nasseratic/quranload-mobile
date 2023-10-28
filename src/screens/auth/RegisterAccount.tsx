@@ -19,11 +19,12 @@ import { YSpacer } from "components/Spacer";
 import TextButton from "components/buttons/TextButton";
 import ActionButton from "components/buttons/ActionBtn";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { RootStackParamList } from "navigation/navigation";
 
 // min 8 characters, 1 upper case letter, 1 lower case letter, 1 special character and 1 number
 const passwordRules = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+]).{8,}$/;
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "RegisterAccount">;
+type Props = NativeStackScreenProps<RootStackParamList, "RegisterAccount">;
 
 const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
   const { mutate, error, data } = useMutation(signUp);

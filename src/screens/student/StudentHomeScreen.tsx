@@ -1,17 +1,17 @@
 import { useContext } from "react";
-import { ActivityIndicator, Dimensions, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import StatsBox from "components/StatsBox";
 import { Colors } from "constants/Colors";
 import LectureBox from "components/LectureBox";
 import Typography from "components/Typography";
-import { BookIcon, ClockIcon, CogIcon } from "assets/icons";
+import { BookIcon, ClockIcon } from "assets/icons";
 import { Loader } from "components/Loader";
 import { i18n } from "locales/config";
 import AuthContext from "contexts/auth";
 import AccountNotAssociated from "components/AccountNotAssociated";
-import { useAssignments } from "hooks/queries/assigemnts";
+import { useAssignments } from "hooks/queries/assignments";
 import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
@@ -19,8 +19,9 @@ import { fetchStudentStatistics } from "services/profileService";
 import { Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
 import { fDateDashed } from "utils/formatTime";
+import { RootStackParamList } from "navigation/navigation";
 
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "StudentHome">;
+type Props = NativeStackScreenProps<RootStackParamList, "StudentHome">;
 
 export const StudentHomeScreen = ({ navigation }: Props) => {
   const { user } = useContext(AuthContext);

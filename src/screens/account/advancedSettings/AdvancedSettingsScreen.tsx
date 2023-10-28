@@ -10,7 +10,8 @@ import ActionButton from "components/buttons/ActionBtn";
 import AuthContext from "contexts/auth";
 import Typography from "components/Typography";
 import * as Updates from "expo-updates";
-type Props = NativeStackScreenProps<Frontend.Navigation.RootStackParamList, "AdvancedSettings">;
+import { RootStackParamList } from "navigation/navigation";
+type Props = NativeStackScreenProps<RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
   const { signOut } = useContext(AuthContext);

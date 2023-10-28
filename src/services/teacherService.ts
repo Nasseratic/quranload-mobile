@@ -10,7 +10,5 @@ interface IFetchTeacherStatsResponse {
   totalApprovedMinutes: number;
   totalApprovedPages: number;
 }
-export const fetchTeacherStats = async ({
-  teamId,
-}: IFetchTeacherStatsRequest): Promise<IFetchTeacherStatsResponse> =>
-  await apiClient.get(`Lessons/TeacherStats?TeamId=${teamId}`);
+export const fetchTeacherStats = ({ teamId }: IFetchTeacherStatsRequest) =>
+  apiClient.get<IFetchTeacherStatsResponse>(`Lessons/TeacherStats?TeamIds=${teamId}`);

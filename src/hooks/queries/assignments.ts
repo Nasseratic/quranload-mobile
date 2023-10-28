@@ -2,7 +2,12 @@ import { fetchUserLessons } from "services/lessonsService";
 import { useQuery } from "@tanstack/react-query";
 import { AssignmentStatusEnum } from "types/Lessons";
 import { useUser } from "contexts/auth";
-import Paginated from "types/Paginated";
+import { isNotNullish } from "utils/notNullish";
+import { Lessons_Dto_LessonGetResponse } from "__generated/apiTypes";
+
+export type Assignment = Omit<Required<Lessons_Dto_LessonGetResponse>, "status"> & {
+  status: AssignmentStatusEnum;
+};
 
 export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null }) => {
   const user = useUser();
@@ -11,7 +16,7 @@ export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null
     ["assignments", status],
     () =>
       user
-        ? Promise.allSettled(
+        ? (Promise.allSettled(
             user?.teams.map((team) =>
               fetchUserLessons({
                 teamId: team.id,
@@ -19,14 +24,15 @@ export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null
               })
             )
           ).then((results) => {
-            const assignments = results.filter(
-              (result) => result.status === "fulfilled"
-            ) as PromiseFulfilledResult<Paginated<Frontend.Content.Assignment>>[];
+            const assignments = results
+              .map((result) => (result.status === "fulfilled" ? result.value : null))
+              .filter(isNotNullish);
+
             const assignmentsByTeam = Object.fromEntries(
-              assignments.map((result) => [result.value.list[0].teamId, result.value.list])
+              assignments.map((result) => [result.list[0].teamId!, result.list])
             );
             return assignmentsByTeam;
-          })
+          }) as Promise<Record<string, Assignment[]>>)
         : null,
     {
       enabled: !!user,

@@ -6,15 +6,20 @@ import { useMemo } from "react";
 import { Card, Stack } from "tamagui";
 import { diffInDays } from "utils/formatTime";
 import { TouchableOpacity } from "react-native";
+import { Assignment } from "hooks/queries/assignments";
+import { t } from "locales/config";
 
 interface Props {
-  homework: Frontend.Content.Homework;
+  homework: Assignment;
   onPress?: () => void;
 }
 
 const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
+  console.log(homework);
+  console.log(homework.endDate);
   const dateString = useMemo(() => {
-    const diff = diffInDays(new Date(), homework.endDate);
+    const end = homework.endDate ? new Date(homework.endDate) : new Date();
+    const diff = diffInDays(new Date(), end);
 
     switch (diff) {
       case 1:
@@ -24,16 +29,18 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
       case -1:
         return "Yesterday";
       default:
-        return format(homework.endDate, "dd-MM-yyyy");
+        return format(end, "dd-MM-yyyy");
     }
   }, [homework]);
 
   const handedInColor = useMemo(() => {
+    if (!homework) return Colors.Error[1];
     if (homework.totalSubmittedStudents === homework.totalRegisteredStudents)
       return Colors.Success[1];
-    if (homework.totalSubmittedStudents > 0) return Colors.Warning[1];
+    if ((homework.totalSubmittedStudents ?? 0) > 0) return Colors.Warning[1];
     return Colors.Error[1];
   }, [homework]);
+
   return (
     <TouchableOpacity onPress={onPress}>
       <Card
@@ -44,9 +51,13 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
         gap="$2"
       >
         <Stack flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Typography type="BodyHeavy" style={{ color: Colors.Primary[1] }}>
-            {homework.description}
-          </Typography>
+          {homework.startPage && homework.endPage ? (
+            <Typography type="BodyHeavy">
+              {t("read")}: {homework.startPage} - {homework.endPage}
+            </Typography>
+          ) : (
+            <Typography type="BodyHeavy">{homework.description}</Typography>
+          )}
           <Stack flexDirection="row" gap="$2">
             <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
               {dateString}
@@ -54,18 +65,20 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
             <ChevronRight color={Colors.Primary[1]} />
           </Stack>
         </Stack>
-        <Stack flexDirection="row" gap="$1" alignItems="center">
-          <Typography type="CaptionHeavy" style={{ color: handedInColor }}>
-            Handed in {homework.totalSubmittedStudents}/{homework.totalRegisteredStudents}
-          </Typography>
-          <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-            {" "}
-            ·{" "}
-          </Typography>
-          <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-            Feedback {homework.feedbackGivenCount}/{homework.totalRegisteredStudents}
-          </Typography>
-        </Stack>
+        {homework && (
+          <Stack flexDirection="row" gap="$1" alignItems="center">
+            <Typography type="CaptionHeavy" style={{ color: handedInColor }}>
+              Handed in {homework.totalSubmittedStudents}/{homework.totalRegisteredStudents}
+            </Typography>
+            <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+              {" "}
+              ·{" "}
+            </Typography>
+            <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+              Feedback {homework.totalFeedbackStudents}/{homework.totalRegisteredStudents}
+            </Typography>
+          </Stack>
+        )}
       </Card>
     </TouchableOpacity>
   );
