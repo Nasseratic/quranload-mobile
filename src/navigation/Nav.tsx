@@ -71,7 +71,6 @@ const Nav = () => {
                   <Stack.Screen name="Assignments" component={AssignmentsScreen} />
                   <Stack.Screen name="Subscriptions" component={SubscriptionScreen} />
                   <Stack.Screen name="CancelSubscription" component={CancelSubscriptionScreen} />
-                  <Stack.Screen name="Record" component={RecordScreen} />
                 </>
               ) : (
                 <>
@@ -85,6 +84,7 @@ const Nav = () => {
                   <Stack.Screen name="TeacherAutoHomework" component={TeacherAutoHomeworkScreen} />
                 </>
               )}
+              <Stack.Screen name="Record" component={RecordScreen} />
               <Stack.Screen name="Profile" component={ProfileScreen} />
               <Stack.Screen name="AdvancedSettings" component={AdvancedSettingsScreen} />
               <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />

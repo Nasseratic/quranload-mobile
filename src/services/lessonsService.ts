@@ -20,7 +20,7 @@ export const fetchUserLessons = async (data: {
 };
 
 export const fetchLessonDetails = async ({ lessonId }: { lessonId: string }) => {
-  return await apiClient.get<Lessons_Dto_LessonDetailResponse>(`Lessons/${lessonId}`);
+  return await apiClient.get<Required<Lessons_Dto_LessonDetailResponse>>(`Lessons/${lessonId}`);
 };
 
 export const submitLessonRecording = async ({

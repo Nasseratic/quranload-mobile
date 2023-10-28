@@ -7,7 +7,9 @@ export type RootStackParamList = {
   };
   Login: undefined;
   Profile: undefined;
-  Record: { assignment: Assignment };
+  Record: {
+    assignment: Pick<Assignment, "id" | "startPage" | "endPage" | "feedbackUrl" | "recordingUrl">;
+  };
   RecordSettings: undefined;
   ResetPassword: undefined;
   RegisterAccount: undefined;
