@@ -72,7 +72,15 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
     );
 
   return (
-    <YStack pointerEvents="box-none" jc="center" alignItems="center" w="100%" gap="$2" p="$4">
+    <YStack
+      pointerEvents="box-none"
+      jc="center"
+      alignItems="center"
+      w="100%"
+      gap="$2"
+      p="$4"
+      bg="white"
+    >
       <YStack w="100%" gap="$2">
         <Slider
           step={durationSec / 100}

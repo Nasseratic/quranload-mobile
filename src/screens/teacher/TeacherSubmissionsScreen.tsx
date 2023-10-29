@@ -34,8 +34,9 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
             submission={submission}
             onPress={() =>
               navigation.navigate("Record", {
+                studentId: submission?.student?.id ?? undefined,
                 assignment: {
-                  id: submission.id!,
+                  id: homework.id,
                   startPage: homework.startPage,
                   endPage: homework.endPage,
                   recordingUrl: submission.recording?.uri ?? null,

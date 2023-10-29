@@ -50,10 +50,13 @@ export const deleteLessonSubmission = async (body: { lessonId: string; studentId
 export const getRecordingUrl = ({
   lessonId,
   recordingId,
+  studentId,
 }: {
   lessonId: string;
   recordingId: string;
-}) => `${BASE_URL}LessonSubmission/recording/file?LessonId=${lessonId}&FileName=${recordingId}`;
+  studentId: string;
+}) =>
+  `${BASE_URL}LessonSubmission/recording/file?LessonId=${lessonId}&FileName=${recordingId}&StudentId=${studentId}`;
 
 export const getFeedbackUrl = ({
   lessonId,

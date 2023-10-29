@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,7 +6,6 @@ import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
 import * as Linking from "expo-linking";
 import Animated, {
-  interpolate,
   useAnimatedStyle,
   withSequence,
   withSpring,
@@ -64,10 +63,12 @@ export function RecordScreenRecorder({
   lessonId,
   recordingId,
   feedbackId,
+  studentId,
 }: {
   lessonId: string;
   recordingId?: string;
   feedbackId?: string;
+  studentId: string;
 }) {
   const user = useUser();
   const carouselRef = useRef<ICarouselInstance>(null);
@@ -75,7 +76,7 @@ export function RecordScreenRecorder({
   const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
   const insets = useSafeAreaInsets();
   const [uriOutput, setUriOutput] = useState<string | null>(
-    recordingId ? getRecordingUrl({ lessonId, recordingId: recordingId }) : null
+    recordingId ? getRecordingUrl({ lessonId, recordingId, studentId }) : null
   );
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
 
@@ -234,20 +235,6 @@ export function RecordScreenRecorder({
     };
   }, [lessonId]);
 
-  const animationStyle = useCallback((value: number) => {
-    "worklet";
-
-    const zIndex = interpolate(value, [-1, 0, 1], [10, 20, 30]);
-    const scale = interpolate(value, [-1, 0, 1], [1.25, 1, 0.25]);
-    const opacity = interpolate(value, [-0.75, 0, 1], [0, 1, 0]);
-
-    return {
-      transform: [{ scale }],
-      zIndex,
-      opacity,
-    };
-  }, []);
-
   if (isSubmitting || isConcatenatingAudio)
     return (
       <View
@@ -293,9 +280,8 @@ export function RecordScreenRecorder({
             height={40 + insets.bottom}
             renderItem={({ item }) => <AudioPlayer uri={item} />}
             ref={carouselRef}
+            scrollAnimationDuration={750}
             loop={false}
-            vertical
-            customAnimation={animationStyle}
             enabled={false}
           />
           <XStack jc="space-between" pointerEvents="box-none" position="absolute" w="100%">
@@ -305,7 +291,7 @@ export function RecordScreenRecorder({
                   value={showFeedback}
                   onChange={(value) => {
                     setShowFeedback(value);
-                    carouselRef.current?.scrollTo({ index: value ? 0 : 1, animated: true });
+                    carouselRef.current?.scrollTo({ index: value ? 0 : 1 });
                   }}
                 />
               )}

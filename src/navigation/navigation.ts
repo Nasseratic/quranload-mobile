@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Login: undefined;
   Profile: undefined;
   Record: {
+    studentId?: string;
     assignment: Pick<Assignment, "id" | "startPage" | "endPage" | "feedbackUrl" | "recordingUrl">;
   };
   RecordSettings: undefined;
