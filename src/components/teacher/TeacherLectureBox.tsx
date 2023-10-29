@@ -6,6 +6,7 @@ import { Card, Circle, Separator, Stack, XStack } from "tamagui";
 import { Team } from "types/User";
 import { TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { i18n } from "locales/config";
 
 interface Props {
   team: Team;
@@ -17,7 +18,7 @@ const TeacherLectureBox = ({ team }: Props) => {
     const date = new Date();
     date.setDate(date.getDate() + index);
     return {
-      day: date.toLocaleString("default", { weekday: "long" })[0],
+      day: date.toLocaleString(i18n.locale, { weekday: "narrow" })[0],
       hasHomeWork: Math.floor(Math.random() * 2),
     };
   });
