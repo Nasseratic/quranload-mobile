@@ -4,7 +4,7 @@ import danish from "locales/da";
 import english from "locales/en";
 import { P, match } from "ts-pattern";
 import { setLocale } from "yup";
-
+import { enGB, da } from "date-fns/locale";
 // Set the key-value pairs for the different languages you want to support.
 const translations = {
   da: danish,
@@ -20,6 +20,17 @@ i18n.locale = match(Localization.locale)
     () => Localization.locale
   )
   .otherwise(() => "en");
+
+export const dateNfsLocale = match(Localization.locale)
+  .with(
+    P.when((locale) => locale.startsWith("en")),
+    () => enGB
+  )
+  .with(
+    P.when((locale) => locale.startsWith("da")),
+    () => da
+  )
+  .otherwise(() => enGB);
 
 // When a value is missing from a language it'll fall back to another language with the key present.
 i18n.enableFallback = true;
