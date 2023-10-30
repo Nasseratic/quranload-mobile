@@ -20,13 +20,14 @@ export const TeacherSubmissionItem = ({ submission, onPress }: Props) => {
   const isFeedbackGiven = !!submission.feedback?.uri;
 
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={onPress} disabled={!isSubmitted}>
       <Card
         padding="$2.5"
         backgroundColor="$backgroundTransparent"
         borderColor="$gray5"
         borderWidth={1}
         gap="$2"
+        opacity={isSubmitted ? 1 : 0.6}
       >
         <Stack flexDirection="row" justifyContent="space-between" alignItems="center">
           <Typography type="BodyHeavy" style={{ color: Colors.Primary[1] }}>

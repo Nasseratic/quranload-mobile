@@ -28,24 +28,26 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
       {isLoading || !data ? (
         <Loader />
       ) : (
-        data.lessonSubmissions?.map((submission, index) => (
-          <TeacherSubmissionItem
-            key={index}
-            submission={submission}
-            onPress={() =>
-              navigation.navigate("Record", {
-                studentId: submission?.student?.id ?? undefined,
-                assignment: {
-                  id: homework.id,
-                  startPage: homework.startPage,
-                  endPage: homework.endPage,
-                  recordingUrl: submission.recording?.uri ?? null,
-                  feedbackUrl: submission.feedback?.uri ?? null,
-                },
-              })
-            }
-          />
-        ))
+        data.lessonSubmissions
+          ?.sort((s) => (s.recording?.uri ? -1 : 1))
+          .map((submission, index) => (
+            <TeacherSubmissionItem
+              key={index}
+              submission={submission}
+              onPress={() =>
+                navigation.navigate("Record", {
+                  studentId: submission?.student?.id ?? undefined,
+                  assignment: {
+                    id: homework.id,
+                    startPage: homework.startPage,
+                    endPage: homework.endPage,
+                    recordingUrl: submission.recording?.uri ?? null,
+                    feedbackUrl: submission.feedback?.uri ?? null,
+                  },
+                })
+              }
+            />
+          ))
       )}
     </QuranLoadView>
   );
