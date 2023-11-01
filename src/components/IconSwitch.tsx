@@ -1,8 +1,6 @@
 import { Colors } from "constants/Colors";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Circle, Stack, XStack, styled } from "tamagui";
-import { BookIcon } from "components/icons/BookIcon";
-import { SpeakerIcon } from "components/icons/SpeakerIcon";
 
 const SwitchContainer = styled(Stack, {
   height: 32,
@@ -19,12 +17,18 @@ const SwitchCircle = styled(Circle, {
   backgroundColor: Colors["Success"][1],
 });
 
-export const Switch = ({
+export const IconSwitch = ({
   value,
   onChange,
+  offIcon,
+  onIcon,
+  invertIcons = false,
 }: {
   value: boolean;
   onChange: (change: boolean) => void;
+  offIcon: (val: boolean) => React.ReactNode;
+  onIcon: (val: boolean) => React.ReactNode;
+  invertIcons?: boolean;
 }) => {
   const circleAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -53,10 +57,8 @@ export const Switch = ({
         <SwitchCircle />
       </Animated.View>
       <XStack jc="center" ai="center" gap={12} px={8}>
-        <BookIcon size={24} color={value ? Colors.Gray[1] : Colors.White[1]} />
-        <Stack pr={2}>
-          <SpeakerIcon size={18} color={value ? Colors.White[1] : Colors.Gray[1]} />
-        </Stack>
+        {invertIcons ? onIcon(!value) : offIcon(value)}
+        <Stack pr={2}>{invertIcons ? offIcon(!value) : onIcon(value)}</Stack>
       </XStack>
     </SwitchContainer>
   );

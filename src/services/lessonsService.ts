@@ -24,27 +24,27 @@ export const fetchLessonDetails = async ({ lessonId }: { lessonId: string }) => 
 };
 
 export const submitLessonRecording = async ({
-  file,
+  uri,
   duration,
   lessonId,
 }: {
-  file: {
-    uri: string;
-    name: string;
-    type: string;
-  };
+  uri: string;
   lessonId: string;
   duration: number;
 }) => {
   const form = new FormData();
-  form.append("Recording", file);
+  form.append("Recording", {
+    uri,
+    name: "recording.mp3",
+    type: "audio/mpeg",
+  });
   form.append("LessonId", lessonId);
   form.append("RecordingDuration", `${duration}`);
 
   return apiClient.post("LessonSubmission/recording", form);
 };
 
-export const deleteLessonSubmission = async (body: { lessonId: string; studentId: string }) =>
+export const deleteSubmission = async (body: { lessonId: string; studentId: string }) =>
   apiClient.delete("LessonSubmission/recording", body);
 
 export const getRecordingUrl = ({

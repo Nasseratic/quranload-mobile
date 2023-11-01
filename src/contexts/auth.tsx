@@ -17,7 +17,15 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  const role = context.user?.roles[0] ?? "Student";
+
+  return {
+    ...context,
+    role,
+    isTeacher: role === "Teacher",
+    isStudent: role === "Student",
+  };
 };
 
 export const useUser = () => {

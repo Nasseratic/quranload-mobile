@@ -1,7 +1,8 @@
 import { StyleSheet, TouchableOpacity } from "react-native";
 
 const sizeMap = {
-  sm: 32,
+  xs: 32,
+  sm: 40,
   md: 48,
   lg: 64,
 } as const;
@@ -15,7 +16,7 @@ export const IconButton = ({
   icon: JSX.Element;
   onPress: () => void;
   bg?: string;
-  size?: "sm" | "md" | "lg";
+  size?: keyof typeof sizeMap;
 }) => {
   return (
     <TouchableOpacity

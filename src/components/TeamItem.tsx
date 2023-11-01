@@ -5,9 +5,9 @@ import Typography from "./Typography";
 import { Colors } from "constants/Colors";
 
 export const TeamItem = ({ team, onPress }: { team: Team; onPress: () => void }) => (
-  <XStack gap="$4">
+  <XStack gap="$4" onPress={onPress}>
     <Avatar circular size="$5">
-      <Avatar.Image src={team.organizationLogo} />
+      {team.organizationLogo.includes("http") && <Avatar.Image src={team.organizationLogo} />}
       <Avatar.Fallback bc="$gray5" jc="center" ai="center">
         <Text fontWeight="bold">{team.organizationName[0]}</Text>
       </Avatar.Fallback>

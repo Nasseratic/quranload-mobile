@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
 import * as Linking from "expo-linking";
@@ -15,30 +14,17 @@ import { Colors } from "constants/Colors";
 import { Checkmark } from "components/icons/CheckmarkIcon";
 import { CrossIcon } from "components/icons/CrossIcon";
 import * as Haptics from "expo-haptics";
-import { AudioPlayer } from "components/AudioPlayer";
 import { formatAudioDuration } from "utils/formatAudioDuration";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  deleteLessonSubmission,
-  getFeedbackUrl,
-  getRecordingUrl,
-  submitLessonRecording,
-} from "services/lessonsService";
-import { concatAudioFragments } from "utils/concatAudioFragments";
 import { IconButton } from "components/buttons/IconButton";
-import { BinIcon } from "components/icons/BinIcon";
+
+import { XStack } from "tamagui";
+import { sleep } from "utils/sleep";
 import {
   clearAudioRecordings,
   getPersistentAudioRecordings,
   persistAudioRecordings,
 } from "utils/persistAudioRecordings";
-import { sleep } from "utils/sleep";
-import { Stack, XStack } from "tamagui";
-import { t } from "locales/config";
-import { useUser } from "contexts/auth";
-import { Switch } from "components/AnimatedSwitch";
-import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
-import { SCREEN_WIDTH } from "constants/GeneralConstants";
+import { concatAudioFragments } from "utils/concatAudioFragments";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -59,33 +45,15 @@ declare global {
 
 type RecordingState = "idle" | "recording" | "paused";
 
-export function RecordScreenRecorder({
+export const RecordingScreenRecorder = ({
   lessonId,
-  recordingId,
-  feedbackId,
-  studentId,
+  onSubmit,
 }: {
   lessonId: string;
-  recordingId?: string;
-  feedbackId?: string;
-  studentId: string;
-}) {
-  const user = useUser();
-  const carouselRef = useRef<ICarouselInstance>(null);
-  const [showFeedback, setShowFeedback] = useState(!!feedbackId);
-  const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
-  const insets = useSafeAreaInsets();
-  const [uriOutput, setUriOutput] = useState<string | null>(
-    recordingId ? getRecordingUrl({ lessonId, recordingId, studentId }) : null
-  );
+  onSubmit: (params: { uri: string; duration: number }) => void;
+}) => {
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
-
-  const queryClient = useQueryClient();
-  const { mutate, isLoading: isSubmitting } = useMutation(submitLessonRecording, {
-    onSuccess: () => {
-      queryClient.invalidateQueries(["assignments"]);
-    },
-  });
+  const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
 
   async function startRecording() {
     const { granted } = await Audio.requestPermissionsAsync();
@@ -139,9 +107,10 @@ export function RecordScreenRecorder({
   };
 
   async function discardRecording() {
+    await currentRecording?.stopAndUnloadAsync();
+    currentRecording = null;
     recordings = [];
     setRecordingState("idle");
-    setUriOutput(null);
     clearAudioRecordings({ lessonId });
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
@@ -160,28 +129,10 @@ export function RecordScreenRecorder({
     setIsConcatenatingAudio(false);
 
     if (!uri) return;
-
-    mutate(
-      {
-        lessonId,
-        file: {
-          uri,
-          name: "test.mp3",
-          type: "audio/mpeg",
-        },
-        duration: 100,
-      },
-      {
-        onSuccess: () => {
-          setUriOutput(uri);
-          recordings = [];
-          clearAudioRecordings({ lessonId });
-        },
-        onError: () => {
-          setRecordingState("paused");
-        },
-      }
-    );
+    onSubmit({
+      uri,
+      duration: Math.round(recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000),
+    });
   };
 
   async function startRecordingWithAutoFragmenting() {
@@ -235,111 +186,18 @@ export function RecordScreenRecorder({
     };
   }, [lessonId]);
 
-  if (isSubmitting || isConcatenatingAudio)
-    return (
-      <View
-        style={[
-          styles.container,
-          styles.shadow,
-          {
-            paddingBottom: insets.bottom,
-            justifyContent: "center",
-          },
-        ]}
-      >
-        <ActivityIndicator />
-      </View>
-    );
-
-  if (uriOutput && recordingState === "idle")
-    return (
-      <Stack
-        style={[
-          styles.shadow,
-          {
-            backgroundColor: "#fff",
-            paddingBottom: insets.bottom,
-          },
-        ]}
-      >
-        <Stack pt="$3" px="$4" jc="flex-end" ai="center">
-          <Carousel
-            data={
-              feedbackId
-                ? [
-                    getFeedbackUrl({
-                      lessonId,
-                      feedbackId: feedbackId,
-                      studentId: user!.id,
-                    }),
-                    uriOutput,
-                  ]
-                : [uriOutput]
-            }
-            width={SCREEN_WIDTH}
-            height={40 + insets.bottom}
-            renderItem={({ item }) => <AudioPlayer uri={item} />}
-            ref={carouselRef}
-            scrollAnimationDuration={750}
-            loop={false}
-            enabled={false}
-          />
-          <XStack jc="space-between" pointerEvents="box-none" position="absolute" w="100%">
-            <View>
-              {feedbackId && (
-                <Switch
-                  value={showFeedback}
-                  onChange={(value) => {
-                    setShowFeedback(value);
-                    carouselRef.current?.scrollTo({ index: value ? 0 : 1 });
-                  }}
-                />
-              )}
-            </View>
-            {!showFeedback && (
-              <IconButton
-                onPress={() =>
-                  Alert.alert(
-                    t("recordingScreen.deleteRecording"),
-                    t("recordingScreen.deleteRecordingDescription"),
-                    [
-                      {
-                        text: t("cancel"),
-                        style: "cancel",
-                      },
-                      {
-                        text: t("delete"),
-                        style: "destructive",
-                        onPress: () => {
-                          deleteLessonSubmission({ lessonId, studentId: user!.id });
-                          setUriOutput(null);
-                        },
-                      },
-                    ]
-                  )
-                }
-                icon={<BinIcon size={20} color={Colors.Black[2]} />}
-                size="sm"
-              />
-            )}
-          </XStack>
-        </Stack>
-      </Stack>
-    );
+  if (isConcatenatingAudio) return <ActivityIndicator />;
 
   return (
-    <View
-      style={[
-        styles.container,
-        styles.shadow,
-        {
-          paddingBottom: insets.bottom,
-        },
-      ]}
-    >
+    <XStack jc="center" ai="center" gap="$2">
       <View>
         {recordingState !== "idle" && (
-          <IconButton bg={Colors.Black[2]} icon={<CrossIcon />} onPress={discardRecording} />
+          <IconButton
+            size="sm"
+            bg={Colors.Black[2]}
+            icon={<CrossIcon />}
+            onPress={discardRecording}
+          />
         )}
       </View>
 
@@ -351,12 +209,55 @@ export function RecordScreenRecorder({
       </TouchableOpacity>
       <View>
         {recordingState !== "idle" && (
-          <IconButton bg={Colors.Success[1]} icon={<Checkmark />} onPress={submitRecording} />
+          <IconButton
+            size="sm"
+            bg={Colors.Success[1]}
+            icon={<Checkmark />}
+            onPress={submitRecording}
+          />
         )}
       </View>
-    </View>
+    </XStack>
   );
-}
+};
+
+const RecordingButton = ({ recordingState }: { recordingState: RecordingState }) => {
+  const isExpanded = recordingState === "recording" || recordingState === "paused";
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      width: isExpanded ? withSpring(120) : withTiming(45),
+      transform: [
+        {
+          scale:
+            recordingState === "recording"
+              ? withSequence(withSpring(0.97), withSpring(1))
+              : recordingState === "paused"
+              ? withSequence(withSpring(1.03), withSpring(1))
+              : 1,
+        },
+      ],
+    };
+  }, [recordingState]);
+
+  const animatedTextStyle = useAnimatedStyle(() => {
+    return {
+      opacity: withTiming(isExpanded ? 1 : 0),
+      width: withTiming(isExpanded ? 54 : 0),
+      marginLeft: withTiming(isExpanded ? 6 : 0),
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.recordingButton, animatedStyle]}>
+      {recordingState === "recording" ? <RecordingPauseIcon /> : <RecordIcon />}
+
+      <Animated.View style={[animatedTextStyle]}>
+        {recordingState !== "idle" && <RecordingTimer isRunning={recordingState === "recording"} />}
+      </Animated.View>
+    </Animated.View>
+  );
+};
 
 const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
   const [seconds, setSeconds] = useState(
@@ -392,50 +293,12 @@ const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
   );
 };
 
-const RecordingButton = ({ recordingState }: { recordingState: RecordingState }) => {
-  const isExpanded = recordingState === "recording" || recordingState === "paused";
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      width: isExpanded ? withSpring(150) : withTiming(50),
-      transform: [
-        {
-          scale:
-            recordingState === "recording"
-              ? withSequence(withSpring(0.97), withSpring(1))
-              : recordingState === "paused"
-              ? withSequence(withSpring(1.03), withSpring(1))
-              : 1,
-        },
-      ],
-    };
-  }, [recordingState]);
-
-  const animatedTextStyle = useAnimatedStyle(() => {
-    return {
-      opacity: withTiming(isExpanded ? 1 : 0),
-      width: withTiming(isExpanded ? 58 : 0),
-      marginLeft: withTiming(isExpanded ? 12 : 0),
-    };
-  });
-
-  return (
-    <Animated.View style={[styles.recordingButton, animatedStyle]}>
-      {recordingState === "recording" ? <RecordingPauseIcon /> : <RecordIcon />}
-
-      <Animated.View style={[animatedTextStyle]}>
-        {recordingState !== "idle" && <RecordingTimer isRunning={recordingState === "recording"} />}
-      </Animated.View>
-    </Animated.View>
-  );
-};
-
 const styles = StyleSheet.create({
   recordingButton: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
+    borderRadius: 45,
     backgroundColor: "#E5505A",
-    borderRadius: 58,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
@@ -448,16 +311,6 @@ const styles = StyleSheet.create({
     minHeight: 100,
     paddingTop: 16,
     paddingHorizontal: 16,
-  },
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
   },
   recordingTimerContainer: {
     gap: 12,

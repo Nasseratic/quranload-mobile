@@ -134,7 +134,7 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
         gap="$3"
       >
         <IconButton
-          size="sm"
+          size="xs"
           onPress={() => {
             sound?.setPositionAsync((positionSec - 3) * 1000);
             setPositionSec(positionSec - 3);
@@ -156,7 +156,7 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
           }
         />
         <IconButton
-          size="sm"
+          size="xs"
           onPress={() => {
             sound?.setPositionAsync((positionSec + 3) * 1000);
             setPositionSec(positionSec + 3);
