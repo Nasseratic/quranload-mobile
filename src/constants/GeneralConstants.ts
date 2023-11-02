@@ -1,4 +1,4 @@
-import { Dimensions } from "react-native";
+import { Dimensions, Platform } from "react-native";
 export default {
   Spacing: {
     xxs: 4,
@@ -21,3 +21,6 @@ export default {
 };
 
 export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");
+
+export const IS_ANDROID = Platform.OS === "android";
+export const IS_IOS = Platform.OS === "ios";

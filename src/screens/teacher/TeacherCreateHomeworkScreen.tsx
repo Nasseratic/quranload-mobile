@@ -1,14 +1,17 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import { Form, Input, Label, TextArea, View } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import { RootStackParamList } from "navigation/navigation";
-
+import { DatePickerInput } from "components/DatePicker";
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
 
 //TODO: Create custom tamagui compatible button
 export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = () => {
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+
   return (
     <QuranLoadView
       appBar={{
@@ -20,13 +23,18 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = () => {
           <Label htmlFor="startDate" unstyled>
             Start date
           </Label>
-          <Input id="startDate" borderWidth={0} placeholder="Start date" />
+
+          <DatePickerInput
+            placeholder="Choose start date"
+            value={startDate}
+            onChange={setStartDate}
+          />
         </View>
         <View gap="$2">
           <Label htmlFor="endDate" unstyled>
             End date
           </Label>
-          <Input id="endDate" borderWidth={0} placeholder="End date" />
+          <DatePickerInput placeholder="Choose end date" value={endDate} onChange={setEndDate} />
         </View>
         <View gap="$2">
           <Label htmlFor="attachment" unstyled>

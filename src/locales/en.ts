@@ -1,6 +1,7 @@
 const english = {
   welcome: "Welcome",
   save: "Save",
+  done: "Done",
   signIn: "Sign in",
   signOut: "Sign out",
   username: "Username",
@@ -20,7 +21,7 @@ const english = {
     deleteRecording: "Delete recording",
     deleteRecordingDescription: "Are you sure you want to delete this recording?",
   },
-  homeScreen:{
+  homeScreen: {
     readingTime: "Reading time per page in minutes",
   },
   profileScreen: {
@@ -37,7 +38,7 @@ const english = {
     all: "All",
     pending: "Pending",
     page: "Page",
-    outOf: "out of"
+    outOf: "out of",
   },
   advancedSettingsScreen: {
     title: "Advanced settings",
