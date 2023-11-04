@@ -9,7 +9,7 @@ const danish = {
   timePerPage: "Tid pr. side",
   pages: "Sider",
   read: "Læs",
-  homeScreen:{
+  homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
   },
   profileScreen: {
@@ -26,7 +26,7 @@ const danish = {
     all: "Alle",
     pending: "Manglende",
     page: "Side",
-    outOf: "af"
+    outOf: "af",
   },
   advancedSettingsScreen: {
     title: "Avanceret indstillinger",
@@ -70,6 +70,9 @@ const danish = {
   teacherHomeScreen: {
     submitted: "Afleveret",
     pagesRead: "Sider læst",
+  },
+  teacherStudentsListScreen: {
+    title: "Elever",
   },
 };
 export default danish;

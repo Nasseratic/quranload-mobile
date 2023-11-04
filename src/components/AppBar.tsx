@@ -5,12 +5,17 @@ import { useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Typography from "./Typography";
 import { useNavigation } from "@react-navigation/native";
+import { Stack } from "tamagui";
 
 const APPBAR_HEIGHT = 50;
 
-type Props = Frontend.Content.AppBar;
+export type AppBarProps = {
+  title: string;
+  disableGoBack?: boolean;
+  rightComponent?: React.ReactNode;
+};
 
-const AppBar = ({ title, disableGoBack, action }: Props) => {
+export const AppBar = ({ title, disableGoBack, rightComponent }: AppBarProps) => {
   const navigation = useNavigation();
   const canGoBack = useMemo(
     () => !disableGoBack && navigation.canGoBack(),
@@ -45,13 +50,9 @@ const AppBar = ({ title, disableGoBack, action }: Props) => {
       <Typography style={styles.title} type="HeadlineHeavy">
         {title}
       </Typography>
-      {action && (
-        <TouchableOpacity onPress={action.onPress} style={{ marginLeft: "auto" }}>
-          {action.icon}
-        </TouchableOpacity>
-      )}
+      <Stack f={1} ai="flex-end">
+        {rightComponent}
+      </Stack>
     </View>
   );
 };
-
-export default AppBar;

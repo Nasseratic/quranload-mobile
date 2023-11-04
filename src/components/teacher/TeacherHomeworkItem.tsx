@@ -15,8 +15,6 @@ interface Props {
 }
 
 const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
-  console.log(homework);
-  console.log(homework.endDate);
   const dateString = useMemo(() => {
     const end = homework.endDate ? new Date(homework.endDate) : new Date();
     const diff = diffInDays(new Date(), end);

@@ -1,13 +1,4 @@
 declare namespace Frontend.Content {
-  export interface AppBar {
-    title: string;
-    disableGoBack?: boolean;
-    action?: {
-      icon: React.ReactElement;
-      onPress?: () => void;
-    };
-  }
-
   export type AssignmentStatus = "submitted" | "pending" | "rejected";
 
   enum AssignmentStatusEnum {

@@ -23,6 +23,7 @@ import { TeacherCreateHomeworkScreen } from "screens/teacher/TeacherCreateHomewo
 import { TeacherAutoHomeworkScreen } from "screens/teacher/TeacherAutoHomeworkScreen";
 import { useAuth } from "contexts/auth";
 import { NotificationsBottomSheet } from "components/NotificationsBottomSheet";
+import { TeacherStudentsListScreen } from "screens/teacher/TeacherStudentsListScreen";
 import { RootStackParamList } from "./navigation";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -82,6 +83,7 @@ const Nav = () => {
                     component={TeacherCreateHomeworkScreen}
                   />
                   <Stack.Screen name="TeacherAutoHomework" component={TeacherAutoHomeworkScreen} />
+                  <Stack.Screen name="TeacherStudentsList" component={TeacherStudentsListScreen} />
                 </>
               )}
               <Stack.Screen name="Record" component={RecordScreen} />

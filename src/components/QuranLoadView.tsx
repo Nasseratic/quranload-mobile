@@ -3,10 +3,10 @@ import { View, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaViewProps, useSafeAreaInsets } from "react-native-safe-area-context";
 import GeneralConstants from "constants/GeneralConstants";
-import AppBar from "components/AppBar";
+import { AppBar, AppBarProps } from "components/AppBar";
 
 interface Props extends SafeAreaViewProps {
-  appBar?: Frontend.Content.AppBar;
+  appBar?: AppBarProps;
 }
 
 const QuranLoadView: FunctionComponent<Props> = ({ appBar, children, ...rest }) => {

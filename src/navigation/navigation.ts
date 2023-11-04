@@ -31,6 +31,7 @@ export type RootStackParamList = {
     teamId: string;
   };
   TeacherAutoHomework: undefined;
+  TeacherStudentsList: { teamId: string };
 };
 
 declare global {

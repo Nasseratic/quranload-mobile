@@ -105,6 +105,9 @@ const english = {
     submitted: "Submitted",
     pagesRead: "Pages read",
   },
+  teacherStudentsListScreen: {
+    title: "Students",
+  },
   createHomework: "Create homework",
 };
 export default english;
