@@ -6,7 +6,8 @@ import { Input, Stack } from "tamagui";
 import ActionButton from "./buttons/ActionBtn";
 import CommunityDatePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { t } from "locales/config";
+import { t, i18n } from "locales/config";
+import { intlFormat } from "utils/formatTime";
 
 export const DatePickerInput = ({
   value,
@@ -37,7 +38,7 @@ export const DatePickerInput = ({
         <Input
           borderWidth={0}
           placeholder={placeholder}
-          value={value?.toLocaleString()}
+          value={value ? intlFormat(value, "date") : ""}
           editable={false}
         />
       </Pressable>
@@ -85,6 +86,7 @@ export const DatePicker = ({
         <CommunityDatePicker
           value={value}
           mode="date"
+          locale={i18n.locale}
           display="spinner"
           onChange={(v) => {
             iosCurrentDate.current = new Date(v.nativeEvent.timestamp ?? 0);
@@ -104,6 +106,7 @@ export const DatePicker = ({
   ) : (
     isOpen && (
       <CommunityDatePicker
+        locale={i18n.locale}
         value={value}
         onChange={(v) => onChange(new Date(v.nativeEvent.timestamp ?? 0))}
       />

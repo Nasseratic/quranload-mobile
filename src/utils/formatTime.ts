@@ -1,5 +1,7 @@
 import { format, getTime, formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
+import { i18n } from "locales/config";
+import { match } from "ts-pattern";
 
 // ----------------------------------------------------------------------
 
@@ -41,3 +43,18 @@ export function diffInDays(a: Date, b: Date) {
   const bUTC = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
   return Math.floor((bUTC - aUTC) / MS_PER_DAY);
 }
+
+const dateIntlConfig = {
+  year: "numeric",
+  day: "numeric",
+  month: "long",
+} satisfies Intl.DateTimeFormatOptions;
+
+export const intlFormat = (date: Date, format: "date") => {
+  return Intl.DateTimeFormat(
+    i18n.locale,
+    match(format)
+      .with("date", () => dateIntlConfig)
+      .otherwise(() => dateIntlConfig)
+  ).format(date);
+};

@@ -2,6 +2,11 @@ const english = {
   welcome: "Welcome",
   save: "Save",
   done: "Done",
+  description: "Description",
+  attachments: "Attachments",
+  startDate: "Start date",
+  endDate: "End date",
+  create: "Create",
   signIn: "Sign in",
   signOut: "Sign out",
   username: "Username",
@@ -100,5 +105,6 @@ const english = {
     submitted: "Submitted",
     pagesRead: "Pages read",
   },
+  createHomework: "Create homework",
 };
 export default english;

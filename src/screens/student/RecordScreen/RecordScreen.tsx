@@ -1,7 +1,6 @@
-import { FunctionComponent, useState, useRef, useMemo } from "react";
+import { FunctionComponent, useState, useRef, useMemo, useEffect } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { View, Alert, StyleSheet } from "react-native";
-import { MushafPages } from "components/Mushaf/MushafPages";
+import { View, Alert, StyleSheet, FlatList } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
 import { useAuth } from "contexts/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,7 +15,7 @@ import {
 } from "services/lessonsService";
 import { IconButton } from "components/buttons/IconButton";
 import { BinIcon } from "components/icons/BinIcon";
-import { Stack, XStack } from "tamagui";
+import { Image, Square, Stack, XStack } from "tamagui";
 import { t } from "locales/config";
 import { IconSwitch } from "components/IconSwitch";
 import Carousel from "react-native-reanimated-carousel";
@@ -29,6 +28,14 @@ import { RecordingScreenRecorder } from "screens/student/RecordScreen/RecordScre
 import { AssignmentStatusEnum } from "types/Lessons";
 import { BookIcon } from "components/icons/BookIcon";
 import { SpeakerIcon } from "components/icons/SpeakerIcon";
+import { AssignmentTypeEnum } from "services/assigmentService";
+import { MushafPages } from "components/Mushaf/MushafPages";
+import { ChevronLeftIcon } from "assets/icons";
+import Typography from "components/Typography";
+import { getMediaUri } from "services/mediaService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { downloadAsync, documentDirectory, getInfoAsync } from "expo-file-system";
+import { Loader } from "components/Loader";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -42,6 +49,12 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const lessonId = route.params.assignment.id;
   const recordingId = route.params.assignment.recordingUrl ?? undefined;
   const feedbackId = route.params.assignment.feedbackUrl ?? undefined;
+  const attachments = useMemo(
+    () =>
+      route.params.assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
+    [route.params.assignment.attachments]
+  );
+  const type = route.params.assignment.typeId;
 
   const [carouselIndex, setCarouselIndex] = useState<0 | 1>(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -76,7 +89,6 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       ].filter(isNotNullish),
     [audioUrl, submissionUrl, feedbackUrl, role]
   );
-  console.log(carouselItems);
   const queryClient = useQueryClient();
 
   const shouldAllowDeleteForIndex = match(role)
@@ -86,13 +98,28 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       () => carouselIndex === carouselItems.length - 1 && (!!recordingId || !!audioUrl)
     )
     .exhaustive();
-
+  console.log(attachments);
   return (
     <View style={{ flex: 1 }}>
-      <MushafPages
-        pageFrom={route.params.assignment.startPage}
-        pageTo={route.params.assignment.endPage}
-      />
+      {match(type as unknown as AssignmentTypeEnum)
+        .with(AssignmentTypeEnum.Custom, () => (
+          <>
+            <XStack mt={insets.top} gap="$2" ai="center">
+              <Square p="$3" px="$4" onPress={() => navigation.goBack()}>
+                <ChevronLeftIcon color={Colors.Black[1]} />
+              </Square>
+              <Typography type="TitleLight">Hi</Typography>
+            </XStack>
+            {attachments && <ImagePages imageIds={attachments} />}
+          </>
+        ))
+        .with(AssignmentTypeEnum.Auto, () => (
+          <MushafPages
+            pageFrom={route.params.assignment.startPage}
+            pageTo={route.params.assignment.endPage}
+          />
+        ))
+        .otherwise(() => null)}
       <Stack
         style={[
           styles.shadow,
@@ -214,3 +241,62 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 });
+
+const downloadImage = async (id: string) => {
+  const { exists } = await getInfoAsync(documentDirectory + id + ".png");
+  if (exists) {
+    return documentDirectory + id + ".png";
+  }
+  const token = (await AsyncStorage.getItem("accessToken")) ?? "";
+  const file = await downloadAsync(getMediaUri(id), documentDirectory + id + ".png", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return file.uri;
+};
+
+const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
+  const [downloadedImages, setDownloadedImages] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    console.log("first");
+    setIsDownloading(true);
+    Promise.all(
+      imageIds?.map(async (imageId) => {
+        if (imageId) {
+          return await downloadImage(imageId);
+        }
+      }) ?? []
+    )
+      .then((images) => setDownloadedImages(images.filter(isNotNullish)))
+      .finally(() => setIsDownloading(false));
+  }, [imageIds]);
+
+  return isDownloading ? (
+    <Stack f={1}>
+      <Loader />
+    </Stack>
+  ) : (
+    <FlatList
+      style={{ flex: 1 }}
+      data={downloadedImages}
+      showsHorizontalScrollIndicator={false}
+      pagingEnabled
+      horizontal
+      renderItem={({ item }) =>
+        item ? (
+          <Image
+            resizeMode="contain"
+            key={item}
+            source={{
+              uri: item,
+              width: SCREEN_WIDTH,
+            }}
+          />
+        ) : null
+      }
+    />
+  );
+};

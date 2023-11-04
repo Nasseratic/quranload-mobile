@@ -22,7 +22,8 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
         title: "Homework",
         action: {
           icon: <PlusIcon color={Colors.Primary[1]} />,
-          onPress: () => navigation.navigate("TeacherCreateHomework"),
+          onPress: () =>
+            navigation.navigate("TeacherCreateHomework", { teamId: route.params.teamId }),
         },
       }}
     >

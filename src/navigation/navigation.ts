@@ -9,7 +9,10 @@ export type RootStackParamList = {
   Profile: undefined;
   Record: {
     studentId?: string;
-    assignment: Pick<Assignment, "id" | "startPage" | "endPage" | "feedbackUrl" | "recordingUrl">;
+    assignment: Pick<
+      Assignment,
+      "id" | "startPage" | "endPage" | "feedbackUrl" | "recordingUrl" | "attachments" | "typeId"
+    >;
   };
   RecordSettings: undefined;
   ResetPassword: undefined;
@@ -24,7 +27,9 @@ export type RootStackParamList = {
   TeacherHome: undefined;
   TeacherHomework: { teamId: string };
   TeacherSubmissions: { homework: Assignment };
-  TeacherCreateHomework: undefined;
+  TeacherCreateHomework: {
+    teamId: string;
+  };
   TeacherAutoHomework: undefined;
 };
 
