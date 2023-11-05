@@ -14,6 +14,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Audio } from "expo-av";
+import { SentryNative } from "utils/sentry";
+
 require("./src/locales/config");
 
 Audio.setAudioModeAsync({
@@ -25,7 +27,7 @@ const queryClient = new QueryClient();
 
 void SplashScreen.preventAutoHideAsync();
 
-export default function App() {
+function App() {
   const [fontsLoaded] = useFonts({
     "NotoSans-regular": NotoSans_400Regular,
     "NotoSans-semibold": NotoSans_600SemiBold,
@@ -50,3 +52,5 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+export default SentryNative.wrap(App);

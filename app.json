@@ -34,7 +34,8 @@
           "package": "audio"
         }
       ],
-      "expo-build-properties"
+      "expo-build-properties",
+      "sentry-expo"
     ],
     "extra": {
       "eas": {
@@ -43,7 +44,10 @@
     },
     "owner": "quranload-app",
     "updates": {
-      "fallbackToCacheTimeout": 7000,
+      "fallbackToCacheTimeout": 0,
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      },
       "url": "https://u.expo.dev/0560d09e-9d38-44d5-b53c-743b6488c3a1"
     }
   }
