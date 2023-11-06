@@ -98,7 +98,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       () => carouselIndex === carouselItems.length - 1 && (!!recordingId || !!audioUrl)
     )
     .exhaustive();
-  console.log(attachments);
+
   return (
     <View style={{ flex: 1 }}>
       {match(type as unknown as AssignmentTypeEnum)
@@ -168,25 +168,29 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             loop={false}
             enabled={false}
           />
-          <XStack jc="space-between" pointerEvents="box-none" position="absolute" w="100%">
-            <View>
-              {(isTeacher || (feedbackId && recordingId)) && (
-                <IconSwitch
-                  value={carouselIndex === 1}
-                  offIcon={(val) => (
-                    <SpeakerIcon size={18} color={val ? Colors.Gray[1] : Colors.White[1]} />
-                  )}
-                  onIcon={(val) => (
-                    <BookIcon size={24} color={val ? Colors.White[1] : Colors.Gray[1]} />
-                  )}
-                  invertIcons={isTeacher}
-                  onChange={(value) => {
-                    setCarouselIndex(value ? 1 : 0);
-                    carouselRef.current?.scrollTo({ index: value ? 1 : 0 });
-                  }}
-                />
-              )}
-            </View>
+          <XStack
+            jc="space-between"
+            pointerEvents="box-none"
+            ai="flex-end"
+            position="absolute"
+            w="100%"
+          >
+            {(isTeacher || (feedbackId && recordingId)) && (
+              <IconSwitch
+                value={carouselIndex === 1}
+                offIcon={(val) => (
+                  <SpeakerIcon size={18} color={val ? Colors.Gray[1] : Colors.White[1]} />
+                )}
+                onIcon={(val) => (
+                  <BookIcon size={24} color={val ? Colors.White[1] : Colors.Gray[1]} />
+                )}
+                invertIcons={isTeacher}
+                onChange={(value) => {
+                  setCarouselIndex(value ? 1 : 0);
+                  carouselRef.current?.scrollTo({ index: value ? 1 : 0 });
+                }}
+              />
+            )}
             {shouldAllowDeleteForIndex && (
               <IconButton
                 onPress={() =>
