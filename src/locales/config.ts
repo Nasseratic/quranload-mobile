@@ -19,7 +19,7 @@ i18n.locale = match(Localization.locale)
     P.when((locale) => locale.startsWith("en") || locale.startsWith("da")),
     () => Localization.locale
   )
-  .otherwise(() => "en");
+  .otherwise(() => "en-GB");
 
 export const dateNfsLocale = match(Localization.locale)
   .with(

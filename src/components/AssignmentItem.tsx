@@ -4,7 +4,7 @@ import { StyleSheet, TouchableOpacity } from "react-native";
 import Typography from "components/Typography";
 import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "./AssignmentStatusCheckbox";
-import { fDateTime } from "utils/formatTime";
+import { intlFormat } from "utils/formatTime";
 import { t } from "locales/config";
 import { Assignment } from "hooks/queries/assignments";
 
@@ -32,9 +32,11 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
           {t("feedback")}
         </Typography>
       )}
-      <Typography style={styles.deadline} type="CaptionLight">
-        {fDateTime(assignment.endDate!)}
-      </Typography>
+      {assignment.endDate && (
+        <Typography style={styles.deadline} type="CaptionLight">
+          Due: {intlFormat(new Date(assignment.endDate), "date-short")}
+        </Typography>
+      )}
       <ChevronRightIcon color={Colors.Primary[1]} />
     </TouchableOpacity>
   );

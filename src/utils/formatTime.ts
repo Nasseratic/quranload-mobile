@@ -50,11 +50,18 @@ const dateIntlConfig = {
   month: "long",
 } satisfies Intl.DateTimeFormatOptions;
 
-export const intlFormat = (date: Date, format: "date") => {
+const dateShortIntlConfig = {
+  year: "2-digit",
+  day: "numeric",
+  month: "numeric",
+} satisfies Intl.DateTimeFormatOptions;
+
+export const intlFormat = (date: Date, format: "date" | "date-short") => {
   return Intl.DateTimeFormat(
     i18n.locale,
     match(format)
       .with("date", () => dateIntlConfig)
-      .otherwise(() => dateIntlConfig)
+      .with("date-short", () => dateShortIntlConfig)
+      .exhaustive()
   ).format(date);
 };
