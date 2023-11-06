@@ -18,6 +18,7 @@ import { match } from "ts-pattern";
 import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
+import Constants from "expo-constants";
 
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
@@ -46,7 +47,11 @@ export const NotificationsBottomSheet = () => {
   }, [signed, status]);
 
   const storeToken = useCallback(async () => {
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    const token = (
+      await Notifications.getExpoPushTokenAsync({
+        projectId: Constants.easConfig?.projectId,
+      })
+    ).data;
     mutate({ token });
   }, [mutate]);
 
