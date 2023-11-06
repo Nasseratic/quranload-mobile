@@ -63,6 +63,7 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
                 textAlign: "center",
               }}
               adjustsFontSizeToFit
+              allowFontScaling={false}
               numberOfLines={1}
               onLayout={(e) => {
                 if (lineExtraWidthMap[i]) return;
