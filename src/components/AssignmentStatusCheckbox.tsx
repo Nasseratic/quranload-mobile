@@ -6,19 +6,25 @@ import { AssignmentStatusEnum, LessonStatusFromEnumToType } from "types/Lessons"
 
 interface Props {
   status: AssignmentStatusEnum;
+  isDue?: boolean;
 }
 
-const AssignmentStatusCheckbox = ({ status }: Props) => {
+const AssignmentStatusCheckbox = ({ status, isDue = true }: Props) => {
   return (
     <TouchableOpacity
-      style={{
-        height: 18.5,
-        width: 18.5,
-        borderRadius: GeneralConstants.BorderRadius.xxs * 1.2,
-        justifyContent: "center",
-        alignItems: "center",
-        ...styles[LessonStatusFromEnumToType(status) as Frontend.Content.AssignmentStatus],
-      }}
+      style={[
+        {
+          height: 18.5,
+          width: 18.5,
+          borderRadius: GeneralConstants.BorderRadius.xxs * 1.2,
+          justifyContent: "center",
+          alignItems: "center",
+          ...styles[LessonStatusFromEnumToType(status)],
+        },
+        isDue && LessonStatusFromEnumToType(status) === "pending"
+          ? { borderColor: Colors.Error[1] }
+          : {},
+      ]}
     >
       {(status === AssignmentStatusEnum.submitted || status == AssignmentStatusEnum.accepted) && (
         <CheckmarkIcon color={Colors.White[1]} />

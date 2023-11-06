@@ -7,6 +7,7 @@ import AssignmentStatusCheckbox from "./AssignmentStatusCheckbox";
 import { intlFormat } from "utils/formatTime";
 import { t } from "locales/config";
 import { Assignment } from "hooks/queries/assignments";
+import { endOfDay, isPast } from "date-fns";
 
 interface Props {
   assignment: Assignment;
@@ -16,7 +17,10 @@ interface Props {
 const AssignmentItem = ({ assignment, onPress }: Props) => {
   return (
     <TouchableOpacity style={styles.assignmentItem} onPress={onPress} activeOpacity={0.65}>
-      <AssignmentStatusCheckbox status={assignment.status} />
+      <AssignmentStatusCheckbox
+        status={assignment.status}
+        isDue={assignment.endDate ? isPast(endOfDay(new Date(assignment.endDate))) : false}
+      />
       {assignment.startPage && assignment.endPage ? (
         <Typography style={styles.assignmentText} type="Body">
           {t("read")}: {assignment.startPage} - {assignment.endPage}
