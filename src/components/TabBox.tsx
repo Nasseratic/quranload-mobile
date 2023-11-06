@@ -22,7 +22,7 @@ const TabBox: FunctionComponent<Props> = ({ index, setIndex, list }) => {
           borderColor: Colors.Gray[1],
           paddingVertical: 15,
         }}
-        tabTextStyle={{ color: Colors.Error[1] }}
+        tabTextStyle={{ color: index === 1 ? Colors.Error[1] : Colors.Primary[2] }}
         activeTabStyle={{
           backgroundColor: Colors.Primary[1],
           borderColor: Colors.Gray[1],
