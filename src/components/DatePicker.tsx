@@ -13,9 +13,8 @@ export const DatePickerInput = ({
   value,
   onChange,
   placeholder,
-}: {
-  value?: Date;
-  onChange: (v: Date) => void;
+  minDate,
+}: Omit<DatePickerProps, "isOpen"> & {
   placeholder?: string;
 }) => {
   const [show, setShow] = useState(false);
@@ -29,6 +28,7 @@ export const DatePickerInput = ({
           onChange(v);
         }}
         isOpen={show}
+        minDate={minDate}
       />
       <Pressable
         onTouchStart={() => {
@@ -46,14 +46,23 @@ export const DatePickerInput = ({
   );
 };
 
+type DatePickerProps = {
+  value?: Date;
+  onChange: (v: Date) => void;
+  minDate?: Date;
+  isOpen: boolean;
+};
+
 export const DatePicker = ({
   value,
   onChange,
   isOpen,
+  minDate,
 }: {
   onChange: (v: Date) => void;
   value: Date;
   isOpen: boolean;
+  minDate?: Date;
 }) => {
   const { bottom } = useSafeAreaInsets();
   const iosCurrentDate = useRef(new Date());
@@ -88,6 +97,7 @@ export const DatePicker = ({
           mode="date"
           locale={i18n.locale}
           display="spinner"
+          minimumDate={minDate}
           onChange={(v) => {
             iosCurrentDate.current = new Date(v.nativeEvent.timestamp ?? 0);
           }}
@@ -108,6 +118,8 @@ export const DatePicker = ({
       <CommunityDatePicker
         locale={i18n.locale}
         value={value}
+        minimumDate={minDate}
+        mode="date"
         onChange={(v) => onChange(new Date(v.nativeEvent.timestamp ?? 0))}
       />
     )

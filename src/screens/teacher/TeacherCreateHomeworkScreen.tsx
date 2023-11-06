@@ -14,6 +14,8 @@ import { createCustomAssignment } from "services/assigmentService";
 import { t } from "locales/config";
 import { useMediaPicker } from "hooks/useMediaPicker";
 
+const today = new Date();
+
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
 
 export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, navigation }) => {
@@ -66,16 +68,25 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
             {t("startDate")}
           </Label>
           <DatePickerInput
+            minDate={today}
             placeholder="Choose start date"
             value={startDate}
-            onChange={setStartDate}
+            onChange={(date) => {
+              if (endDate && date > endDate) setEndDate(date);
+              setStartDate(date);
+            }}
           />
         </View>
         <View gap="$2">
           <Label htmlFor="endDate" unstyled>
             {t("endDate")}
           </Label>
-          <DatePickerInput placeholder="Choose end date" value={endDate} onChange={setEndDate} />
+          <DatePickerInput
+            minDate={startDate}
+            placeholder="Choose end date"
+            value={endDate}
+            onChange={setEndDate}
+          />
         </View>
         <View gap="$2">
           <Label htmlFor="attachment" unstyled>
