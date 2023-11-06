@@ -9,10 +9,11 @@ import { Loader } from "components/Loader";
 import { t } from "locales/config";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherSubmissions">;
+export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
 
 export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navigation }) => {
   const { homework } = route.params;
-  const { data, isLoading } = useQuery(["lesson-details", homework.id], () =>
+  const { data, isLoading } = useQuery([LESSON_DETAILS_QUERY_KEY, homework.id], () =>
     fetchLessonDetails({ lessonId: homework.id })
   );
 

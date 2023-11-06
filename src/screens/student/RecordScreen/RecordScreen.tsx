@@ -36,10 +36,13 @@ import { getMediaUri } from "services/mediaService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { downloadAsync, documentDirectory, getInfoAsync } from "expo-file-system";
 import { Loader } from "components/Loader";
+import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScreen";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
 export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) => {
+  const queryClient = useQueryClient();
+
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
 
@@ -68,8 +71,27 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const teacherFeedback = useMutation(submitFeedback, {
     onSuccess: () => {
       queryClient.invalidateQueries(["assignments"]);
+      queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
     },
   });
+
+  const onDelete = () => {
+    match(role)
+      .with("Teacher", () => deleteFeedback({ lessonId, studentId }))
+      .with("Student", () => deleteSubmission({ lessonId, studentId }))
+      .exhaustive()
+      .then(() => {
+        queryClient.invalidateQueries(["assignments"]);
+        queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
+      });
+    navigation.setParams({
+      assignment: {
+        ...route.params.assignment,
+        [isTeacher ? "feedbackUrl" : "recordingUrl"]: null,
+      },
+    });
+    setAudioUrl(null);
+  };
 
   const feedbackUrl = feedbackId && getFeedbackUrl({ lessonId, feedbackId, studentId });
   const submissionUrl = recordingId && getRecordingUrl({ lessonId, recordingId, studentId });
@@ -89,7 +111,6 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       ].filter(isNotNullish),
     [audioUrl, submissionUrl, feedbackUrl, role]
   );
-  const queryClient = useQueryClient();
 
   const shouldAllowDeleteForIndex = match(role)
     .with("Teacher", () => carouselIndex === 1 && (!!feedbackId || !!audioUrl))
@@ -205,19 +226,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                       {
                         text: t("delete"),
                         style: "destructive",
-                        onPress: () => {
-                          match(role)
-                            .with("Teacher", () => deleteFeedback({ lessonId, studentId }))
-                            .with("Student", () => deleteSubmission({ lessonId, studentId }))
-                            .exhaustive();
-                          navigation.setParams({
-                            assignment: {
-                              ...route.params.assignment,
-                              [isTeacher ? "feedbackUrl" : "recordingUrl"]: null,
-                            },
-                          });
-                          setAudioUrl(null);
-                        },
+                        onPress: onDelete,
                       },
                     ]
                   )
