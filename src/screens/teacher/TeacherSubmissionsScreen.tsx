@@ -39,13 +39,9 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                 navigation.navigate("Record", {
                   studentId: submission?.student?.id ?? undefined,
                   assignment: {
-                    id: homework.id,
-                    typeId: homework.typeId,
-                    startPage: homework.startPage,
-                    endPage: homework.endPage,
+                    ...homework,
                     recordingUrl: submission.recording?.uri ?? null,
                     feedbackUrl: submission.feedback?.uri ?? null,
-                    attachments: homework.attachments ?? [],
                   },
                 })
               }

@@ -48,14 +48,14 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
 
   const { user, role, isTeacher } = useAuth();
 
-  const studentId = route.params.studentId ?? user!.id;
-  const lessonId = route.params.assignment.id;
-  const recordingId = route.params.assignment.recordingUrl ?? undefined;
-  const feedbackId = route.params.assignment.feedbackUrl ?? undefined;
+  const assignment = route.params.assignment;
+  const studentId = assignment ?? user!.id;
+  const lessonId = assignment.id;
+  const recordingId = assignment.recordingUrl ?? undefined;
+  const feedbackId = assignment.feedbackUrl ?? undefined;
   const attachments = useMemo(
-    () =>
-      route.params.assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
-    [route.params.assignment.attachments]
+    () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
+    [assignment.attachments]
   );
   const type = route.params.assignment.typeId;
 
@@ -129,7 +129,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
               <Square p="$3" px="$4" onPress={() => navigation.goBack()}>
                 <ChevronLeftIcon color={Colors.Black[1]} />
               </Square>
-              <Typography type="TitleLight">Hi</Typography>
+              <Typography type="TitleLight">{assignment.description}</Typography>
             </XStack>
             {attachments && <ImagePages imageIds={attachments} />}
           </>

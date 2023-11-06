@@ -11,7 +11,14 @@ export type RootStackParamList = {
     studentId?: string;
     assignment: Pick<
       Assignment,
-      "id" | "startPage" | "endPage" | "feedbackUrl" | "recordingUrl" | "attachments" | "typeId"
+      | "id"
+      | "startPage"
+      | "endPage"
+      | "feedbackUrl"
+      | "recordingUrl"
+      | "attachments"
+      | "typeId"
+      | "description"
     >;
   };
   RecordSettings: undefined;
