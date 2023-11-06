@@ -25,6 +25,7 @@ import {
   persistAudioRecordings,
 } from "utils/persistAudioRecordings";
 import { concatAudioFragments } from "utils/concatAudioFragments";
+import { t } from "locales/config";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -196,7 +197,23 @@ export const RecordingScreenRecorder = ({
             size="sm"
             bg={Colors.Black[2]}
             icon={<CrossIcon />}
-            onPress={discardRecording}
+            onPress={() =>
+              Alert.alert(
+                t("recordingScreen.discardRecording"),
+                t("recordingScreen.discardRecordingDescription"),
+                [
+                  {
+                    text: t("cancel"),
+                    style: "cancel",
+                  },
+                  {
+                    text: t("discard"),
+                    style: "destructive",
+                    onPress: discardRecording,
+                  },
+                ]
+              )
+            }
           />
         )}
       </View>

@@ -19,12 +19,15 @@ const english = {
   delete: "Delete",
   feedback: "Feedback",
   enable: "Enable",
+  discard: "Discard",
   enableNotifications: "Enable Notifications",
   enableNotificationsDescription:
     "Get notified when you have new assignments or when your teacher sends you a feedback",
   recordingScreen: {
     deleteRecording: "Delete recording",
     deleteRecordingDescription: "Are you sure you want to delete this recording?",
+    discardRecording: "Discard recording",
+    discardRecordingDescription: "Are you sure you want to discard this recording?",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",
