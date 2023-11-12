@@ -69,7 +69,9 @@ export const NotificationsBottomSheet = () => {
     bottomSheetRef.current?.dismiss();
   };
 
-  useAppStatusEffect(storeToken);
+  useAppStatusEffect({
+    onForeground: storeToken,
+  });
 
   return (
     <BottomSheetModal

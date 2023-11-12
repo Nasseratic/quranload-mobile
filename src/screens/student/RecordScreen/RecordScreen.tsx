@@ -49,7 +49,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const { user, role, isTeacher } = useAuth();
 
   const assignment = route.params.assignment;
-  const studentId = assignment ?? user!.id;
+  const studentId = route.params.studentId ?? user!.id;
   const lessonId = assignment.id;
   const recordingId = assignment.recordingUrl ?? undefined;
   const feedbackId = assignment.feedbackUrl ?? undefined;

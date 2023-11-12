@@ -26,6 +26,7 @@ import {
 } from "utils/persistAudioRecordings";
 import { concatAudioFragments } from "utils/concatAudioFragments";
 import { t } from "locales/config";
+import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -170,6 +171,10 @@ export const RecordingScreenRecorder = ({
       console.error("Failed to start recording", err);
     }
   }
+
+  useAppStatusEffect({
+    onBackground: pauseRecording,
+  });
 
   useEffect(() => {
     getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {

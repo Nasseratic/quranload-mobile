@@ -2,7 +2,13 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import { match } from "ts-pattern";
 
-export const useAppStatusEffect = (fn: VoidFunction) => {
+export const useAppStatusEffect = ({
+  onForeground,
+  onBackground,
+}: {
+  onForeground?: VoidFunction;
+  onBackground?: VoidFunction;
+}) => {
   useEffect(() => {
     let isActive = true;
     const subscription = AppState.addEventListener("change", (appState) => {
@@ -10,11 +16,12 @@ export const useAppStatusEffect = (fn: VoidFunction) => {
         .with("active", () => {
           if (isActive) return;
           isActive = true;
-          fn();
+          onForeground?.();
         })
         .otherwise(() => {
           if (!isActive) return;
           isActive = false;
+          onBackground?.();
         });
     });
 
