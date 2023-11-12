@@ -8,7 +8,7 @@ import LectureBox from "components/LectureBox";
 import Typography from "components/Typography";
 import { BookIcon, ClockIcon } from "assets/icons";
 import { Loader } from "components/Loader";
-import { i18n } from "locales/config";
+import { i18n, t } from "locales/config";
 import AuthContext from "contexts/auth";
 import AccountNotAssociated from "components/AccountNotAssociated";
 import { useAssignments } from "hooks/queries/assignments";
@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchStudentStatistics } from "services/profileService";
 import { Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
-import { fDateDashed } from "utils/formatTime";
+import { fDateDashed, fMinutesDuration } from "utils/formatTime";
 import { RootStackParamList } from "navigation/navigation";
 
 type Props = NativeStackScreenProps<RootStackParamList, "StudentHome">;
@@ -63,7 +63,7 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
 const StatusSection = ({ teamId }: { teamId: string }) => {
   const { data, isLoading } = useQuery(["student-stats"], () => fetchStudentStatistics({ teamId }));
 
-  if (isLoading) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
+  if (isLoading || !data) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
 
   return (
     <YStack>
@@ -71,38 +71,39 @@ const StatusSection = ({ teamId }: { teamId: string }) => {
         <StatsBox
           icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
           label={i18n.t("timePerPage")}
-          value={`${data?.averageTimePerPage?.toFixed(2)} min`}
+          value={fMinutesDuration({
+            mins: data.averageTimePerPage,
+          })}
           backgroundColor={Colors.Primary[1]}
         />
         <StatsBox
           icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
           label={i18n.t("pages")}
-          value={`${data?.totalNumberOfPagesRead}`}
+          value={`${data.totalNumberOfPagesRead}`}
           backgroundColor={Colors.Success[1]}
         />
       </XStack>
-      {data?.assignmentVelocities && data.assignmentVelocities.length > 2 && (
+      {data.assignmentVelocities && data.assignmentVelocities.length > 2 && (
         <>
           <Typography style={{ opacity: 0.5, marginTop: 16 }}>
             {i18n.t("homeScreen.readingTime")}
           </Typography>
           <LineChartWithTooltips
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
             data={{
-              labels: data?.assignmentVelocities.map((a) => fDateDashed(a.submissionDate)),
+              labels: data.assignmentVelocities.map((a) => fDateDashed(a.submissionDate)),
               datasets: [
                 {
                   data:
-                    data?.assignmentVelocities?.map((a) =>
-                      Number(a.averagePageDuration).toFixed(2)
+                    data.assignmentVelocities?.map((a) =>
+                      Number(a.averagePageDuration.toFixed(2))
                     ) ?? [],
                 },
               ],
             }}
             width={Dimensions.get("window").width - 32} // from react-native
             height={220}
-            yAxisSuffix=" min"
-            yAxisInterval={1} // optional, defaults to 1
             chartConfig={{
               backgroundColor: "#fff",
               backgroundGradientFrom: "#fff",
@@ -118,7 +119,11 @@ const StatusSection = ({ teamId }: { teamId: string }) => {
                 strokeWidth: "0",
                 stroke: "#fff",
               },
+              propsForLabels: {
+                fontSize: 11,
+              },
             }}
+            formatYLabel={(y: number) => y + t("time.m")}
             withInnerLines={false}
             withOuterLines={false}
             withVerticalLabels={false}

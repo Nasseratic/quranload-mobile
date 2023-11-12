@@ -1,9 +1,10 @@
 import PropTypes from "prop-types";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Circle, G, Rect, Text } from "react-native-svg";
 import { ColorValue, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { Colors } from "constants/Colors";
+import { fMinutesDuration } from "utils/formatTime";
 
 const screenWidth = Dimensions.get("window").width - 32;
 
@@ -19,7 +20,7 @@ const Tooltip = ({
   x: number;
   y: number;
   textX: string;
-  textY: string;
+  textY: number;
   stroke: ColorValue;
   pointStroke: ColorValue;
   position: string;
@@ -75,7 +76,7 @@ const Tooltip = ({
         </Text>
 
         <Text x={tipTxtX} y={tipTxtY + 14} fontSize="11" textAnchor="start">
-          {textY} min
+          {fMinutesDuration({ mins: textY })}
         </Text>
       </G>
     </G>

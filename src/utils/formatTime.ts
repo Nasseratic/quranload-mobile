@@ -1,6 +1,12 @@
-import { format, getTime, formatDistanceToNow } from "date-fns";
+import {
+  format,
+  getTime,
+  formatDistanceToNow,
+  intervalToDuration,
+  minutesToMilliseconds,
+} from "date-fns";
 import { da } from "date-fns/locale";
-import { i18n } from "locales/config";
+import { i18n, t } from "locales/config";
 import { match } from "ts-pattern";
 
 // ----------------------------------------------------------------------
@@ -64,4 +70,12 @@ export const intlFormat = (date: Date, format: "date" | "date-short") => {
       .with("date-short", () => dateShortIntlConfig)
       .exhaustive()
   ).format(date);
+};
+
+export const fMinutesDuration = ({ mins }: { mins: number }) => {
+  const duration = intervalToDuration({ start: 0, end: minutesToMilliseconds(mins) });
+
+  return `${duration.minutes ? `${duration.minutes}${t("time.m")}` : ""} ${
+    duration.seconds ? `${duration.seconds}${t("time.s")}` : ""
+  }`;
 };

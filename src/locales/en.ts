@@ -112,5 +112,10 @@ const english = {
     title: "Students",
   },
   createHomework: "Create homework",
+  time: {
+    m: "m",
+    h: "h",
+    s: "s",
+  },
 };
 export default english;
