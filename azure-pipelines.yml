@@ -16,12 +16,9 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    echo $NODE_ENV
-    export NODE_ENV=prod
-    echo $NODE_ENV
     npm install
   displayName: 'Install dependencies'
 
 - script: |
-    EXPO_TOKEN=$(EXPO_TOKEN) npx eas-cli update --branch main -m "$(Build.SourceVersionMessage)" --non-interactive 
+    NODE_ENV="production" EXPO_TOKEN=$(EXPO_TOKEN) npx eas-cli update --branch main -m "$(Build.SourceVersionMessage)" --non-interactive 
   displayName: "Publish update"
