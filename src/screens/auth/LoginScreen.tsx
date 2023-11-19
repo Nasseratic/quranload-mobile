@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "center",
     alignContent: "center",
-    backgroundColor: Colors.Gray[1],
   },
 });
 export default LoginScreen;
