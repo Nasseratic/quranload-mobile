@@ -17,6 +17,7 @@ steps:
 
 - script: |
     npm install
+    echo $NODE_ENV
   displayName: 'Install dependencies'
 
 - script: |
