@@ -20,5 +20,6 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    NODE_ENV="production" EXPO_TOKEN=$(EXPO_TOKEN) npx eas-cli update --branch main -m "$(Build.SourceVersionMessage)" --non-interactive 
+    export NODE_ENV="production"
+    EXPO_TOKEN=$(EXPO_TOKEN) npx eas-cli update --branch main -m "$(Build.SourceVersionMessage)" --non-interactive 
   displayName: "Publish update"
