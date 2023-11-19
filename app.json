@@ -44,7 +44,7 @@
     },
     "owner": "quranload-app",
     "updates": {
-      "fallbackToCacheTimeout": 0,
+      "fallbackToCacheTimeout": 5000,
       "requestHeaders": {
         "expo-channel-name": "production"
       },
