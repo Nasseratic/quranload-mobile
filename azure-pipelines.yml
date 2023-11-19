@@ -16,8 +16,10 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    npm install
     echo $NODE_ENV
+    export NODE_ENV=prod
+    echo $NODE_ENV
+    npm install
   displayName: 'Install dependencies'
 
 - script: |
