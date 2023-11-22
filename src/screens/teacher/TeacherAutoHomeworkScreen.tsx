@@ -1,47 +1,120 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import QuranLoadView from "components/QuranLoadView";
 import { Form, Input, Label, View, XGroup } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import LetterCheckbox from "components/forms/LetterCheckbox";
 import { RootStackParamList } from "navigation/navigation";
+import { dateNfsLocale, i18n } from "locales/config";
+import { startOfWeek } from "date-fns";
+import { useMutation } from "@tanstack/react-query";
+import apiClient from "api/apiClient";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherAutoHomework">;
 
-//TODO: Create custom tamagui compatible button
-export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = () => {
+const calculateDaysRef = (
+  weekDays: {
+    day: string;
+    hasHomeWork: boolean;
+  }[]
+) => {
+  // sun = 1; mon = 2; tue = 4; wed = 8; thu = 16; fri = 32; sat = 64;
+  const weightsArray = [2, 4, 8, 16, 32, 64, 1];
+  let daysRef = 0;
+  weekDays.forEach((day, index) => day.hasHomeWork && (daysRef += weightsArray[index]));
+  return daysRef;
+};
+
+export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) => {
+  const { weekDays, startFromPage, pagesPerDay, teamId } = route.params;
+
+  const [pagesPerDayInput, setPagesPerDayInput] = useState(pagesPerDay ?? 0);
+  const [startFromPageInput, setStartFromPageInput] = useState(startFromPage ?? 0);
+  const [weekDaysInput, setWeekDaysInput] = useState(weekDays ?? []);
+
+  const { mutate } = useMutation({
+    mutationKey: ["PostAutoAssignmentKey"],
+    mutationFn: ({
+      pagesPerDayInput,
+      startFromPageInput,
+    }: {
+      pagesPerDayInput: number;
+      startFromPageInput: number;
+    }) =>
+      apiClient.post("Assignments", {
+        pagesPerDay: pagesPerDayInput,
+        startFromPage: startFromPageInput,
+        typeId: 1, // typeId 1 is the auto assignment
+        days: calculateDaysRef(weekDaysInput),
+        teamId: teamId,
+      }),
+  });
+
   return (
     <QuranLoadView
       appBar={{
-        title: "Update auto homework",
+        title: i18n.t("teacherAutoHW.updateAutoHW"),
       }}
     >
-      <Form onSubmit={() => null} gap="$3.5">
+      <Form
+        onSubmit={() => {
+          mutate({ pagesPerDayInput, startFromPageInput });
+        }}
+        gap="$3.5"
+      >
         <View gap="$2">
           <Label htmlFor="pagesPerDay" unstyled>
-            Pages per day
+            {i18n.t("teacherAutoHW.pagesPerDay")}
           </Label>
-          <Input id="pagesPerDay" borderWidth={0} placeholder="Pages per day" />
+          <Input
+            id="pagesPerDay"
+            value={pagesPerDayInput.toString()}
+            keyboardType="number-pad" // TODO: Add min 1 & max 604
+            borderWidth={0}
+            placeholder={i18n.t("teacherAutoHW.pagesPerDay")}
+            onChangeText={(input) => {
+              setPagesPerDayInput(Number(input));
+            }}
+          />
         </View>
         <View gap="$2">
           <Label htmlFor="startPage" unstyled>
-            Start page
+            {i18n.t("teacherAutoHW.startPage")}
           </Label>
-          <Input id="startPage" borderWidth={0} placeholder="Start page" />
+          <Input
+            id="startPage"
+            value={startFromPageInput.toString()}
+            keyboardType="number-pad" // TODO: Add min 1 & max 604
+            borderWidth={0}
+            placeholder={i18n.t("teacherAutoHW.startPage")}
+            onChangeText={(input) => {
+              setStartFromPageInput(Number(input));
+            }}
+          />
         </View>
         <View gap="$2">
-          <Label unstyled>Choose days</Label>
+          <Label unstyled>{i18n.t("teacherAutoHW.chooseDays")}</Label>
           <XGroup backgroundColor="$backgroundTransparent" justifyContent="space-between">
-            <LetterCheckbox letter="M" />
-            <LetterCheckbox letter="T" />
-            <LetterCheckbox letter="W" />
-            <LetterCheckbox letter="T" />
-            <LetterCheckbox letter="F" />
-            <LetterCheckbox letter="S" />
-            <LetterCheckbox letter="S" />
+            {weekDays?.map((day, index) => {
+              console.log(weekDays);
+
+              return (
+                <LetterCheckbox
+                  letter={day.day}
+                  key={index}
+                  checked={day.hasHomeWork}
+                  onChange={() => {
+                    weekDaysInput[index].hasHomeWork = !weekDaysInput[index].hasHomeWork;
+                    setWeekDaysInput(weekDaysInput);
+                  }}
+                />
+              );
+            })}
           </XGroup>
         </View>
-        <ActionButton title="Create" />
+        <Form.Trigger asChild>
+          <ActionButton title={i18n.t("save")} />
+        </Form.Trigger>
       </Form>
     </QuranLoadView>
   );

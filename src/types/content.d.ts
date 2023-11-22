@@ -45,4 +45,11 @@ declare namespace Frontend.Content {
     submittedAtDate?: Date;
     isFeedbackGiven: boolean;
   }
+
+  export interface AutoHW {
+    teamId: string;
+    weekDays: [{ day: string; hasHomeWork: boolean }];
+    pagesPerDay: number;
+    startFromPage: number;
+  }
 }
