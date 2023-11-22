@@ -16,7 +16,7 @@ export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null
     ["assignments", status],
     () =>
       user
-        ? (Promise.allSettled(
+        ? (Promise.all(
             user?.teams.map((team) =>
               fetchUserLessons({
                 teamId: team.id,
@@ -24,9 +24,7 @@ export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null
               })
             )
           ).then((results) => {
-            const assignments = results
-              .map((result) => (result.status === "fulfilled" ? result.value : null))
-              .filter(isNotNullish);
+            const assignments = results.filter(isNotNullish);
 
             const assignmentsByTeam = Object.fromEntries(
               assignments.map((result) => [result.list[0].teamId!, result.list])
