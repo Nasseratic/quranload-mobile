@@ -22,7 +22,10 @@ const TeacherLectureBox = ({ team }: Props) => {
     ["auto-assignment"],
     () => fetchAutoAssignment({ teamId: team.id, typeId: 1 }) // typeId 1 is the auto assignment
   );
+
   if (isLoading) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
+
+  console.log("CHECK THIS OUT: ", data);
 
   const resolveDaysRefToHasHomeWorkArray = (days: any) => {
     // Weights: sun = 1; mon = 2; tue = 4; wed = 8; thu = 16; fri = 32; sat = 64;
@@ -31,39 +34,40 @@ const TeacherLectureBox = ({ team }: Props) => {
 
     if (days >= 64) {
       // 5) sat
-      days = -64;
+      days -= 64;
       hasHomeWorkArray[5] = true;
     }
     if (days >= 32) {
       // 4) fri
-      days = -32;
+      days -= 32;
       hasHomeWorkArray[4] = true;
     }
     if (days >= 16) {
       // 3) thu
-      days = -16;
+      days -= 16;
       hasHomeWorkArray[3] = true;
     }
     if (days >= 8) {
       // 2) wed
-      days = -8;
+      days -= 8;
       hasHomeWorkArray[2] = true;
     }
     if (days >= 4) {
       // 1) tue
-      days = -4;
+      days -= 4;
       hasHomeWorkArray[1] = true;
     }
     if (days >= 2) {
       // 0) mon
-      days = -2;
+      days -= 2;
       hasHomeWorkArray[0] = true;
     }
     if (days == 1) {
       // 6) sun
-      days = -1;
+      days -= 1;
       hasHomeWorkArray[6] = true;
     }
+    console.log("ARRAY: ", days, hasHomeWorkArray);
     return hasHomeWorkArray;
   };
 
@@ -80,56 +84,59 @@ const TeacherLectureBox = ({ team }: Props) => {
   });
 
   return (
-    <TouchableOpacity onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}>
-      <Card bg="white" borderWidth={1} borderColor="$gray5">
-        <Stack p="$3" gap="$3">
-          <XStack jc="space-between" ai="flex-start">
-            <Stack>
-              <Typography style={{ color: Colors.Primary[1] }}>
-                {t("teacherAutoHW.pagesPerDay")}: {data?.list[0]?.pagesPerDay}
-              </Typography>
-              <Typography style={{ color: Colors.Primary[1] }}>
-                {t("teacherAutoHW.nextHW")} 11-12
-              </Typography>
-            </Stack>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("TeacherAutoHomework", {
-                  teamId: team.id,
-                  weekDays,
-                  pagesPerDay: data?.list[0]?.pagesPerDay,
-                  startFromPage: data?.list[0]?.startFromPage,
-                })
-              }
+    <Card bg="white" borderWidth={1} borderColor="$gray5">
+      <Stack
+        p="$3"
+        gap="$3"
+        onPress={() =>
+          navigation.navigate("TeacherAutoHomework", {
+            assignmentId: data?.list[0]?.id || "",
+            teamId: team.id,
+            weekDays,
+            pagesPerDay: data?.list[0]?.pagesPerDay || 0,
+            startFromPage: data?.list[0]?.startFromPage || 0,
+          })
+        }
+      >
+        <XStack jc="space-between" ai="flex-start">
+          <Stack>
+            <Typography style={{ color: Colors.Primary[1] }}>
+              {t("teacherAutoHW.pagesPerDay")}: {data?.list[0]?.pagesPerDay}
+            </Typography>
+            <Typography style={{ color: Colors.Primary[1] }}>
+              {t("teacherAutoHW.nextHW")} 11-12
+            </Typography>
+          </Stack>
+
+          <EditIcon color={Colors.Black[2]} />
+        </XStack>
+        <XStack gap="$2" jc="space-between">
+          {weekDays.map((day, index) => (
+            <Circle
+              key={index}
+              bw={2}
+              size="$3.5"
+              borderColor={day.hasHomeWork ? Colors.Success[1] : Colors.Black[3]}
             >
-              <EditIcon color={Colors.Black[2]} />
-            </TouchableOpacity>
-          </XStack>
-          <XStack gap="$2" jc="space-between">
-            {weekDays.map((day, index) => (
-              <Circle
+              <Typography
                 key={index}
-                bw={2}
-                size="$3.5"
-                borderColor={day.hasHomeWork ? Colors.Success[1] : Colors.Black[3]}
+                type="SubHeaderHeavy"
+                style={{ color: day.hasHomeWork ? Colors.Primary[1] : Colors.Black[3] }}
               >
-                <Typography
-                  key={index}
-                  type="SubHeaderHeavy"
-                  style={{ color: day.hasHomeWork ? Colors.Primary[1] : Colors.Black[3] }}
-                >
-                  {day.day}
-                </Typography>
-              </Circle>
-            ))}
-          </XStack>
-        </Stack>
-        <Separator />
-        <Stack p="$3">
-          <TeamItem team={team} onPress={() => {}} />
-        </Stack>
-      </Card>
-    </TouchableOpacity>
+                {day.day}
+              </Typography>
+            </Circle>
+          ))}
+        </XStack>
+      </Stack>
+      <Separator />
+      <Stack p="$3">
+        <TeamItem
+          team={team}
+          onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}
+        />
+      </Stack>
+    </Card>
   );
 };
 

@@ -38,6 +38,7 @@ export type RootStackParamList = {
     teamId: string;
   };
   TeacherAutoHomework: {
+    assignmentId: string,
     teamId: string,
     weekDays: { day: string; hasHomeWork: boolean }[],
     pagesPerDay: number,

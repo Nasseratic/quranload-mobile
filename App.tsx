@@ -53,4 +53,4 @@ function App() {
   );
 }
 
-export default SentryNative.wrap(App);
+export default App;

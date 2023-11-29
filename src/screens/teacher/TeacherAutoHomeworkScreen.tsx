@@ -7,8 +7,9 @@ import LetterCheckbox from "components/forms/LetterCheckbox";
 import { RootStackParamList } from "navigation/navigation";
 import { dateNfsLocale, i18n } from "locales/config";
 import { startOfWeek } from "date-fns";
-import { useMutation } from "@tanstack/react-query";
+import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "api/apiClient";
+import { useNavigation } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherAutoHomework">;
 
@@ -26,28 +27,40 @@ const calculateDaysRef = (
 };
 
 export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) => {
-  const { weekDays, startFromPage, pagesPerDay, teamId } = route.params;
+  const { weekDays, startFromPage, pagesPerDay, teamId, assignmentId } = route.params;
+  const navigation = useNavigation();
+  const queryClient = useQueryClient();
 
-  const [pagesPerDayInput, setPagesPerDayInput] = useState(pagesPerDay ?? 0);
-  const [startFromPageInput, setStartFromPageInput] = useState(startFromPage ?? 0);
+  const [pagesPerDayInput, setPagesPerDayInput] = useState<number | null>(pagesPerDay);
+  const [startFromPageInput, setStartFromPageInput] = useState<number | null>(startFromPage);
   const [weekDaysInput, setWeekDaysInput] = useState(weekDays ?? []);
 
-  const { mutate } = useMutation({
+  const { mutate, isLoading } = useMutation({
     mutationKey: ["PostAutoAssignmentKey"],
-    mutationFn: ({
-      pagesPerDayInput,
-      startFromPageInput,
-    }: {
-      pagesPerDayInput: number;
-      startFromPageInput: number;
-    }) =>
-      apiClient.post("Assignments", {
-        pagesPerDay: pagesPerDayInput,
-        startFromPage: startFromPageInput,
-        typeId: 1, // typeId 1 is the auto assignment
-        days: calculateDaysRef(weekDaysInput),
-        teamId: teamId,
-      }),
+    mutationFn: async () => {
+      console.log("assignmentId: ", assignmentId);
+      if (assignmentId == "")
+        // create a new auto assignment
+        await apiClient.post("Assignments", {
+          pagesPerDay: pagesPerDayInput,
+          startFromPage: startFromPageInput,
+          typeId: 1, // typeId 1 is the auto assignment
+          days: calculateDaysRef(weekDaysInput),
+          teamId: teamId,
+        });
+      // edit the existing auto assignment
+      else
+        await apiClient.put("Assignments", {
+          id: assignmentId,
+          pagesPerDay: pagesPerDayInput,
+          startFromPage: startFromPageInput,
+          typeId: 1, // typeId 1 is the auto assignment
+          days: calculateDaysRef(weekDaysInput),
+          teamId: teamId,
+        });
+      queryClient.refetchQueries(["auto-assignment"]);
+      navigation.goBack();
+    },
   });
 
   return (
@@ -58,7 +71,7 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
     >
       <Form
         onSubmit={() => {
-          mutate({ pagesPerDayInput, startFromPageInput });
+          mutate();
         }}
         gap="$3.5"
       >
@@ -68,12 +81,12 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
           </Label>
           <Input
             id="pagesPerDay"
-            value={pagesPerDayInput.toString()}
+            value={pagesPerDayInput?.toString()}
             keyboardType="number-pad" // TODO: Add min 1 & max 604
             borderWidth={0}
             placeholder={i18n.t("teacherAutoHW.pagesPerDay")}
             onChangeText={(input) => {
-              setPagesPerDayInput(Number(input));
+              setPagesPerDayInput(input ? Number(input) : null);
             }}
           />
         </View>
@@ -83,12 +96,12 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
           </Label>
           <Input
             id="startPage"
-            value={startFromPageInput.toString()}
+            value={startFromPageInput?.toString()}
             keyboardType="number-pad" // TODO: Add min 1 & max 604
             borderWidth={0}
             placeholder={i18n.t("teacherAutoHW.startPage")}
             onChangeText={(input) => {
-              setStartFromPageInput(Number(input));
+              setStartFromPageInput(input ? Number(input) : null);
             }}
           />
         </View>
@@ -97,7 +110,6 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
           <XGroup backgroundColor="$backgroundTransparent" justifyContent="space-between">
             {weekDays?.map((day, index) => {
               console.log(weekDays);
-
               return (
                 <LetterCheckbox
                   letter={day.day}
@@ -112,8 +124,8 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
             })}
           </XGroup>
         </View>
-        <Form.Trigger asChild>
-          <ActionButton title={i18n.t("save")} />
+        <Form.Trigger asChild disabled={!startFromPageInput || !pagesPerDayInput}>
+          <ActionButton title={i18n.t("save")} isLoading={isLoading} />
         </Form.Trigger>
       </Form>
     </QuranLoadView>
