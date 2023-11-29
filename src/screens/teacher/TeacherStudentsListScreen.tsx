@@ -6,11 +6,9 @@ import { fetchStudentsList } from "services/teamService";
 import { useQuery } from "@tanstack/react-query";
 import { Card, Stack } from "tamagui";
 import Typography from "components/Typography";
-import ChevronRight from "components/icons/ChevronRight";
-import { Colors } from "constants/Colors";
-import { TouchableOpacity } from "react-native";
 import GeneralConstants from "constants/GeneralConstants";
 import { t } from "locales/config";
+import { Colors } from "constants/Colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherStudentsList">;
 
@@ -18,6 +16,12 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
   const { teamId } = route.params;
   const { data } = useQuery(["students-list"], () => fetchStudentsList({ teamId }));
   const students = data?.list ?? [];
+
+  const percentageToColor = (percentage: number) => {
+    if (percentage >= 80) return Colors.Success[1];
+    if (percentage >= 60) return Colors.Warning[1];
+    return Colors.Error[1];
+  };
 
   return (
     <QuranLoadView
@@ -27,22 +31,30 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
     >
       <Stack gap={GeneralConstants.Spacing.md}>
         {students.map((student) => (
-          <TouchableOpacity key={student.id}>
-            <Card
-              paddingHorizontal={GeneralConstants.Spacing.md}
-              paddingVertical={GeneralConstants.Spacing.sm}
-              backgroundColor="$backgroundTransparent"
-              borderColor="$gray5"
-              borderWidth={1}
-              borderRadius={GeneralConstants.BorderRadius.full}
-              justifyContent="space-between"
-              flexDirection="row"
-              alignItems="center"
+          <Card
+            key={student.id}
+            paddingHorizontal={GeneralConstants.Spacing.md}
+            paddingVertical={GeneralConstants.Spacing.sm}
+            backgroundColor="$backgroundTransparent"
+            borderColor="$gray5"
+            borderWidth={1}
+            borderRadius={GeneralConstants.BorderRadius.full}
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="space-between"
+            gap="$1.5"
+          >
+            <Typography type="Body" style={{ color: Colors.Primary[1] }}>
+              {student.fullName}
+            </Typography>
+            <Typography
+              type="Body"
+              style={{ color: percentageToColor(student.percentageOfAcceptedOrSubmittedLessons) }}
             >
-              <Typography>{student.fullName}</Typography>
-              <ChevronRight color={Colors.Primary[1]} />
-            </Card>
-          </TouchableOpacity>
+              {student.percentageOfAcceptedOrSubmittedLessons > 59 ? "+" : "-"}
+              {` ${student.percentageOfAcceptedOrSubmittedLessons}%`}
+            </Typography>
+          </Card>
         ))}
       </Stack>
     </QuranLoadView>
