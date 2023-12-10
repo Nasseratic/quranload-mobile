@@ -5,8 +5,8 @@ import { TeacherSubmissionItem } from "components/teacher/TeacherSubmissionItem"
 import { RootStackParamList } from "navigation/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { fetchLessonDetails } from "services/lessonsService";
-import { Loader } from "components/Loader";
 import { t } from "locales/config";
+import { Spinner } from "tamagui";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherSubmissions">;
 export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
@@ -27,7 +27,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
       }}
     >
       {isLoading || !data ? (
-        <Loader />
+        <Spinner py="$10" />
       ) : (
         data.lessonSubmissions
           ?.sort((s) => (s.recording?.uri ? -1 : 1))

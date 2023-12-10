@@ -1,8 +1,7 @@
 import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
-import { ActivityIndicator } from "react-native";
-import { Stack, XStack } from "tamagui";
+import { FlatList } from "react-native";
+import { Spinner, XStack } from "tamagui";
 import { Colors } from "constants/Colors";
 import TeacherHomeworkItem from "components/teacher/TeacherHomeworkItem";
 import { useAssignments } from "hooks/queries/assignments";
@@ -10,6 +9,9 @@ import { RootStackParamList } from "navigation/navigation";
 import PersonsIcon from "components/icons/PersonsIcon";
 import { IconButton } from "components/buttons/IconButton";
 import PlusIcon from "components/icons/PlusIcon";
+import { SafeView } from "components/SafeView";
+import { AppBar } from "components/AppBar";
+import { t } from "locales/config";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherHomework">;
 
@@ -19,10 +21,10 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
   const currentTeamAssignments = assignments?.[route.params.teamId];
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: "Homework",
-        rightComponent: (
+    <SafeView>
+      <AppBar
+        title={t("assignmentScreen.title")}
+        rightComponent={
           <XStack>
             <IconButton
               icon={<PersonsIcon color={Colors.Primary[1]} />}
@@ -37,25 +39,24 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
               }
             />
           </XStack>
-        ),
-      }}
-    >
-      {isAssignmentsLoading || !currentTeamAssignments ? (
-        <ActivityIndicator size="large" style={{ marginTop: 40 }} />
-      ) : (
-        <Stack gap={"$3.5"}>
-          {currentTeamAssignments.map(
-            (homework, index) =>
-              homework && (
-                <TeacherHomeworkItem
-                  key={index}
-                  homework={homework}
-                  onPress={() => navigation.navigate("TeacherSubmissions", { homework })}
-                />
-              )
-          )}
-        </Stack>
-      )}
-    </QuranLoadView>
+        }
+      />
+      <FlatList
+        data={currentTeamAssignments}
+        renderItem={({ item }) => (
+          <TeacherHomeworkItem
+            homework={item}
+            onPress={() => navigation.navigate("TeacherSubmissions", { homework: item })}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{
+          gap: 16,
+          padding: 16,
+          paddingBottom: 24,
+        }}
+        ListFooterComponent={isAssignmentsLoading ? <Spinner size="large" py="$12" /> : null}
+      />
+    </SafeView>
   );
 };

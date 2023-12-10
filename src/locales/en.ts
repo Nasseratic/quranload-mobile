@@ -7,7 +7,7 @@ const english = {
   startDate: "Start date",
   endDate: "End date",
   create: "Create",
-  update:"Update",
+  update: "Update",
   signIn: "Sign in",
   signOut: "Sign out",
   username: "Username",
@@ -118,12 +118,12 @@ const english = {
     h: "h",
     s: "s",
   },
-  teacherAutoHW:{
+  teacherAutoHW: {
     updateAutoHW: "Update auto homework",
-    pagesPerDay:"Pages per day",
+    pagesPerDay: "Pages per day",
     startPage: "Start page",
     chooseDays: "Choose days",
-    nextHW: "Next homework: recite pages"
-  }
+    nextHW: "Next homework: recite pages",
+  },
 };
 export default english;
