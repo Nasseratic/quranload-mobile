@@ -19,5 +19,5 @@ export const submitFeedback = async (formData: {
     type: "audio/mpeg",
   });
   form.append("LessonState", `${formData.lessonState}`);
-  return apiClient.post("LessonSubmission/feedback", form);
+  return apiClient.postForm("LessonSubmission/feedback", form);
 };

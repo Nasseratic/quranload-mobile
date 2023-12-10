@@ -20,7 +20,7 @@ import { t } from "locales/config";
 import { IconSwitch } from "components/IconSwitch";
 import Carousel from "react-native-reanimated-carousel";
 import { ICarouselInstance } from "react-native-reanimated-carousel";
-import { SCREEN_WIDTH } from "constants/GeneralConstants";
+import { IS_IOS, SCREEN_WIDTH } from "constants/GeneralConstants";
 import { match } from "ts-pattern";
 import { deleteFeedback, submitFeedback } from "services/feedbackService";
 import { isNotNullish } from "utils/notNullish";
@@ -154,7 +154,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           <Carousel
             data={carouselItems}
             width={SCREEN_WIDTH}
-            height={40 + insets.bottom}
+            height={(IS_IOS ? 40 : 90) + insets.bottom}
             renderItem={({ item }) =>
               item === "RECORDER" ? (
                 <RecordingScreenRecorder
@@ -244,14 +244,16 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
 
 const styles = StyleSheet.create({
   shadow: {
-    shadowColor: "#000",
+    shadowColor: "rgba(0, 0, 0, 0.05)",
     shadowOffset: {
       width: 0,
       height: -4,
     },
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.03)",
     shadowOpacity: 0.05,
     shadowRadius: 10,
-    elevation: 2,
+    elevation: 25,
   },
 });
 
@@ -274,7 +276,6 @@ const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    console.log("first");
     setIsDownloading(true);
     Promise.all(
       imageIds?.map(async (imageId) => {

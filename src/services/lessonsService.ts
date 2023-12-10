@@ -40,8 +40,7 @@ export const submitLessonRecording = async ({
   });
   form.append("LessonId", lessonId);
   form.append("RecordingDuration", `${duration}`);
-
-  return apiClient.post("LessonSubmission/recording", form);
+  return apiClient.postForm("LessonSubmission/recording", form);
 };
 
 export const deleteSubmission = async (body: { lessonId: string; studentId: string }) =>

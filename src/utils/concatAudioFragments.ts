@@ -17,7 +17,6 @@ export const concatAudioFragments = async (audioFiles: string[]) => {
       `${audioInputFilesString} ${concatFilesCommand} -codec:a libmp3lame -q:a 7 ${outputFile}`
     ).then(async (session) => {
       const returnCode = await session.getReturnCode();
-      session.getOutput();
       if (ReturnCode.isSuccess(returnCode)) {
         // SUCCESS
         resolve(outputFile);

@@ -27,6 +27,7 @@ import {
 import { concatAudioFragments } from "utils/concatAudioFragments";
 import { t } from "locales/config";
 import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
+import { IS_IOS } from "constants/GeneralConstants";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -38,12 +39,6 @@ let recordings: {
 const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
 const METERING_CHECK_INTERVAL = 300;
-
-declare global {
-  interface FormData {
-    append(name: string, value: FormDataValue, fileName?: string): void;
-  }
-}
 
 type RecordingState = "idle" | "recording" | "paused";
 
@@ -77,7 +72,7 @@ export const RecordingScreenRecorder = ({
     }
 
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setRecordingState("recording");
 
       await startRecordingWithAutoFragmenting();
@@ -104,7 +99,7 @@ export const RecordingScreenRecorder = ({
 
   const pauseRecording = async () => {
     setRecordingState("paused");
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     await cutRecording();
   };
 
@@ -114,18 +109,20 @@ export const RecordingScreenRecorder = ({
     recordings = [];
     setRecordingState("idle");
     clearAudioRecordings({ lessonId });
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
+    if (IS_IOS)
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+      });
   }
 
   const submitRecording = async () => {
     setRecordingState("idle");
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     await cutRecording();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
+    if (IS_IOS)
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+      });
     setIsConcatenatingAudio(true);
     const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
     setIsConcatenatingAudio(false);
@@ -139,9 +136,10 @@ export const RecordingScreenRecorder = ({
 
   async function startRecordingWithAutoFragmenting() {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-      });
+      if (IS_IOS)
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+        });
       const { recording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HEIGH_QUALITY
       );

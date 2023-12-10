@@ -4,15 +4,21 @@ import { BASE_URL } from "api/apiClient";
 
 type MediaResponse = Pick<Required<Media_Dto_MediaDto>, "id" | "uri">;
 
+declare global {
+  interface FormData {
+    append(name: string, value: FormDataValue, fileName?: string): void;
+  }
+}
+
 export const uploadFile = async (formData: { uri: string }) => {
   const form = new FormData();
   form.append("File", {
     uri: formData.uri,
-    name: "attachment.mp3",
-    type: "audio/mpeg",
+    name: "file",
+    type: "png",
   });
   form.append("MediaType", "2");
-  return apiClient.post<MediaResponse>("Media", form);
+  return apiClient.postForm<MediaResponse>("Media", form);
 };
 
 export const getMediaUri = (id: string) => `${BASE_URL}Media/${id}?filename=Assignment/${id}`;

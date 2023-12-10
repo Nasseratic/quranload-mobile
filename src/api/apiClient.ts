@@ -87,6 +87,14 @@ const responseBody = <T>(response: AxiosResponse<T>) => {
 
 const request = {
   get: <T>(url: string) => api.get<T>(url).then(responseBody),
+  postForm: <T>(url: string, body: object) =>
+    api
+      .post<T>(url, body, {
+        headers: {
+          "content-type": "multipart/form-data",
+        },
+      })
+      .then(responseBody),
   post: <T>(url: string, body: object) => api.post<T>(url, body).then(responseBody),
   put: <T>(url: string, body: object) => api.put<T>(url, body).then(responseBody),
   delete: <T>(url: string, body?: object) =>
