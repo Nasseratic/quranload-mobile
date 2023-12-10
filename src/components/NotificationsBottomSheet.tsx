@@ -19,7 +19,7 @@ import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
-
+import { isDevelopmentBuild } from "expo-dev-client";
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
 export const NotificationsBottomSheet = () => {
@@ -47,6 +47,9 @@ export const NotificationsBottomSheet = () => {
   }, [signed, status]);
 
   const storeToken = useCallback(async () => {
+    if (isDevelopmentBuild()) {
+      return console.log("skipping push notification registration in development build");
+    }
     const token = (
       await Notifications.getExpoPushTokenAsync({
         projectId: Constants.easConfig?.projectId,
