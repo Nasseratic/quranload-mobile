@@ -1,15 +1,15 @@
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import AssignmentItem from "components/AssignmentItem";
-import { StyleSheet, View } from "react-native";
-import GeneralConstants from "constants/GeneralConstants";
-import { Loader } from "components/Loader";
+import { FlatList } from "react-native";
 import TabBox from "components/TabBox";
-import { i18n } from "locales/config";
+import { i18n, t } from "locales/config";
 import { AssignmentStatusEnum } from "types/Lessons";
 import { useAssignments } from "hooks/queries/assignments";
 import { RootStackParamList } from "navigation/navigation";
+import { SafeView } from "components/SafeView";
+import { AppBar } from "components/AppBar";
+import { Spinner } from "tamagui";
 
 const tabs = ["pending", "all"] as const;
 
@@ -22,37 +22,33 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
   });
 
   const teamAssignments = assignments?.[route.params.teamId];
-
   return (
-    <QuranLoadView appBar={{ title: i18n.t("assignmentScreen.title") }}>
-      <TabBox
-        list={[i18n.t("assignmentScreen.pending"), i18n.t("assignmentScreen.all")]}
-        index={tabs.indexOf(tabKey)}
-        setIndex={(index) => setTabKey(tabs[index])}
+    <SafeView>
+      <AppBar title={t("assignmentScreen.title")} />
+      <FlatList
+        data={teamAssignments}
+        renderItem={({ item }) => (
+          <AssignmentItem
+            assignment={item}
+            onPress={() => navigation.navigate("Record", { assignment: item })}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{
+          gap: 16,
+          paddingHorizontal: 16,
+        }}
+        ListHeaderComponent={
+          <TabBox
+            list={[i18n.t("assignmentScreen.pending"), i18n.t("assignmentScreen.all")]}
+            index={tabs.indexOf(tabKey)}
+            setIndex={(index) => setTabKey(tabs[index])}
+          />
+        }
+        ListFooterComponent={isAssignmentsLoading ? <Spinner py="$12" size="large" /> : null}
       />
-      {isAssignmentsLoading ? (
-        <Loader />
-      ) : (
-        teamAssignments && (
-          <View style={styles.assignments}>
-            {teamAssignments.map((assignment, index) => (
-              <AssignmentItem
-                key={index}
-                assignment={assignment}
-                onPress={() => navigation.navigate("Record", { assignment })}
-              />
-            ))}
-          </View>
-        )
-      )}
-    </QuranLoadView>
+    </SafeView>
   );
 };
-
-const styles = StyleSheet.create({
-  assignments: {
-    gap: GeneralConstants.Spacing.md,
-  },
-});
 
 export default AssignmentsScreen;
