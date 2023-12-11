@@ -195,6 +195,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             ai="flex-end"
             position="absolute"
             w="100%"
+            bottom={IS_IOS ? 0 : 10}
           >
             {(isTeacher || (feedbackId && recordingId)) && (
               <IconSwitch

@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Audio } from "expo-av";
 import { useState, useRef, useEffect, memo } from "react";
 import { ActivityIndicator } from "react-native";
-import { XStack, YStack, Text } from "tamagui";
+import { XStack, YStack, Text, Slider } from "tamagui";
 import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { formatAudioDuration } from "utils/formatAudioDuration";
@@ -10,7 +11,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { downloadAsync, documentDirectory } from "expo-file-system";
 import { IconButton } from "./buttons/IconButton";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
-import Slider from "./Slider";
 const downloadedAudioFiles: Record<string, string> = {};
 
 export const AudioPlayer = memo(({ uri }: { uri: string }) => {
@@ -71,6 +71,16 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       </XStack>
     );
 
+  const updateValue = (value: number) => {
+    if (value < 0 || value > durationSec) return;
+    setPositionSec(value);
+    sound?.getStatusAsync().then((status) => {
+      if (status.isLoaded && status.isPlaying) {
+        sound?.pauseAsync();
+        wasPlaying.current = true;
+      }
+    });
+  };
   return (
     <YStack
       pointerEvents="box-none"
@@ -82,16 +92,12 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       bg="white"
     >
       <YStack w="100%" gap="$2">
+        {/* @ts-expect-error */}
         <Slider
           step={durationSec / 100}
-          style={{
-            width: "100%",
-            height: 1,
-          }}
-          value={positionSec}
-          minimumValue={0}
-          maximumValue={durationSec}
-          onValueChange={(value: number) => {
+          max={durationSec}
+          min={0}
+          onValueChange={([value]) => {
             if (value < 0 || value > durationSec) return;
             setPositionSec(value);
             sound?.getStatusAsync().then((status) => {
@@ -101,23 +107,23 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
               }
             });
           }}
-          useNativeDriver={true}
-          onSlidingStart={() => {
-            sound?.getStatusAsync().then((status) => {
-              if (status.isLoaded && status.isPlaying) {
-                sound?.pauseAsync();
-                wasPlaying.current = true;
-              }
-            });
-          }}
-          onSlidingComplete={() => {
-            sound?.setPositionAsync(positionSec * 1000);
+          onSlideMove={(_, value) => updateValue(value)}
+          onSlideStart={(_, value) => updateValue(value)}
+          onSlideEnd={(_, value) => {
+            updateValue(value);
+            sound?.setPositionAsync(value * 1000);
             if (wasPlaying.current) {
               sound?.playAsync();
               wasPlaying.current = false;
             }
           }}
-        />
+          value={[positionSec]}
+        >
+          <Slider.Track w="100%" f={1} maxHeight={3}>
+            <Slider.TrackActive />
+          </Slider.Track>
+          <Slider.Thumb size={12} bg="black" borderWidth={0} circular index={0} />
+        </Slider>
         <XStack gap="$3" jc="space-between" alignItems="center" w="100%">
           <Text style={{ color: Colors.Black[2] }}>
             {formatAudioDuration(Math.floor(positionSec))}
@@ -129,7 +135,7 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       </YStack>
       <XStack
         style={{
-          transform: [{ translateY: -4 }],
+          transform: [{ translateY: -12 }],
         }}
         gap="$3"
       >
