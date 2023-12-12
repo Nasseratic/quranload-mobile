@@ -77,7 +77,8 @@ export const RecordingScreenRecorder = ({
 
       await startRecordingWithAutoFragmenting();
     } catch (err) {
-      console.log(err);
+      //Implement error handling
+      err;
       setRecordingState("idle");
     }
   }
@@ -150,8 +151,7 @@ export const RecordingScreenRecorder = ({
       await Promise.race([
         sleep(RECORDING_INTERVAL_TOLERANCE),
         (async () => {
-          // eslint-disable-next-line no-constant-condition
-          while (true) {
+          for (;;) {
             const status = await recording.getStatusAsync();
             if (!status.isRecording) break;
             if (status.metering && status.metering < -40) {

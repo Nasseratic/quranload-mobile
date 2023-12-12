@@ -25,7 +25,7 @@ const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route, navigation 
         navigation.goBack();
       })
       .catch((err) => {
-        console.log(err);
+        //Implement error handling
       })
       .finally(() => setSubmitting(false));
   };

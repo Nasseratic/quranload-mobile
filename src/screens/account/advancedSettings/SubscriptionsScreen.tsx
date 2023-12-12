@@ -21,7 +21,6 @@ const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
     void fetchSubscriptions()
       .then((res) => {
         setSubscriptions(res.list);
-        console.log(res.list);
       })
       .finally(() => setIsLoading(false));
   }, []);

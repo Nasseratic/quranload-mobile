@@ -105,7 +105,6 @@ const tooltipDecorators = (state: any, data: any, valueFormatter: any) => () => 
 
   const { index, value, x, y } = state;
   const textX = data?.labels[index];
-  console.log(data?.labels);
   const position = data.labels.length === index + 1 ? "left" : "right";
 
   return (

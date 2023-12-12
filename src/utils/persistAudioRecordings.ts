@@ -11,7 +11,7 @@ export const getPersistentAudioRecordings = async ({ lessonId }: { lessonId: str
     }
     return [];
   } catch (e) {
-    console.log(e);
+    //Implement error handling
     return [];
   }
 };
@@ -26,7 +26,7 @@ export const persistAudioRecordings = async ({
   try {
     await AsyncStorage.setItem(getStorageKey(lessonId), JSON.stringify(recordings));
   } catch (e) {
-    console.log(e);
+    //Implement error handling
   }
 };
 
@@ -34,7 +34,7 @@ export const clearAudioRecordings = async ({ lessonId }: { lessonId: string }) =
   try {
     await AsyncStorage.removeItem(getStorageKey(lessonId));
   } catch (e) {
-    console.log(e);
+    //Implement error handling
   }
 };
 

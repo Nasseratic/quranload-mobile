@@ -27,7 +27,6 @@ const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
       newPasswordAgain: Yup.string().oneOf([Yup.ref("newPassword")], "Passwords must match"),
     }),
     onSubmit(values, { setErrors }) {
-      console.log("FORM SUBMIT VALUES", values);
       changePassword({
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
@@ -44,7 +43,6 @@ const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
           if (error.message) {
             setErrors({ error: error.message });
           }
-          console.log("ERROORORO", error);
         })
         .finally(() => formik.setSubmitting(false));
     },

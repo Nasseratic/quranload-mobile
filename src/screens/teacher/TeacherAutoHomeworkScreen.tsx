@@ -5,9 +5,8 @@ import { Form, Input, Label, View, XGroup } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import LetterCheckbox from "components/forms/LetterCheckbox";
 import { RootStackParamList } from "navigation/navigation";
-import { dateNfsLocale, i18n } from "locales/config";
-import { startOfWeek } from "date-fns";
-import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { i18n } from "locales/config";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "api/apiClient";
 import { useNavigation } from "@react-navigation/native";
 
@@ -38,7 +37,6 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
   const { mutate, isLoading } = useMutation({
     mutationKey: ["PostAutoAssignmentKey"],
     mutationFn: async () => {
-      console.log("assignmentId: ", assignmentId);
       if (assignmentId == "")
         // create a new auto assignment
         await apiClient.post("Assignments", {
@@ -109,7 +107,6 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
           <Label unstyled>{i18n.t("teacherAutoHW.chooseDays")}</Label>
           <XGroup backgroundColor="$backgroundTransparent" justifyContent="space-between">
             {weekDays?.map((day, index) => {
-              console.log(weekDays);
               return (
                 <LetterCheckbox
                   letter={day.day}
