@@ -4,7 +4,7 @@ import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
 import { Card, Circle, Separator, Stack, XStack } from "tamagui";
 import { Team } from "types/User";
-import { ActivityIndicator, TouchableOpacity } from "react-native";
+import { ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { dateNfsLocale, i18n, t } from "locales/config";
 import { useQuery } from "@tanstack/react-query";
@@ -25,12 +25,10 @@ const TeacherLectureBox = ({ team }: Props) => {
 
   if (isLoading) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
 
-  console.log("CHECK THIS OUT: ", data);
-
-  const resolveDaysRefToHasHomeWorkArray = (days: any) => {
+  const resolveDaysRefToHasHomeWorkArray = (days: number) => {
     // Weights: sun = 1; mon = 2; tue = 4; wed = 8; thu = 16; fri = 32; sat = 64;
     // Indexes: 0) mon, 1) tues, 2) wed, 3) thu, 4) fri, 5) sat, 6) sun
-    const hasHomeWorkArray = new Array(7).fill(false);
+    const hasHomeWorkArray = new Array(7).fill(false) as boolean[];
 
     if (days >= 64) {
       // 5) sat
@@ -67,11 +65,10 @@ const TeacherLectureBox = ({ team }: Props) => {
       days -= 1;
       hasHomeWorkArray[6] = true;
     }
-    console.log("ARRAY: ", days, hasHomeWorkArray);
     return hasHomeWorkArray;
   };
 
-  const hasHomeWorkArray = resolveDaysRefToHasHomeWorkArray(data?.list[0]?.days);
+  const hasHomeWorkArray = resolveDaysRefToHasHomeWorkArray(data?.list[0]?.days ?? 0);
 
   const weekDays = new Array(7).fill(0).map((_, index) => {
     const date = startOfWeek(new Date(), { locale: dateNfsLocale });

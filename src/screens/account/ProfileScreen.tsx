@@ -50,7 +50,6 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
           if (error.validation) {
             formik.setErrors(error.validation);
           }
-          console.log(error);
         });
     },
   });

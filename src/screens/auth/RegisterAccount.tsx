@@ -34,7 +34,8 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
     isLoading: isResendingVerification,
   } = useMutation(resendVerificationEmail, {
     onError: (err: AxiosError) => {
-      console.log(err.response?.data);
+      //Implement error handling
+      err;
     },
   });
 

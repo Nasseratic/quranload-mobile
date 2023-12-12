@@ -53,15 +53,12 @@ export const AuthProvider = ({ children }: Props) => {
   const handleSignIn = () => {
     fetchUserProfile()
       .then((res) => {
-        console.log(res);
         setUser(res);
         setSignedIn(true);
       })
-      .catch((err) => {
-        console.log(err);
+      .catch((_) => {
         setSignedIn(false);
       })
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       .finally(async () => {
         setInitialized(true);
         await SplashScreen.hideAsync();

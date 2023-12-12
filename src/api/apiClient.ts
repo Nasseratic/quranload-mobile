@@ -7,7 +7,6 @@ export const BASE_URL = "https://quranload-be-dev-app.azurewebsites.net/api/";
 const api = axios.create({
   baseURL: BASE_URL,
 });
-AsyncStorage.getItem("accessToken").then(console.log);
 api.interceptors.request.use(async (conf) => {
   const token = await AsyncStorage.getItem("accessToken");
   if (token) {
@@ -29,14 +28,12 @@ api.interceptors.response.use(
       if (data != null && data.errors) {
         for (const key in data.errors) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          console.log("DATA KEY ERROR: ", key);
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
           if ((data.errors as any)[key]) {
             let newKey = key.replace("Request.", "");
             newKey = newKey.replace("$.", "");
             newKey = newKey.replace("request.", "");
             newKey = camelize(newKey);
-            console.log(newKey);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
             newError[newKey] = (data.errors as any)[key].join(". ");
           }
@@ -46,12 +43,9 @@ api.interceptors.response.use(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       return Promise.reject({ status: status, validation: newError, message: data?.message });
     } else if (status === 500) {
-      console.log(data);
       return Promise.reject({ status: status, error: "an expected error occurred" });
     } else if (status === 401) {
-      console.log("401 ERROR");
       const refreshTokenCode = await AsyncStorage.getItem("refreshToken");
-      console.log(refreshTokenCode);
       if (refreshTokenCode != null && !originalRequest._retry) {
         return refreshToken({ refreshToken: refreshTokenCode })
           .then(async (res) => {
@@ -74,8 +68,6 @@ api.interceptors.response.use(
     } else if (status === 404) {
       return Promise.reject({ status: status, error: "an expected error occurred" });
     } else {
-      console.log(error);
-
       return Promise.reject({ status: status, error: "an expected error occurred" });
     }
   }

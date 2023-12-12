@@ -25,7 +25,8 @@ const ResetPasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
           navigation.goBack();
         })
         .catch((err) => {
-          console.log(err);
+          //Implement error handling
+          err;
         });
     },
   });

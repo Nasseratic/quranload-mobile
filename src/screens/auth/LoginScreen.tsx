@@ -25,11 +25,9 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
       error: "",
     },
     onSubmit: (values, { setErrors }) => {
-      console.log(values);
       setErrors({});
       signIn(values.username, values.password).catch((err: ISignInErrorResponse) => {
         if (err.response?.data?.message) {
-          console.log(err.response.data);
           setErrors({ error: err.response.data.message });
         }
         formik.setSubmitting(false);
