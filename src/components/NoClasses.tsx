@@ -6,8 +6,14 @@ import { t } from "locales/config";
 import { EmptySvg } from "components/svgs/EmptySvg";
 import ActionButton from "./buttons/ActionBtn";
 import * as Linking from "expo-linking";
+import { useMemo } from "react";
 
-const AccountNotAssociated = () => {
+const NoClasses = ({ role }: { role: "teacher" | "student" }) => {
+  const text = useMemo(
+    () =>
+      role === "teacher" ? t("teacherHomeScreen.noClasses") : t("studentDashboard.notEnrolled"),
+    [role]
+  );
   return (
     <View style={styles.container}>
       <EmptySvg size={SCREEN_WIDTH * 0.5} />
@@ -20,15 +26,17 @@ const AccountNotAssociated = () => {
             width: 280,
           }}
         >
-          {t("studentDashboard.notEnrolled")}
+          {text}
         </Typography>
       </View>
-      <View>
-        <ActionButton
-          title={t("studentDashboard.enroll")}
-          onPress={() => Linking.openURL("https://www.quranload.com")}
-        />
-      </View>
+      {role === "student" && (
+        <View>
+          <ActionButton
+            title={t("studentDashboard.enroll")}
+            onPress={() => Linking.openURL("https://www.quranload.com")}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -52,4 +60,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AccountNotAssociated;
+export default NoClasses;

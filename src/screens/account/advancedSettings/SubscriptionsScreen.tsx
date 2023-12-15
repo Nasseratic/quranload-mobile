@@ -1,11 +1,14 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
-import QuranLoadView from "components/QuranLoadView";
 import SubscriptionCard from "components/SubscriptionCard";
 import { fetchSubscriptions } from "services/profileService";
 import { Loader } from "components/Loader";
 import { RootStackParamList } from "navigation/navigation";
+import { AppBar } from "components/AppBar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList } from "react-native";
+import NoClasses from "components/NoClasses";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Subscriptions">;
 const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
@@ -28,20 +31,22 @@ const SubscriptionScreen: FunctionComponent<Props> = ({ navigation }) => {
   if (isLoading) return <Loader />;
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("subscriptionsScreen.title"),
-      }}
-    >
-      {subscriptions &&
-        subscriptions.map((subscription) => (
-          <SubscriptionCard
-            key={subscription.id}
-            subscription={subscription}
-            onPress={() => handleOnPress(subscription)}
-          />
-        ))}
-    </QuranLoadView>
+    <SafeAreaView style={{ flex: 1 }}>
+      <AppBar title={i18n.t("subscriptionsScreen.title")} />
+      <FlatList
+        data={subscriptions}
+        keyExtractor={(subscription) => subscription.id}
+        ListEmptyComponent={<NoClasses role="student" />}
+        renderItem={({ item }) => (
+          <SubscriptionCard key={item.id} subscription={item} onPress={() => handleOnPress(item)} />
+        )}
+        contentContainerStyle={{
+          gap: 16,
+          paddingHorizontal: 16,
+          paddingBottom: subscriptions?.length && 16,
+        }}
+      />
+    </SafeAreaView>
   );
 };
 

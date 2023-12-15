@@ -1,9 +1,10 @@
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { FunctionComponent } from "react";
-import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import Typography from "./Typography";
 import { fDate } from "utils/formatTime";
+import { Image } from "expo-image";
 
 interface Props {
   subscription: Frontend.Content.Subscription;
@@ -13,12 +14,7 @@ interface Props {
 const SubscriptionCard: FunctionComponent<Props> = ({ subscription, onPress }) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image
-        style={styles.institutionImage}
-        source={{
-          uri: "https://quranload-lp-dev-app.azurewebsites.net/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fmosque.d8bc985e.jpg&w=384&q=75",
-        }}
-      />
+      <Image style={styles.institutionImage} contentFit="cover" source={subscription.image} />
       <View style={styles.institutionInfo}>
         <Typography type="SubHeaderHeavy" style={{ color: Colors.Primary[1] }}>
           {subscription.teamName}

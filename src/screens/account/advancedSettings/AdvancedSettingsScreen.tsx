@@ -1,7 +1,6 @@
-import { FunctionComponent, useContext } from "react";
+import { FunctionComponent, useContext, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
-import QuranLoadView from "components/QuranLoadView";
 import Menu from "components/menu/Menu";
 import { KeyIcon, SadFaceIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
@@ -11,50 +10,57 @@ import AuthContext from "contexts/auth";
 import Typography from "components/Typography";
 import * as Updates from "expo-updates";
 import { RootStackParamList } from "navigation/navigation";
+import { AppBar } from "components/AppBar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { View } from "tamagui";
 type Props = NativeStackScreenProps<RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
-  const { signOut } = useContext(AuthContext);
+  const { signOut, user } = useContext(AuthContext);
 
   const handleSignout = async () => {
     await signOut();
   };
 
-  const menuItems: IMenuItemProps[] = [
-    {
-      text: i18n.t("advancedSettingsScreen.changePassword"),
-      onPress: () => navigation.navigate("ChangePassword"),
-      icon: <KeyIcon color={Colors.Primary[1]} />,
-    },
-    /*{
-      text: i18n.t("advancedSettingsScreen.changeLanguage"),
-      onPress: () => navigation.navigate("ChangeLanguage"),
-      icon: <GlobeIcon color={Colors.Primary[1]} />,
-    },*/
-    {
-      text: i18n.t("advancedSettingsScreen.cancelSubscription"),
-      onPress: () => navigation.navigate("Subscriptions"),
-      icon: <SadFaceIcon color={Colors.Primary[1]} />,
-    },
-  ];
+  const menuItems = useMemo(() => {
+    const items: IMenuItemProps[] = [
+      {
+        text: i18n.t("advancedSettingsScreen.changePassword"),
+        onPress: () => navigation.navigate("ChangePassword"),
+        icon: <KeyIcon color={Colors.Primary[1]} />,
+      },
+    ];
+    console.log(user?.roles);
+
+    const studentRole = user?.roles.indexOf("Student");
+
+    if (studentRole !== undefined && studentRole >= 0) {
+      items.push({
+        text: i18n.t("advancedSettingsScreen.cancelSubscription"),
+        onPress: () => navigation.navigate("Subscriptions"),
+        icon: <SadFaceIcon color={Colors.Primary[1]} />,
+      });
+    }
+
+    return items;
+  }, [navigation, user?.roles]);
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("advancedSettingsScreen.title"),
-      }}
-    >
-      <Menu menuItems={menuItems} />
-      <ActionButton
-        style={{ backgroundColor: Colors.Error["1"] }}
-        onPress={handleSignout}
-        title={i18n.t("signOut")}
-      />
+    <SafeAreaView>
+      <AppBar title={i18n.t("advancedSettingsScreen.title")} />
+      <View gap={16} paddingHorizontal={16}>
+        <Menu menuItems={menuItems} />
+        <ActionButton
+          style={{ backgroundColor: Colors.Error["1"] }}
+          onPress={handleSignout}
+          title={i18n.t("signOut")}
+        />
 
-      <Typography style={{ alignSelf: "flex-end", fontSize: 10, color: Colors.Black[2] }}>
-        Version: {(Updates.updateId ?? "").slice(0, 7)}
-      </Typography>
-    </QuranLoadView>
+        <Typography style={{ alignSelf: "flex-end", fontSize: 10, color: Colors.Black[2] }}>
+          Version: {(Updates.updateId ?? "").slice(0, 7)}
+        </Typography>
+      </View>
+    </SafeAreaView>
   );
 };
 

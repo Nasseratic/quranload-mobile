@@ -1,7 +1,7 @@
 const danish = {
   welcome: "Velkommen",
   save: "Gem",
-  update:"Update",
+  update: "Update",
   signIn: "Log ind",
   signOut: "Log ud",
   username: "Brugernavn",
@@ -71,16 +71,17 @@ const danish = {
   teacherHomeScreen: {
     submitted: "Afleveret",
     pagesRead: "Sider læst",
+    noClasses: "Du har ingen klasser endnu",
   },
   teacherStudentsListScreen: {
     title: "Elever",
   },
-  teacherAutoHW:{
+  teacherAutoHW: {
     updateAutoHW: "Update auto homework", // Add Danish trasnlation
-    pagesPerDay:"Sider pr. dag",
+    pagesPerDay: "Sider pr. dag",
     startPage: "Start fra side",
     chooseDays: "Vælg dage",
-    nextHW: "Næste lektier: læs side"
-  }
+    nextHW: "Næste lektier: læs side",
+  },
 };
 export default danish;

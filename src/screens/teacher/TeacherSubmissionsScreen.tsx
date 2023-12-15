@@ -1,12 +1,15 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import { TeacherSubmissionItem } from "components/teacher/TeacherSubmissionItem";
 import { RootStackParamList } from "navigation/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { fetchLessonDetails } from "services/lessonsService";
 import { t } from "locales/config";
 import { Spinner } from "tamagui";
+import { AppBar } from "components/AppBar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Lessons_Dto_LessonSubmissionDto } from "__generated/apiTypes";
+import { FlatList } from "react-native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherSubmissions">;
 export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
@@ -17,37 +20,51 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
     fetchLessonDetails({ lessonId: homework.id })
   );
 
+  const submissions: Lessons_Dto_LessonSubmissionDto[] = useMemo(() => {
+    if (data?.lessonSubmissions) {
+      return data.lessonSubmissions?.sort((s) => (s.recording?.uri ? -1 : 1));
+    }
+
+    return [];
+  }, [data?.lessonSubmissions]);
+
   return (
-    <QuranLoadView
-      appBar={{
-        title:
+    <SafeAreaView>
+      <AppBar
+        title={
           (homework.startPage && homework.endPage
             ? `${t("read")}: ${homework.startPage} - ${homework.endPage}`
-            : homework.description) ?? "",
-      }}
-    >
+            : homework.description) ?? ""
+        }
+      />
       {isLoading || !data ? (
         <Spinner py="$10" />
       ) : (
-        data.lessonSubmissions
-          ?.sort((s) => (s.recording?.uri ? -1 : 1))
-          .map((submission, index) => (
+        <FlatList
+          data={submissions}
+          keyExtractor={(submission, index) => submission.id ?? index.toString()}
+          contentContainerStyle={{
+            gap: 16,
+            marginHorizontal: 16,
+            paddingBottom: 16,
+          }}
+          renderItem={({ item }) => (
             <TeacherSubmissionItem
-              key={index}
-              submission={submission}
+              submission={item}
               onPress={() =>
                 navigation.navigate("Record", {
-                  studentId: submission?.student?.id ?? undefined,
+                  studentId: item?.student?.id ?? undefined,
                   assignment: {
                     ...homework,
-                    recordingUrl: submission.recording?.uri ?? null,
-                    feedbackUrl: submission.feedback?.uri ?? null,
+                    recordingUrl: item.recording?.uri ?? null,
+                    feedbackUrl: item.feedback?.uri ?? null,
                   },
                 })
               }
             />
-          ))
+          )}
+        />
       )}
-    </QuranLoadView>
+    </SafeAreaView>
   );
 };

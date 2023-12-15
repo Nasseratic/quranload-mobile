@@ -1,7 +1,6 @@
 import { useContext } from "react";
-import { ActivityIndicator, Dimensions } from "react-native";
+import { ActivityIndicator, Dimensions, FlatList } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import StatsBox from "components/StatsBox";
 import { Colors } from "constants/Colors";
 import LectureBox from "components/LectureBox";
@@ -10,7 +9,6 @@ import { BookIcon, ClockIcon } from "assets/icons";
 import { Loader } from "components/Loader";
 import { i18n, t } from "locales/config";
 import AuthContext from "contexts/auth";
-import AccountNotAssociated from "components/AccountNotAssociated";
 import { useAssignments } from "hooks/queries/assignments";
 import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
@@ -20,6 +18,8 @@ import { Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
 import { fDateDashed, fMinutesDuration } from "utils/formatTime";
 import { RootStackParamList } from "navigation/navigation";
+import { SafeAreaView } from "react-native-safe-area-context";
+import NoClasses from "components/NoClasses";
 
 type Props = NativeStackScreenProps<RootStackParamList, "StudentHome">;
 
@@ -30,33 +30,37 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
   });
 
   if (isAssignmentsLoading || !user || !assignments) return <Loader />;
-
   return (
-    <QuranLoadView>
+    <SafeAreaView style={{ paddingHorizontal: 16, flex: 1 }}>
       <UserHeader />
-      {user.teams.length > 0 ? (
-        user.teams.map((team, index) => {
-          const teamAssignments = assignments[team.id];
+      <FlatList
+        data={user.teams}
+        ListEmptyComponent={<NoClasses role="student" />}
+        contentContainerStyle={{
+          gap: 16,
+          paddingTop: user.teams.length && 12,
+          paddingBottom: user.teams.length && 16,
+        }}
+        renderItem={({ item }) => {
+          const teamAssignments = assignments[item.id];
           return (
-            <Stack gap="$4" key={index}>
+            <Stack gap="$4" key={item.id}>
               <LectureBox
                 pendingAssignmentsCount={teamAssignments.length}
-                team={team}
+                team={item}
                 latestOpenAssignment={teamAssignments[0]}
-                onLecturePress={() => navigation.navigate("Assignments", { teamId: team.id })}
+                onLecturePress={() => navigation.navigate("Assignments", { teamId: item.id })}
                 onAssignmentPress={() =>
                   teamAssignments &&
                   navigation.navigate("Record", { assignment: teamAssignments[0] })
                 }
               />
-              <StatusSection teamId={team.id} />
+              <StatusSection teamId={item.id} />
             </Stack>
           );
-        })
-      ) : (
-        <AccountNotAssociated />
-      )}
-    </QuranLoadView>
+        }}
+      />
+    </SafeAreaView>
   );
 };
 

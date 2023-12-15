@@ -1,6 +1,5 @@
 import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import { i18n } from "locales/config";
 import { useFormik } from "formik";
 import ActionButton from "components/buttons/ActionBtn";
@@ -12,6 +11,9 @@ import { fetchUserProfile, updateUserProfile } from "services/profileService";
 import * as yup from "yup";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RootStackParamList } from "navigation/navigation";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppBar } from "components/AppBar";
+import { View } from "tamagui";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
@@ -55,61 +57,63 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
   });
 
   if (isLoading) return <Loader />;
-
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("profileScreen.title"),
-      }}
-    >
-      <InputField
-        label={i18n.t("profileScreen.fullNameLabel")}
-        value={formik.values.fullName}
-        touched={formik.touched.fullName}
-        error={formik.errors.fullName}
-        placeholder={formik.values.fullName}
-        onChangeText={formik.handleChange("fullName")}
-        onBlur={formik.handleBlur("fullName")}
-      />
+    <SafeAreaView>
+      <AppBar title={i18n.t("profileScreen.title")} />
+      <View gap={16} paddingHorizontal={16}>
+        <InputField
+          label={i18n.t("profileScreen.fullNameLabel")}
+          value={formik.values.fullName}
+          touched={formik.touched.fullName}
+          error={formik.errors.fullName}
+          placeholder={formik.values.fullName}
+          onChangeText={formik.handleChange("fullName")}
+          onBlur={formik.handleBlur("fullName")}
+        />
 
-      <InputField
-        label={i18n.t("profileScreen.phoneNumberLabel")}
-        value={formik.values.phoneNumber}
-        touched={formik.touched.phoneNumber}
-        error={formik.errors.phoneNumber}
-        placeholder={formik.values.phoneNumber}
-        onChangeText={formik.handleChange("phoneNumber")}
-        keyboardType="phone-pad"
-      />
+        <InputField
+          label={i18n.t("profileScreen.phoneNumberLabel")}
+          value={formik.values.phoneNumber}
+          touched={formik.touched.phoneNumber}
+          error={formik.errors.phoneNumber}
+          placeholder={formik.values.phoneNumber}
+          onChangeText={formik.handleChange("phoneNumber")}
+          keyboardType="phone-pad"
+        />
 
-      <InputField
-        label={i18n.t("profileScreen.genderLabel")}
-        value={formik.values.gender}
-        touched={formik.touched.gender}
-        error={formik.errors.gender}
-        placeholder={formik.values.gender}
-        onChangeText={formik.handleChange("gender")}
-        disabled
-      />
+        <InputField
+          label={i18n.t("profileScreen.genderLabel")}
+          value={formik.values.gender}
+          touched={formik.touched.gender}
+          error={formik.errors.gender}
+          placeholder={formik.values.gender}
+          onChangeText={formik.handleChange("gender")}
+          disabled
+        />
 
-      <InputField
-        label={i18n.t("profileScreen.emailLabel")}
-        value={formik.values.emailAddress}
-        touched={formik.touched.emailAddress}
-        error={formik.errors.emailAddress}
-        placeholder={formik.values.emailAddress}
-        onChangeText={formik.handleChange("emailAddress")}
-        keyboardType="email-address"
-      />
+        <InputField
+          label={i18n.t("profileScreen.emailLabel")}
+          value={formik.values.emailAddress}
+          touched={formik.touched.emailAddress}
+          error={formik.errors.emailAddress}
+          placeholder={formik.values.emailAddress}
+          onChangeText={formik.handleChange("emailAddress")}
+          keyboardType="email-address"
+        />
 
-      <TextButton
-        style={styles.advancedSettingsBtn}
-        onPress={() => navigation.navigate("AdvancedSettings")}
-      >
-        {i18n.t("profileScreen.advancedSettings")}
-      </TextButton>
-      <ActionButton disabled={!formik.isValid} onPress={formik.submitForm} title={i18n.t("save")} />
-    </QuranLoadView>
+        <TextButton
+          style={styles.advancedSettingsBtn}
+          onPress={() => navigation.navigate("AdvancedSettings")}
+        >
+          {i18n.t("profileScreen.advancedSettings")}
+        </TextButton>
+        <ActionButton
+          disabled={!formik.isValid}
+          onPress={formik.submitForm}
+          title={i18n.t("save")}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

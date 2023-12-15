@@ -108,6 +108,7 @@ const english = {
   teacherHomeScreen: {
     submitted: "Submitted",
     pagesRead: "Pages read",
+    noClasses: "You have no classes yet",
   },
   teacherStudentsListScreen: {
     title: "Students",

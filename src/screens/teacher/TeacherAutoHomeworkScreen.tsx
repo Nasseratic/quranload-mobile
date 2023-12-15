@@ -1,6 +1,5 @@
 import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import { Form, Input, Label, View, XGroup } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import LetterCheckbox from "components/forms/LetterCheckbox";
@@ -9,6 +8,8 @@ import { i18n } from "locales/config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "api/apiClient";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppBar } from "components/AppBar";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherAutoHomework">;
 
@@ -62,16 +63,14 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
   });
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("teacherAutoHW.updateAutoHW"),
-      }}
-    >
+    <SafeAreaView>
+      <AppBar title={i18n.t("teacherAutoHW.updateAutoHW")} />
       <Form
         onSubmit={() => {
           mutate();
         }}
         gap="$3.5"
+        marginHorizontal={16}
       >
         <View gap="$2">
           <Label htmlFor="pagesPerDay" unstyled>
@@ -125,6 +124,6 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
           <ActionButton title={i18n.t("save")} isLoading={isLoading} />
         </Form.Trigger>
       </Form>
-    </QuranLoadView>
+    </SafeAreaView>
   );
 };

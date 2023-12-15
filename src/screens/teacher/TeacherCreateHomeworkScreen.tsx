@@ -1,6 +1,5 @@
 import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import { Avatar, Card, Circle, Form, Label, ScrollView, TextArea, View, XStack } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import { RootStackParamList } from "navigation/navigation";
@@ -13,6 +12,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCustomAssignment } from "services/assigmentService";
 import { t } from "locales/config";
 import { useMediaPicker } from "hooks/useMediaPicker";
+import { AppBar } from "components/AppBar";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const today = new Date();
 
@@ -57,12 +58,9 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
     isLoading;
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: t("createHomework"),
-      }}
-    >
-      <Form onSubmit={handleSubmit} gap="$3.5">
+    <SafeAreaView>
+      <AppBar title={t("createHomework")} />
+      <Form onSubmit={handleSubmit} gap="$3.5" marginHorizontal={16}>
         <View gap="$2">
           <Label htmlFor="startDate" unstyled>
             {t("startDate")}
@@ -146,6 +144,6 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
           <ActionButton title={t("create")} isLoading={isLoading || isUploading} />
         </Form.Trigger>
       </Form>
-    </QuranLoadView>
+    </SafeAreaView>
   );
 };
