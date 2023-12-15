@@ -1,21 +1,33 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import { RootStackParamList } from "navigation/navigation";
 import { fetchStudentsList } from "services/teamService";
 import { useQuery } from "@tanstack/react-query";
-import { Card, Stack } from "tamagui";
+import { Card } from "tamagui";
 import Typography from "components/Typography";
 import GeneralConstants from "constants/GeneralConstants";
 import { t } from "locales/config";
 import { Colors } from "constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppBar } from "components/AppBar";
+import { User } from "types/User";
+import { FlatList } from "react-native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherStudentsList">;
 
 export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) => {
   const { teamId } = route.params;
   const { data } = useQuery(["students-list"], () => fetchStudentsList({ teamId }));
-  const students = data?.list ?? [];
+
+  const students: User[] = useMemo(() => {
+    if (data?.list) {
+      return data.list.sort(
+        (a, b) =>
+          b.percentageOfAcceptedOrSubmittedLessons - a.percentageOfAcceptedOrSubmittedLessons
+      );
+    }
+    return [];
+  }, [data?.list]);
 
   const percentageToColor = (percentage: number) => {
     if (percentage >= 80) return Colors.Success[1];
@@ -24,15 +36,19 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
   };
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: t("teacherStudentsListScreen.title"),
-      }}
-    >
-      <Stack gap={GeneralConstants.Spacing.md}>
-        {students.map((student) => (
+    <SafeAreaView>
+      <AppBar title={t("teacherStudentsListScreen.title")} />
+      <FlatList
+        data={students}
+        keyExtractor={(student) => student.id}
+        contentContainerStyle={{
+          gap: 16,
+          marginHorizontal: 16,
+          paddingBottom: 16,
+        }}
+        renderItem={({ item }) => (
           <Card
-            key={student.id}
+            key={item.id}
             paddingHorizontal={GeneralConstants.Spacing.md}
             paddingVertical={GeneralConstants.Spacing.sm}
             backgroundColor="$backgroundTransparent"
@@ -45,18 +61,17 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
             gap="$1.5"
           >
             <Typography type="Body" style={{ color: Colors.Primary[1] }}>
-              {student.fullName}
+              {item.fullName}
             </Typography>
             <Typography
               type="Body"
-              style={{ color: percentageToColor(student.percentageOfAcceptedOrSubmittedLessons) }}
+              style={{ color: percentageToColor(item.percentageOfAcceptedOrSubmittedLessons) }}
             >
-              {student.percentageOfAcceptedOrSubmittedLessons > 59 ? "+" : "-"}
-              {` ${student.percentageOfAcceptedOrSubmittedLessons}%`}
+              {` ${item.percentageOfAcceptedOrSubmittedLessons}%`}
             </Typography>
           </Card>
-        ))}
-      </Stack>
-    </QuranLoadView>
+        )}
+      />
+    </SafeAreaView>
   );
 };

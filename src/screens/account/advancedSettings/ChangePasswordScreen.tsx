@@ -1,7 +1,6 @@
 import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
-import QuranLoadView from "components/QuranLoadView";
 import InputField from "components/forms/InputField";
 import ActionButton from "components/buttons/ActionBtn";
 import { useFormik } from "formik";
@@ -10,6 +9,9 @@ import * as Yup from "yup";
 import FormErrorView from "components/forms/FormErrorView";
 import { Alert } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
+import { AppBar } from "components/AppBar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { View } from "tamagui";
 
 type Props = NativeStackScreenProps<RootStackParamList, "ChangePassword">;
 const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
@@ -50,50 +52,49 @@ const ChangePasswordScreen: FunctionComponent<Props> = ({ navigation }) => {
   });
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("changePasswordScreen.title"),
-      }}
-    >
-      <InputField
-        value={formik.values.currentPassword}
-        touched={formik.touched.currentPassword}
-        error={formik.errors.currentPassword}
-        placeholder={formik.values.currentPassword}
-        secureTextEntry={true}
-        label={i18n.t("changePasswordScreen.currentPassword")}
-        onChangeText={formik.handleChange("currentPassword")}
-        onBlur={formik.handleBlur("currentPassword")}
-      />
-      <InputField
-        value={formik.values.newPassword}
-        touched={formik.touched.newPassword}
-        error={formik.errors.newPassword}
-        placeholder={formik.values.newPassword}
-        secureTextEntry={true}
-        label={i18n.t("changePasswordScreen.newPassword")}
-        onChangeText={formik.handleChange("newPassword")}
-        onBlur={formik.handleBlur("newPassword")}
-      />
-      <InputField
-        value={formik.values.newPasswordAgain}
-        touched={formik.touched.newPasswordAgain}
-        error={formik.errors.newPasswordAgain}
-        placeholder={formik.values.newPasswordAgain}
-        secureTextEntry={true}
-        label={i18n.t("changePasswordScreen.newPasswordAgain")}
-        onChangeText={formik.handleChange("newPasswordAgain")}
-        onBlur={formik.handleBlur("newPasswordAgain")}
-      />
-      <FormErrorView error={formik.errors.error} />
+    <SafeAreaView>
+      <AppBar title={i18n.t("changePasswordScreen.title")} />
+      <View gap={16} paddingHorizontal={16}>
+        <InputField
+          value={formik.values.currentPassword}
+          touched={formik.touched.currentPassword}
+          error={formik.errors.currentPassword}
+          placeholder={formik.values.currentPassword}
+          secureTextEntry={true}
+          label={i18n.t("changePasswordScreen.currentPassword")}
+          onChangeText={formik.handleChange("currentPassword")}
+          onBlur={formik.handleBlur("currentPassword")}
+        />
+        <InputField
+          value={formik.values.newPassword}
+          touched={formik.touched.newPassword}
+          error={formik.errors.newPassword}
+          placeholder={formik.values.newPassword}
+          secureTextEntry={true}
+          label={i18n.t("changePasswordScreen.newPassword")}
+          onChangeText={formik.handleChange("newPassword")}
+          onBlur={formik.handleBlur("newPassword")}
+        />
+        <InputField
+          value={formik.values.newPasswordAgain}
+          touched={formik.touched.newPasswordAgain}
+          error={formik.errors.newPasswordAgain}
+          placeholder={formik.values.newPasswordAgain}
+          secureTextEntry={true}
+          label={i18n.t("changePasswordScreen.newPasswordAgain")}
+          onChangeText={formik.handleChange("newPasswordAgain")}
+          onBlur={formik.handleBlur("newPasswordAgain")}
+        />
+        <FormErrorView error={formik.errors.error} />
 
-      <ActionButton
-        disabled={!formik.isValid}
-        isLoading={formik.isSubmitting}
-        onPress={formik.handleSubmit}
-        title={i18n.t("changePasswordScreen.updatePassword")}
-      />
-    </QuranLoadView>
+        <ActionButton
+          disabled={!formik.isValid}
+          isLoading={formik.isSubmitting}
+          onPress={formik.handleSubmit}
+          title={i18n.t("changePasswordScreen.updatePassword")}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

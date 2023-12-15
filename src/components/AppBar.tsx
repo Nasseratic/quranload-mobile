@@ -7,7 +7,7 @@ import Typography from "./Typography";
 import { useNavigation } from "@react-navigation/native";
 import { Stack } from "tamagui";
 
-const APPBAR_HEIGHT = 50;
+const APPBAR_HEIGHT = 56;
 
 export type AppBarProps = {
   title: string;

@@ -1,7 +1,6 @@
 import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n } from "locales/config";
-import QuranLoadView from "components/QuranLoadView";
 import Typography from "components/Typography";
 import Card from "components/Card";
 import { View, Alert } from "react-native";
@@ -11,6 +10,8 @@ import { Colors } from "constants/Colors";
 import { fDate } from "utils/formatTime";
 import { cancelSubscription } from "services/profileService";
 import { RootStackParamList } from "navigation/navigation";
+import { AppBar } from "components/AppBar";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Props = NativeStackScreenProps<RootStackParamList, "CancelSubscription">;
 
@@ -30,12 +31,15 @@ const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route, navigation 
       .finally(() => setSubmitting(false));
   };
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("cancelSubscriptionScreen.title"),
-      }}
-    >
-      <Card style={{ padding: GeneralConstants.Spacing.md, gap: GeneralConstants.Spacing.xxs }}>
+    <SafeAreaView>
+      <AppBar title={i18n.t("cancelSubscriptionScreen.title")} />
+      <Card
+        style={{
+          marginHorizontal: 16,
+          padding: GeneralConstants.Spacing.md,
+          gap: GeneralConstants.Spacing.xxs,
+        }}
+      >
         <TextRow label="Name" value={subscription.teamName} />
         <TextRow label="Organization" value={subscription.organizationName} />
         <TextRow label="Start date" value={fDate(subscription.enrollmentDate)} />
@@ -50,7 +54,7 @@ const CancelSubscriptionScreen: FunctionComponent<Props> = ({ route, navigation 
           title={"Cancel subscription"}
         />
       </Card>
-    </QuranLoadView>
+    </SafeAreaView>
   );
 };
 

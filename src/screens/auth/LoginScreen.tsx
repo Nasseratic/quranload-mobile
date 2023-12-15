@@ -2,7 +2,6 @@ import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
 import { FormikProvider, useFormik } from "formik";
 import MyTextInput from "components/forms/MyTextInput";
 import ActionBtn from "components/buttons/ActionBtn";
@@ -41,7 +40,6 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
       <View style={{ alignItems: "center" }}>
         <Image source={require("../../assets/logo.png")} />
       </View>

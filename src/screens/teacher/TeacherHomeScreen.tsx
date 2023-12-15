@@ -1,6 +1,5 @@
 import { FunctionComponent } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import QuranLoadView from "components/QuranLoadView";
 import { useAuth } from "contexts/auth";
 import UserHeader from "components/UserHeader";
 import TeacherLectureBox from "components/teacher/TeacherLectureBox";
@@ -11,24 +10,35 @@ import { Colors } from "constants/Colors";
 import { t } from "locales/config";
 import { fetchTeacherStats } from "services/teacherService";
 import { useQuery } from "@tanstack/react-query";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, FlatList } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
+import { SafeAreaView } from "react-native-safe-area-context";
+import NoClasses from "components/NoClasses";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherHome">;
 
 export const TeacherHomeScreen: FunctionComponent<Props> = () => {
   const { user } = useAuth();
-
   return (
-    <QuranLoadView>
+    <SafeAreaView style={{ paddingHorizontal: 16, flex: 1 }}>
       <UserHeader />
-      {user?.teams.map((team, index) => (
-        <Stack gap="$4" key={index}>
-          <TeacherLectureBox key={index} team={team} />
-          <StatusSection teamId={team.id} />
-        </Stack>
-      ))}
-    </QuranLoadView>
+      <FlatList
+        data={user?.teams}
+        keyExtractor={(team) => team.id}
+        ListEmptyComponent={() => <NoClasses role="teacher" />}
+        contentContainerStyle={{
+          gap: 16,
+          paddingTop: user?.teams?.length && 12,
+          paddingBottom: user?.teams?.length && 16,
+        }}
+        renderItem={({ item }) => (
+          <Stack gap="$4">
+            <TeacherLectureBox team={item} />
+            <StatusSection teamId={item.id} />
+          </Stack>
+        )}
+      />
+    </SafeAreaView>
   );
 };
 

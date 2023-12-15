@@ -1,11 +1,10 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { TouchableOpacity, View } from "react-native";
 import Typography from "components/Typography";
 import { CogIcon } from "assets/icons";
 import AuthContext from "contexts/auth";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Colors } from "constants/Colors";
-import { Link, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 const UserHeader = () => {
   const navigation = useNavigation();
@@ -13,7 +12,12 @@ const UserHeader = () => {
   if (!user) return;
 
   return (
-    <View>
+    <View
+      style={{
+        paddingTop: 16,
+        paddingBottom: 4,
+      }}
+    >
       <Typography type="BodyLight" style={{ opacity: 0.5 }}>
         Assalamu alykum,
       </Typography>
