@@ -52,7 +52,7 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           gap: 16,
-          padding: 16,
+          paddingHorizontal: 16,
           paddingBottom: 24,
         }}
         ListFooterComponent={isAssignmentsLoading ? <Spinner size="large" py="$12" /> : null}
