@@ -1,7 +1,6 @@
 import { FunctionComponent } from "react";
 import { i18n, t } from "locales/config";
-import QuranLoadView from "components/QuranLoadView";
-import { Image, TouchableOpacity, View } from "react-native";
+import { Image, ImageSourcePropType, TouchableOpacity, View } from "react-native";
 import { FormikProvider, useFormik } from "formik";
 import FormErrorView from "components/forms/FormErrorView";
 import ActionBtn from "components/buttons/ActionBtn";
@@ -18,8 +17,11 @@ import GeneralConstants, { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { YSpacer } from "components/Spacer";
 import TextButton from "components/buttons/TextButton";
 import ActionButton from "components/buttons/ActionBtn";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "navigation/navigation";
+import { AppBar } from "components/AppBar";
+import { ScrollView } from "tamagui";
+import Logo from "@assets/logo.png";
 
 // min 8 characters, 1 upper case letter, 1 lower case letter, 1 special character and 1 number
 const passwordRules = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+]).{8,}$/;
@@ -66,46 +68,37 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
 
   if (data)
     return (
-      <>
-        <QuranLoadView
-          appBar={{
-            title: i18n.t("createAccount"),
-          }}
-        >
-          <View
-            style={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: 16,
-              paddingTop: 62,
-            }}
-          >
-            <View>
-              <MailBoxSvg width={SCREEN_WIDTH * 0.6} />
-              <YSpacer space={20} />
-              <Typography type="TitleHeavy" adjustsFontSizeToFit style={{ width: "100%" }}>
-                {t("registerAccountScreen.success")}
-              </Typography>
-              <Typography type="SubHeaderLight">
-                {t("registerAccountScreen.successDescription")}
-              </Typography>
-              <YSpacer space={12} />
-              <TextButton
-                disabled={isResendingVerification}
-                onPress={() => resendVerification({ email: formik.values.email })}
-              >
-                {resendVerificationData
-                  ? t("registerAccountScreen.emailResent")
-                  : t("registerAccountScreen.resendEmail")}
-              </TextButton>
-            </View>
-          </View>
-        </QuranLoadView>
+      <SafeAreaView style={{ flex: 1, justifyContent: "space-between" }}>
+        <AppBar title={i18n.t("registerAccountScreen.createAccount")} />
         <View
           style={{
-            position: "absolute",
-            width: "100%",
-            bottom: 0,
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <View>
+            <MailBoxSvg width={SCREEN_WIDTH * 0.6} />
+            <YSpacer space={20} />
+            <Typography type="TitleHeavy" adjustsFontSizeToFit style={{ width: "100%" }}>
+              {t("registerAccountScreen.success")}
+            </Typography>
+            <Typography type="SubHeaderLight">
+              {t("registerAccountScreen.successDescription")}
+            </Typography>
+            <YSpacer space={12} />
+            <TextButton
+              disabled={isResendingVerification}
+              onPress={() => resendVerification({ email: formik.values.email })}
+            >
+              {resendVerificationData
+                ? t("registerAccountScreen.emailResent")
+                : t("registerAccountScreen.resendEmail")}
+            </TextButton>
+          </View>
+        </View>
+        <View
+          style={{
             paddingHorizontal: 16,
             paddingBottom: insets.bottom + 16,
           }}
@@ -115,90 +108,88 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
             onPress={() => navigation.goBack()}
           />
         </View>
-      </>
+      </SafeAreaView>
     );
 
   return (
-    <QuranLoadView
-      appBar={{
-        title: i18n.t("createAccount"),
-      }}
-    >
-      <View style={{ alignItems: "center", marginTop: 50 }}>
-        <Image source={require("../../assets/logo.png")} />
-      </View>
-      <FormikProvider value={formik}>
-        <View style={{ gap: GeneralConstants.Spacing.md }}>
-          <InputField
-            value={formik.values.firstName}
-            touched={formik.touched.firstName}
-            error={formik.errors.firstName}
-            placeholder={formik.values.firstName}
-            label={t("registerAccountScreen.firstName")}
-            onChangeText={formik.handleChange("firstName")}
-            onBlur={formik.handleBlur("firstName")}
-          />
-
-          <InputField
-            value={formik.values.lastName}
-            touched={formik.touched.lastName}
-            error={formik.errors.lastName}
-            placeholder={formik.values.lastName}
-            label={t("registerAccountScreen.lastName")}
-            onChangeText={formik.handleChange("lastName")}
-            onBlur={formik.handleBlur("lastName")}
-          />
-
-          <InputField
-            value={formik.values.email}
-            touched={formik.touched.email}
-            error={formik.errors.email}
-            placeholder={formik.values.email}
-            label={t("registerAccountScreen.email")}
-            onChangeText={formik.handleChange("email")}
-            onBlur={formik.handleBlur("email")}
-          />
-
-          <InputField
-            value={formik.values.password}
-            touched={formik.touched.password}
-            error={formik.errors.password}
-            placeholder={formik.values.password}
-            secureTextEntry={true}
-            label={t("registerAccountScreen.password")}
-            onChangeText={formik.handleChange("password")}
-            onBlur={formik.handleBlur("password")}
-          />
-          <InputField
-            value={formik.values.confirmPassword}
-            touched={formik.touched.confirmPassword}
-            error={formik.errors.confirmPassword}
-            placeholder={formik.values.confirmPassword}
-            secureTextEntry={true}
-            label={t("registerAccountScreen.confirmPassword")}
-            onChangeText={formik.handleChange("confirmPassword")}
-            onBlur={formik.handleBlur("confirmPassword")}
-          />
+    <SafeAreaView style={{ flex: 1 }}>
+      <AppBar title={i18n.t("registerAccountScreen.createAccount")} />
+      <ScrollView contentContainerStyle={{ marginHorizontal: 16, paddingBottom: 16 }}>
+        <View style={{ alignItems: "center", marginTop: 50 }}>
+          <Image source={Logo as ImageSourcePropType} />
         </View>
-        <FormErrorView error={error as AxiosError} />
-        <View style={{ alignItems: "center", marginTop: 25 }}>
-          <ActionBtn
-            isLoading={formik.isSubmitting}
-            title={i18n.t("createAccount")}
-            onPress={formik.handleSubmit}
-          />
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{ alignItems: "center", marginTop: 15 }}
-          >
-            <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
-              {/* TODO: translate */}
-              Allerede en konto? Log ind her
-            </Typography>
-          </TouchableOpacity>
-        </View>
-      </FormikProvider>
-    </QuranLoadView>
+        <FormikProvider value={formik}>
+          <View style={{ gap: GeneralConstants.Spacing.md }}>
+            <InputField
+              value={formik.values.firstName}
+              touched={formik.touched.firstName}
+              error={formik.errors.firstName}
+              placeholder={formik.values.firstName}
+              label={t("registerAccountScreen.firstName")}
+              onChangeText={formik.handleChange("firstName")}
+              onBlur={formik.handleBlur("firstName")}
+            />
+
+            <InputField
+              value={formik.values.lastName}
+              touched={formik.touched.lastName}
+              error={formik.errors.lastName}
+              placeholder={formik.values.lastName}
+              label={t("registerAccountScreen.lastName")}
+              onChangeText={formik.handleChange("lastName")}
+              onBlur={formik.handleBlur("lastName")}
+            />
+
+            <InputField
+              value={formik.values.email}
+              touched={formik.touched.email}
+              error={formik.errors.email}
+              placeholder={formik.values.email}
+              label={t("registerAccountScreen.email")}
+              onChangeText={formik.handleChange("email")}
+              onBlur={formik.handleBlur("email")}
+            />
+
+            <InputField
+              value={formik.values.password}
+              touched={formik.touched.password}
+              error={formik.errors.password}
+              placeholder={formik.values.password}
+              secureTextEntry={true}
+              label={t("registerAccountScreen.password")}
+              onChangeText={formik.handleChange("password")}
+              onBlur={formik.handleBlur("password")}
+            />
+            <InputField
+              value={formik.values.confirmPassword}
+              touched={formik.touched.confirmPassword}
+              error={formik.errors.confirmPassword}
+              placeholder={formik.values.confirmPassword}
+              secureTextEntry={true}
+              label={t("registerAccountScreen.confirmPassword")}
+              onChangeText={formik.handleChange("confirmPassword")}
+              onBlur={formik.handleBlur("confirmPassword")}
+            />
+          </View>
+          <FormErrorView error={error as AxiosError} />
+          <View style={{ alignItems: "center", marginTop: 25 }}>
+            <ActionBtn
+              isLoading={formik.isSubmitting}
+              title={i18n.t("createAccount")}
+              onPress={formik.handleSubmit}
+            />
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{ alignItems: "center", marginTop: 15 }}
+            >
+              <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+                {t("registerAccountScreen.alreadyRegistered")}
+              </Typography>
+            </TouchableOpacity>
+          </View>
+        </FormikProvider>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

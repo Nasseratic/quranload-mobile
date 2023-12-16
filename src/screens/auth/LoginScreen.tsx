@@ -1,16 +1,17 @@
 import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
+import { Image, StyleSheet, View, TouchableOpacity, ImageSourcePropType } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FormikProvider, useFormik } from "formik";
 import MyTextInput from "components/forms/MyTextInput";
 import ActionBtn from "components/buttons/ActionBtn";
 import AuthContext from "contexts/auth";
-import { i18n } from "locales/config";
+import { t } from "locales/config";
 import FormErrorView from "components/forms/FormErrorView";
 import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
 import { RootStackParamList } from "navigation/navigation";
+import Logo from "@assets/logo.png";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -41,12 +42,12 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ alignItems: "center" }}>
-        <Image source={require("../../assets/logo.png")} />
+        <Image source={Logo as ImageSourcePropType} />
       </View>
       <FormikProvider value={formik}>
         <MyTextInput
-          placeHolder={i18n.t("username")}
-          label={i18n.t("username")}
+          placeHolder={t("loginScreen.username")}
+          label={t("loginScreen.username")}
           onChange={formik.handleChange("username")}
           onBlur={formik.handleBlur("username")}
           value={formik.values.username}
@@ -54,8 +55,8 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
           touched={formik.touched.username}
         />
         <MyTextInput
-          placeHolder={i18n.t("password")}
-          label={i18n.t("password")}
+          placeHolder={t("loginScreen.password")}
+          label={t("loginScreen.password")}
           onChange={formik.handleChange("password")}
           onBlur={formik.handleBlur("password")}
           value={formik.values.password}
@@ -66,7 +67,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
         <View style={{ alignItems: "center", marginTop: 25 }}>
           <ActionBtn
             isLoading={formik.isSubmitting}
-            title={i18n.t("signIn")}
+            title={t("loginScreen.signIn")}
             onPress={handleSubmit}
           />
           <TouchableOpacity
@@ -74,8 +75,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
             style={{ alignItems: "center", marginTop: 15 }}
           >
             <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
-              {/* TODO: translate */}
-              Glemt adgangskode?
+              {t("loginScreen.forgotPassword")}
             </Typography>
           </TouchableOpacity>
 
@@ -84,8 +84,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
             style={{ alignItems: "center", marginTop: 15 }}
           >
             <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-              {/* TODO: translate */}
-              Ikke en konto? Opret konto
+              {t("loginScreen.notRegistered")}
             </Typography>
           </TouchableOpacity>
         </View>
