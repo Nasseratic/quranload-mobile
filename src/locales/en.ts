@@ -12,7 +12,6 @@ const english = {
   signOut: "Sign out",
   username: "Username",
   password: "Password",
-  createAccount: "Create Account",
   timePerPage: "Time per page",
   pages: "Pages",
   read: "Read",
@@ -90,7 +89,15 @@ const english = {
     required: "Field required",
     validEmail: "Must be a valid email",
   },
+  loginScreen: {
+    username: "Username",
+    password: "Password",
+    signIn: "Sign In",
+    forgotPassword: "Forgot password?",
+    notRegistered: "Don't have an account?",
+  },
   registerAccountScreen: {
+    createAccount: "Create Account",
     password: "Password",
     confirmPassword: "Confirm password",
     dateOfBirth: "Date of birth",
@@ -104,6 +111,7 @@ const english = {
     resendEmail: "Resend email",
     emailResent: "Email resent",
     backToLogin: "Back to login",
+    alreadyRegistered: "Already have an account?",
   },
   teacherHomeScreen: {
     submitted: "Submitted",

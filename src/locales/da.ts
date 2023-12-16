@@ -6,7 +6,6 @@ const danish = {
   signOut: "Log ud",
   username: "Brugernavn",
   password: "Adgangskode",
-  createAccount: "Opret Konto",
   timePerPage: "Tid pr. side",
   pages: "Sider",
   read: "Læs",
