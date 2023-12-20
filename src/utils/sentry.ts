@@ -5,3 +5,5 @@ Sentry.init({
   enableInExpoDevelopment: false,
   debug: true,
 });
+
+export const captureException = SentryNative.captureException;

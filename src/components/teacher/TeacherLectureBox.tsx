@@ -2,7 +2,7 @@ import { EditIcon } from "assets/icons";
 import { TeamItem } from "components/TeamItem";
 import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
-import { Card, Circle, Separator, Stack, XStack } from "tamagui";
+import { Card, Circle, Stack, XStack } from "tamagui";
 import { Team } from "types/User";
 import { ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -10,6 +10,8 @@ import { dateNfsLocale, i18n, t } from "locales/config";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAutoAssignment } from "services/assignmentService";
 import { startOfWeek } from "date-fns";
+import PlusIcon from "components/icons/PlusIcon";
+import { actionSheet } from "components/ActionSheet";
 
 interface Props {
   team: Team;
@@ -68,72 +70,106 @@ const TeacherLectureBox = ({ team }: Props) => {
     return hasHomeWorkArray;
   };
 
-  const hasHomeWorkArray = resolveDaysRefToHasHomeWorkArray(data?.list[0]?.days ?? 0);
+  const latestAssignment = data?.list[0];
 
   const weekDays = new Array(7).fill(0).map((_, index) => {
     const date = startOfWeek(new Date(), { locale: dateNfsLocale });
     date.setDate(date.getDate() + index);
-
     return {
       day: date.toLocaleString(i18n.locale, { weekday: "narrow" })[0],
-      hasHomeWork: hasHomeWorkArray[index],
+      hasHomeWork: latestAssignment?.days
+        ? resolveDaysRefToHasHomeWorkArray(latestAssignment.days)[index]
+        : false,
     };
   });
 
   return (
-    <Card bg="white" borderWidth={1} borderColor="$gray5">
-      <Stack
-        p="$3"
-        gap="$3"
-        onPress={() =>
-          navigation.navigate("TeacherAutoHomework", {
-            assignmentId: data?.list[0]?.id || "",
-            teamId: team.id,
-            weekDays,
-            pagesPerDay: data?.list[0]?.pagesPerDay || 0,
-            startFromPage: data?.list[0]?.startFromPage || 0,
-          })
-        }
-      >
-        <XStack jc="space-between" ai="flex-start">
-          <Stack>
-            <Typography style={{ color: Colors.Primary[1] }}>
-              {t("teacherAutoHW.pagesPerDay")}: {data?.list[0]?.pagesPerDay}
-            </Typography>
-            <Typography style={{ color: Colors.Primary[1] }}>
-              {t("teacherAutoHW.nextHW")} 11-12
-            </Typography>
-          </Stack>
+    <Stack gap="$2">
+      <Card bg="white" borderWidth={1} borderColor="$gray5">
+        <Stack p="$3">
+          <TeamItem
+            team={team}
+            onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}
+          />
+        </Stack>
+      </Card>
 
-          <EditIcon color={Colors.Black[2]} />
-        </XStack>
-        <XStack gap="$2" jc="space-between">
-          {weekDays.map((day, index) => (
-            <Circle
-              key={index}
-              bw={2}
-              size="$3.5"
-              borderColor={day.hasHomeWork ? Colors.Success[1] : Colors.Black[3]}
-            >
-              <Typography
-                key={index}
-                type="SubHeaderHeavy"
-                style={{ color: day.hasHomeWork ? Colors.Primary[1] : Colors.Black[3] }}
-              >
-                {day.day}
-              </Typography>
-            </Circle>
-          ))}
-        </XStack>
-      </Stack>
-      <Separator />
-      <Stack p="$3">
-        <TeamItem
-          team={team}
-          onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}
-        />
-      </Stack>
-    </Card>
+      <Card p="$3" bg="white" borderWidth={1} borderColor="$gray5">
+        {latestAssignment ? (
+          <Stack
+            gap="$3"
+            onPress={() =>
+              navigation.navigate("TeacherAutoHomework", {
+                assignmentId: data?.list[0]?.id || "",
+                teamId: team.id,
+                weekDays,
+                pagesPerDay: data?.list[0]?.pagesPerDay,
+                startFromPage: data?.list[0]?.startFromPage,
+              })
+            }
+          >
+            <XStack jc="space-between" ai="flex-start">
+              <Stack>
+                <Typography style={{ color: Colors.Primary[1] }}>
+                  {t("teacherAutoHW.pagesPerDay")}: {data?.list[0]?.pagesPerDay}
+                </Typography>
+                <Typography style={{ color: Colors.Primary[1] }}>
+                  {t("teacherAutoHW.nextHW")} 11-12
+                </Typography>
+              </Stack>
+
+              <EditIcon color={Colors.Black[2]} />
+            </XStack>
+            <XStack gap="$2" jc="space-between">
+              {weekDays.map(({ day, hasHomeWork }, index) => (
+                <Circle
+                  key={index}
+                  bw={2}
+                  size="$3.5"
+                  borderColor={hasHomeWork ? Colors.Success[1] : Colors.Black[3]}
+                >
+                  <Typography
+                    key={index}
+                    type="SubHeaderHeavy"
+                    style={{ color: hasHomeWork ? Colors.Primary[1] : Colors.Black[3] }}
+                  >
+                    {day}
+                  </Typography>
+                </Circle>
+              ))}
+            </XStack>
+          </Stack>
+        ) : (
+          <XStack
+            onPress={() =>
+              actionSheet.show({
+                options: [
+                  {
+                    title: t("teacherHomeScreen.createAutoHomework"),
+                    onPress: () =>
+                      navigation.navigate("TeacherAutoHomework", {
+                        teamId: team.id,
+                        weekDays,
+                      }),
+                  },
+                  {
+                    title: t("teacherHomeScreen.createCustomHomework"),
+                    onPress: () =>
+                      navigation.navigate("TeacherCreateHomework", { teamId: team.id }),
+                  },
+                ],
+              })
+            }
+            pressStyle={{ opacity: 0.7 }}
+            jc="space-between"
+            ai="center"
+          >
+            <Typography type="SubHeaderLight">Create homework</Typography>
+            <PlusIcon color="black" />
+          </XStack>
+        )}
+      </Card>
+    </Stack>
   );
 };
 

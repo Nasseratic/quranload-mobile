@@ -117,6 +117,8 @@ const english = {
     submitted: "Submitted",
     pagesRead: "Pages read",
     noClasses: "You have no classes yet",
+    createCustomHomework: "Create custom homework",
+    createAutoHomework: "Create recurring quran homework",
   },
   teacherStudentsListScreen: {
     title: "Students",
@@ -129,10 +131,14 @@ const english = {
   },
   teacherAutoHW: {
     updateAutoHW: "Update auto homework",
+    createAutoHW: "Create auto homework",
     pagesPerDay: "Pages per day",
     startPage: "Start page",
     chooseDays: "Choose days",
     nextHW: "Next homework: recite pages",
+    updated: "Auto homework updated",
+    created: "Auto homework created",
   },
+  defaultError: "Something went wrong 🫠",
 };
 export default english;

@@ -4,12 +4,13 @@ import { Form, Input, Label, View, XGroup } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import LetterCheckbox from "components/forms/LetterCheckbox";
 import { RootStackParamList } from "navigation/navigation";
-import { i18n } from "locales/config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { i18n, t } from "locales/config";
 import apiClient from "api/apiClient";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppBar } from "components/AppBar";
+import { toast } from "components/Toast";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherAutoHomework">;
 
@@ -31,40 +32,47 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
   const navigation = useNavigation();
   const queryClient = useQueryClient();
 
-  const [pagesPerDayInput, setPagesPerDayInput] = useState<number | null>(pagesPerDay);
-  const [startFromPageInput, setStartFromPageInput] = useState<number | null>(startFromPage);
+  const [pagesPerDayInput, setPagesPerDayInput] = useState<number | null>(pagesPerDay ?? null);
+  const [startFromPageInput, setStartFromPageInput] = useState<number | null>(
+    startFromPage ?? null
+  );
   const [weekDaysInput, setWeekDaysInput] = useState(weekDays ?? []);
 
   const { mutate, isLoading } = useMutation({
-    mutationKey: ["PostAutoAssignmentKey"],
+    // TODO: move this to a service
     mutationFn: async () => {
-      if (assignmentId == "")
-        // create a new auto assignment
-        await apiClient.post("Assignments", {
-          pagesPerDay: pagesPerDayInput,
-          startFromPage: startFromPageInput,
-          typeId: 1, // typeId 1 is the auto assignment
-          days: calculateDaysRef(weekDaysInput),
-          teamId: teamId,
+      const body = {
+        typeId: 1, // typeId 1 is the auto assignment
+        teamId: teamId,
+        pagesPerDay: pagesPerDayInput,
+        startFromPage: startFromPageInput,
+        days: calculateDaysRef(weekDaysInput),
+      };
+
+      try {
+        if (assignmentId)
+          await apiClient.put("Assignments", {
+            id: assignmentId,
+            ...body,
+          });
+        else await apiClient.post("Assignments", body);
+        queryClient.refetchQueries(["auto-assignment"]);
+        navigation.goBack();
+        toast.show({
+          status: "Success",
+          title: assignmentId ? t("teacherAutoHW.updated") : t("teacherAutoHW.created"),
         });
-      // edit the existing auto assignment
-      else
-        await apiClient.put("Assignments", {
-          id: assignmentId,
-          pagesPerDay: pagesPerDayInput,
-          startFromPage: startFromPageInput,
-          typeId: 1, // typeId 1 is the auto assignment
-          days: calculateDaysRef(weekDaysInput),
-          teamId: teamId,
-        });
-      queryClient.refetchQueries(["auto-assignment"]);
-      navigation.goBack();
+      } catch (err) {
+        toast.reportError(err);
+      }
     },
   });
 
   return (
     <SafeAreaView>
-      <AppBar title={i18n.t("teacherAutoHW.updateAutoHW")} />
+      <AppBar
+        title={assignmentId ? t("teacherAutoHW.updateAutoHW") : t("teacherAutoHW.createAutoHW")}
+      />
       <Form
         onSubmit={() => {
           mutate();

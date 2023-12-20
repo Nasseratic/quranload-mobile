@@ -38,11 +38,11 @@ export type RootStackParamList = {
     teamId: string;
   };
   TeacherAutoHomework: {
-    assignmentId: string,
-    teamId: string,
-    weekDays: { day: string; hasHomeWork: boolean }[],
-    pagesPerDay: number,
-    startFromPage: number,
+    teamId: string;
+    weekDays: { day: string; hasHomeWork: boolean }[];
+    assignmentId?: string;
+    pagesPerDay?: number;
+    startFromPage?: number;
   };
   TeacherStudentsList: { teamId: string };
 };

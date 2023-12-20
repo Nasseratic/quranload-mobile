@@ -14,7 +14,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Audio } from "expo-av";
-import { SentryNative } from "utils/sentry";
+import { RootActionSheetContainer } from "components/ActionSheet";
+import { RootToastContainer } from "components/Toast";
 
 require("./src/locales/config");
 
@@ -43,9 +44,11 @@ function App() {
           <BottomSheetModalProvider>
             <QueryClientProvider client={queryClient}>
               <AuthProvider>
+                <RootToastContainer />
                 <Nav />
               </AuthProvider>
             </QueryClientProvider>
+            <RootActionSheetContainer />
           </BottomSheetModalProvider>
         </TamaguiProvider>
       </SafeAreaProvider>
