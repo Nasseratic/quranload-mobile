@@ -12,6 +12,7 @@ import { fetchAutoAssignment } from "services/assignmentService";
 import { startOfWeek } from "date-fns";
 import PlusIcon from "components/icons/PlusIcon";
 import { actionSheet } from "components/ActionSheet";
+import ChevronRight from "components/icons/ChevronRight";
 
 interface Props {
   team: Team;
@@ -85,13 +86,18 @@ const TeacherLectureBox = ({ team }: Props) => {
 
   return (
     <Stack gap="$2">
-      <Card bg="white" borderWidth={1} borderColor="$gray5">
-        <Stack p="$3">
-          <TeamItem
-            team={team}
-            onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}
-          />
-        </Stack>
+      <Card
+        onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}
+        p="$3"
+        bg="white"
+        borderWidth={1}
+        borderColor="$gray5"
+        pressStyle={{ opacity: 0.7 }}
+      >
+        <XStack jc="space-between" ai="center">
+          <TeamItem team={team} />
+          <ChevronRight color={Colors.Black[2]} size={22} />
+        </XStack>
       </Card>
 
       <Card p="$3" bg="white" borderWidth={1} borderColor="$gray5">
@@ -100,21 +106,21 @@ const TeacherLectureBox = ({ team }: Props) => {
             gap="$3"
             onPress={() =>
               navigation.navigate("TeacherAutoHomework", {
-                assignmentId: data?.list[0]?.id || "",
+                assignmentId: latestAssignment?.id || "",
                 teamId: team.id,
                 weekDays,
-                pagesPerDay: data?.list[0]?.pagesPerDay,
-                startFromPage: data?.list[0]?.startFromPage,
+                pagesPerDay: latestAssignment?.pagesPerDay,
+                startFromPage: latestAssignment?.startFromPage,
               })
             }
           >
             <XStack jc="space-between" ai="flex-start">
               <Stack>
                 <Typography style={{ color: Colors.Primary[1] }}>
-                  {t("teacherAutoHW.pagesPerDay")}: {data?.list[0]?.pagesPerDay}
+                  {t("teacherAutoHW.startPage")} {latestAssignment?.startFromPage}
                 </Typography>
                 <Typography style={{ color: Colors.Primary[1] }}>
-                  {t("teacherAutoHW.nextHW")} 11-12
+                  {t("teacherAutoHW.pagesPerDay")}: {latestAssignment?.pagesPerDay}
                 </Typography>
               </Stack>
 
