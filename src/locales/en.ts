@@ -130,14 +130,14 @@ const english = {
     s: "s",
   },
   teacherAutoHW: {
-    updateAutoHW: "Update auto homework",
-    createAutoHW: "Create auto homework",
+    updateAutoHW: "Update recurring homework",
+    createAutoHW: "Create recurring homework",
     pagesPerDay: "Pages per day",
     startPage: "Start page",
     chooseDays: "Choose days",
     nextHW: "Next homework: recite pages",
-    updated: "Auto homework updated",
-    created: "Auto homework created",
+    updated: "Recurring homework updated",
+    created: "Recurring homework created",
   },
   defaultError: "Something went wrong 🫠",
 };
