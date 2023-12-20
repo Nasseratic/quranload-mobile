@@ -26,7 +26,7 @@ Audio.setAudioModeAsync({
 // Create a client
 const queryClient = new QueryClient();
 
-void SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync();
 
 function App() {
   const [fontsLoaded] = useFonts({

@@ -56,12 +56,15 @@ export const AuthProvider = ({ children }: Props) => {
         setUser(res);
         setSignedIn(true);
       })
-      .catch((_) => {
+      .catch(() => {
         setSignedIn(false);
       })
-      .finally(async () => {
+      .finally(() => {
         setInitialized(true);
-        await SplashScreen.hideAsync();
+        // a delay to not show login screen for already logged in users
+        setTimeout(() => {
+          SplashScreen.hideAsync();
+        }, 300);
       });
   };
   const signOut = async () => {

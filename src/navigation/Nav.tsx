@@ -44,7 +44,7 @@ const Nav = () => {
       if (accessToken) {
         handleSignIn();
       } else {
-        await SplashScreen.hideAsync();
+        SplashScreen.hideAsync();
       }
     }
 
