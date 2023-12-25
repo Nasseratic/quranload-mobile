@@ -139,6 +139,10 @@ const english = {
     updated: "Recurring homework updated",
     created: "Recurring homework created",
   },
+  submissionScreen: {
+    deleteAssignment: "Delete assignment",
+    deleteAssignmentDescription: "Are you sure you want to delete this assignment?",
+  },
   defaultError: "Something went wrong 🫠",
 };
 export default english;

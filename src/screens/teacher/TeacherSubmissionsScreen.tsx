@@ -9,7 +9,7 @@ import { Spinner } from "tamagui";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Lessons_Dto_LessonSubmissionDto } from "__generated/apiTypes";
-import { FlatList } from "react-native";
+import { Alert, FlatList } from "react-native";
 import { IconButton } from "components/buttons/IconButton";
 import { BinIcon } from "components/icons/BinIcon";
 import { Colors } from "constants/Colors";
@@ -50,12 +50,29 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
             size="md"
             icon={<BinIcon size={20} color={Colors.Black[2]} />}
             onPress={async () => {
-              try {
-                await mutateAsync(homework.assignmentId);
-                queryClient.refetchQueries(["assignments"]);
-              } catch (e) {
-                toast.reportError(e);
-              }
+              Alert.prompt(
+                t("submissionScreen.deleteAssignment"),
+                t("submissionScreen.deleteAssignmentDescription"),
+                [
+                  {
+                    text: t("cancel"),
+                    style: "cancel",
+                  },
+                  {
+                    text: t("delete"),
+                    style: "destructive",
+                    onPress: async () => {
+                      try {
+                        await mutateAsync(homework.assignmentId);
+                        queryClient.refetchQueries(["assignments"]);
+                      } catch (e) {
+                        toast.reportError(e);
+                      }
+                    },
+                  },
+                ],
+                "default"
+              );
             }}
           />
         }
