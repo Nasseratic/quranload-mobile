@@ -4,8 +4,8 @@ import { Team } from "types/User";
 import Typography from "./Typography";
 import { Colors } from "constants/Colors";
 
-export const TeamItem = ({ team, onPress }: { team: Team; onPress?: () => void }) => (
-  <XStack gap="$4" onPress={onPress} pressStyle={{ opacity: 0.4 }}>
+export const TeamItem = ({ team }: { team: Team }) => (
+  <XStack gap="$4">
     <Avatar circular size="$5">
       {team.organizationLogo.includes("http") && <Avatar.Image src={team.organizationLogo} />}
       <Avatar.Fallback bc="$gray5" jc="center" ai="center">
