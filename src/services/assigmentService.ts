@@ -21,3 +21,6 @@ export enum AssignmentTypeEnum {
 
 export const createCustomAssignment = async (assignment: CreateAssignmentInput) =>
   apiClient.post("Assignments", { ...assignment, typeId: AssignmentTypeEnum.Custom });
+
+export const deleteAssignment = async (assignmentId: string) =>
+  apiClient.delete(`Assignments/${assignmentId}`);
