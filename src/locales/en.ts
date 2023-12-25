@@ -18,6 +18,7 @@ const english = {
   cancel: "Cancel",
   delete: "Delete",
   feedback: "Feedback",
+  handedIn: "Handed in",
   enable: "Enable",
   discard: "Discard",
   enableNotifications: "Enable Notifications",

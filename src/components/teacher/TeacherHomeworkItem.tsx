@@ -64,16 +64,15 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
           </Stack>
         </Stack>
         {homework && (
-          <Stack flexDirection="row" gap="$1" alignItems="center">
+          <Stack flexDirection="row" gap={5} alignItems="center">
             <Typography type="CaptionHeavy" style={{ color: handedInColor }}>
-              Handed in {homework.totalSubmittedStudents}/{homework.totalRegisteredStudents}
+              {t("handedIn")} {homework.totalSubmittedStudents}/{homework.totalRegisteredStudents}
             </Typography>
             <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-              {" "}
-              ·{" "}
+              ·
             </Typography>
             <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-              Feedback {homework.totalFeedbackStudents}/{homework.totalRegisteredStudents}
+              {t("feedback")} {homework.totalFeedbackStudents}/{homework.totalRegisteredStudents}
             </Typography>
           </Stack>
         )}
