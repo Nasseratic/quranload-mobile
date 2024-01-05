@@ -42,7 +42,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
               <LottieView
                 source={EmptyFolderLottie}
                 autoPlay
-                loop
+                loop={false}
                 style={{ width: 300, height: 300, alignSelf: "center" }}
               />
               <Typography type="SubHeaderHeavy">{t("assignmentScreen.empty")}</Typography>
