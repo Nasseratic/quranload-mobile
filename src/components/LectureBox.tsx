@@ -7,12 +7,12 @@ import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
 import { Team } from "types/User";
 import { Assignment } from "hooks/queries/assignments";
+import { useNavigation } from "@react-navigation/native";
 
 interface Props {
   team: Team;
   latestOpenAssignment?: Assignment;
   onLecturePress: () => void;
-  onAssignmentPress?: () => void;
   pendingAssignmentsCount: number;
 }
 
@@ -20,9 +20,10 @@ const LectureBox = ({
   team,
   latestOpenAssignment,
   onLecturePress,
-  onAssignmentPress,
   pendingAssignmentsCount,
 }: Props) => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.lecture} onPress={onLecturePress}>
@@ -48,7 +49,10 @@ const LectureBox = ({
         </View>
       </TouchableOpacity>
       {latestOpenAssignment && (
-        <TouchableOpacity style={styles.assignment} onPress={onAssignmentPress}>
+        <TouchableOpacity
+          style={styles.assignment}
+          onPress={() => navigation.navigate("Record", { assignment: latestOpenAssignment })}
+        >
           <AssignmentStatusCheckbox status={latestOpenAssignment.status} />
           <Typography type="BodyLight">{latestOpenAssignment.description}</Typography>
           <ChevronRightIcon

@@ -48,6 +48,8 @@ const english = {
     pending: "Pending",
     page: "Page",
     outOf: "out of",
+    empty: "You have no homework yet",
+    emptyDescription: "Homework will appear here when your teacher assigns you some",
   },
   advancedSettingsScreen: {
     title: "Advanced settings",

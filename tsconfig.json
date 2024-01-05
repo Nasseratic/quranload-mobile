@@ -4,6 +4,7 @@
     "strict": true,
     "baseUrl": ".",
     "checkJs": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "*": ["src/*"],
       "@assets/*": ["src/assets/*"],

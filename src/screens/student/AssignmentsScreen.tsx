@@ -9,8 +9,11 @@ import { useAssignments } from "hooks/queries/assignments";
 import { RootStackParamList } from "navigation/navigation";
 import { SafeView } from "components/SafeView";
 import { AppBar } from "components/AppBar";
-import { Spinner } from "tamagui";
-
+import { Spinner, Stack } from "tamagui";
+import LottieView from "lottie-react-native";
+import Typography from "components/Typography";
+import { Colors } from "constants/Colors";
+import EmptyFolderLottie from "assets/lottie/empty.json";
 const tabs = ["pending", "all"] as const;
 
 type Props = NativeStackScreenProps<RootStackParamList, "Assignments">;
@@ -33,6 +36,25 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
             onPress={() => navigation.navigate("Record", { assignment: item })}
           />
         )}
+        ListEmptyComponent={
+          isAssignmentsLoading ? null : (
+            <Stack jc="center" ai="center">
+              <LottieView
+                source={EmptyFolderLottie}
+                autoPlay
+                loop
+                style={{ width: 300, height: 300, alignSelf: "center" }}
+              />
+              <Typography type="SubHeaderHeavy">{t("assignmentScreen.empty")}</Typography>
+              <Typography
+                type="CaptionLight"
+                style={{ width: "80%", textAlign: "center", color: Colors.Black[2] }}
+              >
+                {t("assignmentScreen.emptyDescription")}
+              </Typography>
+            </Stack>
+          )
+        }
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           gap: 16,

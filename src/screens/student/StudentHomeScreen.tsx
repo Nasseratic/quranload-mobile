@@ -14,7 +14,7 @@ import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentStatistics } from "services/profileService";
-import { Stack, XStack, YStack } from "tamagui";
+import { Card, Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
 import { fDateDashed, fMinutesDuration } from "utils/formatTime";
 import { RootStackParamList } from "navigation/navigation";
@@ -46,14 +46,10 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
           return (
             <Stack gap="$4" key={item.id}>
               <LectureBox
-                pendingAssignmentsCount={teamAssignments.length}
+                pendingAssignmentsCount={teamAssignments?.length ?? 0}
                 team={item}
-                latestOpenAssignment={teamAssignments[0]}
+                latestOpenAssignment={teamAssignments?.[0]}
                 onLecturePress={() => navigation.navigate("Assignments", { teamId: item.id })}
-                onAssignmentPress={() =>
-                  teamAssignments &&
-                  navigation.navigate("Record", { assignment: teamAssignments[0] })
-                }
               />
               <StatusSection teamId={item.id} />
             </Stack>
@@ -65,7 +61,16 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
 };
 
 const StatusSection = ({ teamId }: { teamId: string }) => {
-  const { data, isLoading } = useQuery(["student-stats"], () => fetchStudentStatistics({ teamId }));
+  const { data, isLoading, error } = useQuery(["student-stats"], () =>
+    fetchStudentStatistics({ teamId })
+  );
+
+  if (error)
+    return (
+      <Card p={16} bg={Colors["Error"][1]}>
+        <Typography style={{ color: "white" }}>{t("defaultError")}</Typography>
+      </Card>
+    );
 
   if (isLoading || !data) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
 
