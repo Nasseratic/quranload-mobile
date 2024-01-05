@@ -42,11 +42,13 @@ const LectureBox = ({
             {team.organizationName}
           </Typography>
         </View>
-        <View style={styles.lectureMissingAssignments}>
-          <Typography type="SmallHeavy" style={{ color: Colors.White[1] }}>
-            {pendingAssignmentsCount}
-          </Typography>
-        </View>
+        {pendingAssignmentsCount > 0 && (
+          <View style={styles.lectureMissingAssignments}>
+            <Typography type="SmallHeavy" style={{ color: Colors.White[1] }}>
+              {pendingAssignmentsCount}
+            </Typography>
+          </View>
+        )}
       </TouchableOpacity>
       {latestOpenAssignment && (
         <TouchableOpacity
