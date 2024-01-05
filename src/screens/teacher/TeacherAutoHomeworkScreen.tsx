@@ -70,9 +70,7 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
 
   return (
     <SafeAreaView>
-      <AppBar
-        title={assignmentId ? t("teacherAutoHW.updateAutoHW") : t("teacherAutoHW.createAutoHW")}
-      />
+      <AppBar title={t("teacherAutoHW.recurringHomework")} />
       <Form
         onSubmit={() => {
           mutate();

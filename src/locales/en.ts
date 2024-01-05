@@ -139,8 +139,7 @@ const english = {
     s: "s",
   },
   teacherAutoHW: {
-    updateAutoHW: "Update recurring homework",
-    createAutoHW: "Create recurring homework",
+    recurringHomework: "Recurring homework",
     pagesPerDay: "Pages per day",
     startPage: "Start page",
     chooseDays: "Choose days",
