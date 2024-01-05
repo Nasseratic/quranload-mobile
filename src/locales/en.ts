@@ -48,8 +48,11 @@ const english = {
     pending: "Pending",
     page: "Page",
     outOf: "out of",
-    empty: "You have no homework yet",
-    emptyDescription: "Homework will appear here when your teacher assigns you some",
+    empty: "No homework yet",
+    emptyDescriptionStudent:
+      "Homework from your teachers will appear here when they assign them to you",
+    emptyDescriptionTeacher:
+      "You haven't created any homework yet. You can view all homework you've created here as well as recurring homework",
   },
   advancedSettingsScreen: {
     title: "Advanced settings",

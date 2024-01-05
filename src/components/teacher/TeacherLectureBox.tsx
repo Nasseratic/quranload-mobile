@@ -170,7 +170,7 @@ const TeacherLectureBox = ({ team }: Props) => {
             jc="space-between"
             ai="center"
           >
-            <Typography type="SubHeaderLight">Create homework</Typography>
+            <Typography type="SubHeaderLight">{t("createHomework")}</Typography>
             <PlusIcon color="black" />
           </XStack>
         )}
