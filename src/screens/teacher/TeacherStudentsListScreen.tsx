@@ -3,7 +3,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "navigation/navigation";
 import { fetchStudentsList } from "services/teamService";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "tamagui";
+import { Card, Spinner } from "tamagui";
 import Typography from "components/Typography";
 import GeneralConstants from "constants/GeneralConstants";
 import { t } from "locales/config";
@@ -12,20 +12,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppBar } from "components/AppBar";
 import { User } from "types/User";
 import { FlatList } from "react-native";
+import { EmptyState } from "components/EmptyState";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherStudentsList">;
 
 export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) => {
   const { teamId } = route.params;
-  const { data } = useQuery(["students-list"], () => fetchStudentsList({ teamId }));
+  const { data, isLoading } = useQuery(["students-list"], () => fetchStudentsList({ teamId }));
 
   const students: User[] = useMemo(() => {
-    if (data?.list) {
-      return data.list.sort(
-        (a, b) =>
-          b.percentageOfAcceptedOrSubmittedLessons - a.percentageOfAcceptedOrSubmittedLessons
-      );
-    }
+    // if (data?.list) {
+    //   return data.list.sort(
+    //     (a, b) =>
+    //       b.percentageOfAcceptedOrSubmittedLessons - a.percentageOfAcceptedOrSubmittedLessons
+    //   );
+    // }
     return [];
   }, [data?.list]);
 
@@ -46,6 +47,15 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
           marginHorizontal: 16,
           paddingBottom: 16,
         }}
+        ListEmptyComponent={
+          isLoading ? null : (
+            <EmptyState
+              title={t("teacherStudentsListScreen.empty")}
+              description={t("teacherStudentsListScreen.emptyDescription")}
+            />
+          )
+        }
+        ListFooterComponent={isLoading ? <Spinner py="$12" size="large" /> : null}
         renderItem={({ item }) => (
           <Card
             key={item.id}

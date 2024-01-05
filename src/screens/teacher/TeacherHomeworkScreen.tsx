@@ -43,7 +43,7 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
       />
 
       <FlatList
-        data={currentTeamAssignments?.slice(0, 0)}
+        data={currentTeamAssignments}
         renderItem={({ item }) => (
           <TeacherHomeworkItem
             homework={item}

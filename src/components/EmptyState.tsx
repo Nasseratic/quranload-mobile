@@ -13,7 +13,7 @@ export const EmptyState = ({
   title: string;
   description: string;
 }>) => (
-  <Stack ai="center">
+  <Stack ai="center" gap="$2">
     <LottieView
       source={EmptyFolderLottie}
       autoPlay
@@ -23,7 +23,7 @@ export const EmptyState = ({
     <Typography type="SubHeaderHeavy">{title}</Typography>
     <Typography
       type="CaptionLight"
-      style={{ width: "90%", textAlign: "center", color: Colors.Black[2] }}
+      style={{ width: "85%", textAlign: "center", color: Colors.Black[2] }}
     >
       {description}
     </Typography>

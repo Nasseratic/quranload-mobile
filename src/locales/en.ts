@@ -128,6 +128,9 @@ const english = {
   },
   teacherStudentsListScreen: {
     title: "Students",
+    empty: "No students registered yet",
+    emptyDescription:
+      "Students will appear here when they are assigned to your class, as well as the completeness of their homework",
   },
   createHomework: "Create homework",
   time: {
