@@ -23,7 +23,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
 
   const teamAssignments = assignments?.[route.params.teamId];
   return (
-    <SafeView>
+    <SafeView side="top" f={1}>
       <AppBar title={t("assignmentScreen.title")} />
       <FlatList
         data={teamAssignments}
@@ -45,6 +45,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
         contentContainerStyle={{
           gap: 16,
           paddingHorizontal: 16,
+          paddingBottom: 40,
         }}
         ListHeaderComponent={
           <TabBox

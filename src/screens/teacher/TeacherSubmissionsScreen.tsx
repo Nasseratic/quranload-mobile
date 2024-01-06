@@ -7,7 +7,6 @@ import { fetchLessonDetails } from "services/lessonsService";
 import { t } from "locales/config";
 import { Spinner } from "tamagui";
 import { AppBar } from "components/AppBar";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Lessons_Dto_LessonSubmissionDto } from "__generated/apiTypes";
 import { Alert, FlatList } from "react-native";
 import { IconButton } from "components/buttons/IconButton";
@@ -15,6 +14,7 @@ import { BinIcon } from "components/icons/BinIcon";
 import { Colors } from "constants/Colors";
 import { deleteAssignment } from "services/assigmentService";
 import { toast } from "components/Toast";
+import { SafeView } from "components/SafeView";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherSubmissions">;
 export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
@@ -38,7 +38,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
   }, [data?.lessonSubmissions]);
 
   return (
-    <SafeAreaView>
+    <SafeView side="top" f={1}>
       <AppBar
         title={
           (homework.startPage && homework.endPage
@@ -86,7 +86,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
           contentContainerStyle={{
             gap: 16,
             marginHorizontal: 16,
-            paddingBottom: 16,
+            paddingBottom: 40,
           }}
           renderItem={({ item }) => (
             <TeacherSubmissionItem
@@ -105,6 +105,6 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
           )}
         />
       )}
-    </SafeAreaView>
+    </SafeView>
   );
 };

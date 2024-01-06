@@ -23,7 +23,7 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
   const currentTeamAssignments = assignments?.[teamId];
 
   return (
-    <SafeView>
+    <SafeView side="top" f={1}>
       <AppBar
         title={t("assignmentScreen.title")}
         rightComponent={
@@ -71,7 +71,7 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
         contentContainerStyle={{
           gap: 16,
           paddingHorizontal: 16,
-          paddingBottom: 24,
+          paddingBottom: 40,
         }}
         ListFooterComponent={isAssignmentsLoading ? <Spinner size="large" py="$12" /> : null}
       />
