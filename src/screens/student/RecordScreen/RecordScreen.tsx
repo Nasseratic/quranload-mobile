@@ -155,7 +155,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             data={carouselItems}
             width={SCREEN_WIDTH}
             height={(IS_IOS ? 40 : 90) + insets.bottom}
-            renderItem={({ item }) =>
+            renderItem={({ item, index }) =>
               item === "RECORDER" ? (
                 <RecordingScreenRecorder
                   lessonId={lessonId}
@@ -181,7 +181,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                   }}
                 />
               ) : (
-                <AudioPlayer uri={item} />
+                <AudioPlayer uri={item} isVisible={index === carouselIndex} />
               )
             }
             ref={carouselRef}

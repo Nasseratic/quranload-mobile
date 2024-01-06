@@ -13,7 +13,7 @@ import { IconButton } from "./buttons/IconButton";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 
-export const AudioPlayer = memo(({ uri }: { uri: string }) => {
+export const AudioPlayer = memo(({ uri, isVisible }: { uri: string; isVisible: boolean }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [durationSec, setDurationSec] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -93,38 +93,40 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       bg="white"
       width={SCREEN_WIDTH}
     >
-      <YStack w={SCREEN_WIDTH - 32} gap="$1.5">
-        {/* @ts-expect-error */}
-        <Slider
-          step={1}
-          max={100}
-          min={0}
-          onSlideMove={(_, value) => updateValue(value)}
-          onSlideStart={(_, value) => updateValue(value)}
-          onSlideEnd={(_, value) => {
-            updateValue(value);
-            sound?.setPositionAsync(convertPresentToPosition(value, durationSec) * 1000);
-            if (wasPlaying.current) {
-              sound?.playAsync();
-              wasPlaying.current = false;
-            }
-          }}
-          value={[convertPositionToPresent(positionSec, durationSec)]}
-        >
-          <Slider.Track w="100%" f={1} maxHeight={3} hitSlop={20}>
-            <Slider.TrackActive />
-          </Slider.Track>
-          <Slider.Thumb size={12} bg="black" borderWidth={0} circular index={0} />
-        </Slider>
-        <XStack gap="$3" jc="space-between" alignItems="center" w="100%">
-          <Text style={{ color: Colors.Black[2] }}>
-            {formatAudioDuration(Math.floor(positionSec))}
-          </Text>
-          <Text style={{ color: Colors.Black[2] }}>
-            {formatAudioDuration(Math.floor(durationSec))}
-          </Text>
-        </XStack>
-      </YStack>
+      {isVisible && (
+        <YStack w={SCREEN_WIDTH - 32} gap="$1.5">
+          {/* @ts-expect-error */}
+          <Slider
+            step={1}
+            max={100}
+            min={0}
+            onSlideMove={(_, value) => updateValue(value)}
+            onSlideStart={(_, value) => updateValue(value)}
+            onSlideEnd={(_, value) => {
+              updateValue(value);
+              sound?.setPositionAsync(convertPresentToPosition(value, durationSec) * 1000);
+              if (wasPlaying.current) {
+                sound?.playAsync();
+                wasPlaying.current = false;
+              }
+            }}
+            value={[convertPositionToPresent(positionSec, durationSec)]}
+          >
+            <Slider.Track w="100%" f={1} maxHeight={3} hitSlop={20}>
+              <Slider.TrackActive />
+            </Slider.Track>
+            <Slider.Thumb size={12} bg="black" borderWidth={0} circular index={0} />
+          </Slider>
+          <XStack gap="$3" jc="space-between" alignItems="center" w="100%">
+            <Text style={{ color: Colors.Black[2] }}>
+              {formatAudioDuration(Math.floor(positionSec))}
+            </Text>
+            <Text style={{ color: Colors.Black[2] }}>
+              {formatAudioDuration(Math.floor(durationSec))}
+            </Text>
+          </XStack>
+        </YStack>
+      )}
       <XStack
         style={{
           transform: [{ translateY: -12 }],
@@ -185,7 +187,11 @@ const cleanAndCreateRecordingsDir = () =>
 // clean when app starts
 cleanAndCreateRecordingsDir();
 
+const downloadedAudioFiles: { [key: string]: string } = {};
+
 const downloadAudio = async (uri: string) => {
+  if (downloadedAudioFiles[uri]) return downloadedAudioFiles[uri];
+
   const token = (await AsyncStorage.getItem("accessToken")) ?? "";
   const file = await FileSystem.downloadAsync(
     uri,
@@ -197,5 +203,6 @@ const downloadAudio = async (uri: string) => {
     }
   );
 
+  downloadedAudioFiles[uri] = file.uri;
   return file.uri;
 };
