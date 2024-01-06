@@ -93,7 +93,7 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       p="$4"
       bg="white"
     >
-      <YStack w="100%" gap="$0.5">
+      <YStack w="100%" gap="$1.5">
         {/* @ts-expect-error */}
         <Slider
           step={1}
