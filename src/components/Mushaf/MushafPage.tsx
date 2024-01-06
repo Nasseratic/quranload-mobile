@@ -1,16 +1,10 @@
-import { Text, View } from "react-native";
-import * as Font from "expo-font";
-import React, { useCallback, useState } from "react";
+import { View } from "react-native";
+import React, { useMemo } from "react";
 import { FontMap } from "utils/FontMap";
-import { MushafPageSurahHeader } from "components/Mushaf/MushafPageSurahHeader";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
-import { BsmlSvg } from "components/svgs/BsmlSvg";
-import { match, P } from "ts-pattern";
 import { Loader } from "components/Loader";
 import QuranPages from "assets/data/preprocessedQuranPages.json";
-import { XSpacer } from "components/Spacer";
-
-const lineExtraWidthMap: Record<number, number> = {};
+import { Canvas, useFont, Text as SkText } from "@shopify/react-native-skia";
 
 const QURAN_PAGE_PADDING = 12;
 
@@ -18,117 +12,62 @@ const APPBAR_HEIGHT = 54;
 
 const QURAN_PAGE_WIDTH = SCREEN_WIDTH - QURAN_PAGE_PADDING * 2;
 
+const fontSize = 22;
 export function MushafPage({ pageNumber }: { pageNumber: number }) {
-  const [fontsLoaded] = Font.useFonts({
-    [`page${pageNumber}`]: FontMap[`${pageNumber}` as keyof typeof FontMap],
-  });
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const skFont = useFont(FontMap[`${pageNumber}` as keyof typeof FontMap], fontSize);
 
-  const [isLayoutReady, setIsLayoutReady] = useState(false);
+  const lines = useMemo(
+    () =>
+      Object.values(QuranPages[`${pageNumber}` as keyof typeof QuranPages]).map(
+        // reverse the lines to make it RTL
+        (line) => line.slice().reverse()
+      ),
+    [pageNumber]
+  );
 
-  const onLayoutRootView = useCallback(() => {
-    if (fontsLoaded) {
-      setTimeout(() => {
-        setIsLayoutReady(true);
-      }, 200);
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) return <Loader />;
-
-  const lines = QuranPages[`${pageNumber}` as keyof typeof QuranPages];
+  if (!skFont) return <Loader />;
 
   return (
     <>
       <View
         style={{
+          flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          flex: 1,
           paddingHorizontal: QURAN_PAGE_PADDING,
-          width: SCREEN_WIDTH,
           paddingTop: APPBAR_HEIGHT,
         }}
-        onLayout={onLayoutRootView}
       >
-        {Object.values(lines).map((line, i) => {
-          return (
-            <Text
-              key={i}
-              style={{
-                fontFamily: `page${pageNumber}`,
-                fontSize: 20,
-                lineHeight: pageNumber == 1 || pageNumber == 2 ? 48 : 40,
-                paddingHorizontal: 3,
-                width: QURAN_PAGE_WIDTH,
-                textAlign: "center",
-              }}
-              adjustsFontSizeToFit
-              allowFontScaling={false}
-              numberOfLines={1}
-              onLayout={(e) => {
-                if (lineExtraWidthMap[i]) return;
-                const lineWidth = e.nativeEvent.layout.width;
-                lineExtraWidthMap[i] = (QURAN_PAGE_WIDTH - lineWidth) / 2;
-              }}
-            >
-              {line.map((word, j) =>
-                match(word)
-                  .with(P.string.startsWith("SURH"), () => (
-                    <MushafPageSurahHeader
-                      key={j}
-                      width={QURAN_PAGE_WIDTH}
-                      surahNumber={parseInt(word.split("-")[1])}
-                    />
-                  ))
-                  .with("BSML", () => (
-                    <View
-                      key={j}
-                      style={{
-                        paddingTop: 5,
-                        width: QURAN_PAGE_WIDTH,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <BsmlSvg width={QURAN_PAGE_WIDTH / 2} />
-                    </View>
-                  ))
-                  .otherwise(() => {
-                    const isLast = line.length - 1 === j;
-                    const isMiddle = Math.round((line.length - 1) / 2) === j;
-                    return (
-                      <Word isMiddle={isMiddle} isLast={isLast} word={word} key={j} index={i} />
-                    );
-                  })
-              )}
-            </Text>
-          );
-        })}
+        <Canvas
+          style={{
+            width: QURAN_PAGE_WIDTH,
+            height: 38 * 15.5,
+          }}
+        >
+          {lines.map((line, i) => {
+            const wordWidths = line.map((word) => skFont?.getTextWidth(word));
+
+            const wordSpacing =
+              (QURAN_PAGE_WIDTH - (wordWidths?.reduce((a, b) => (a ?? 0) + (b ?? 0), 0) ?? 0)) /
+              (line.length - 1);
+
+            return (
+              <React.Fragment key={i}>
+                {line.map((word, j) => (
+                  <SkText
+                    key={j}
+                    font={skFont}
+                    text={word}
+                    y={(fontSize + 16) * (i + 1)}
+                    x={wordWidths.slice(0, j).reduce((a, b) => a + b + wordSpacing, 0)}
+                  />
+                ))}
+              </React.Fragment>
+            );
+          })}
+        </Canvas>
       </View>
-      {!isLayoutReady && <Loader />}
     </>
   );
 }
-
-const Word = React.memo(
-  function Word({
-    word,
-    index,
-    isLast,
-    isMiddle,
-  }: {
-    word: string;
-    index: number;
-    isLast: boolean;
-    isMiddle: boolean;
-  }) {
-    return (
-      <Text>
-        {(isMiddle || isLast) && <XSpacer space={lineExtraWidthMap[index] ?? 0} />}
-        {word}
-        {isLast ? null : <XSpacer space={2} />}
-      </Text>
-    );
-  },
-  () => true
-);
