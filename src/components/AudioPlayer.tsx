@@ -8,10 +8,10 @@ import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { Colors } from "constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { downloadAsync, documentDirectory } from "expo-file-system";
+import * as FileSystem from "expo-file-system";
 import { IconButton } from "./buttons/IconButton";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
-const downloadedAudioFiles: Record<string, string> = {};
+import { SCREEN_WIDTH } from "constants/GeneralConstants";
 
 export const AudioPlayer = memo(({ uri }: { uri: string }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -35,11 +35,7 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       if (!uri) return;
 
       const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
-      const playableUri = isRemoteFile
-        ? downloadedAudioFiles[uri] ?? (await downloadAudio(uri))
-        : uri;
-
-      downloadedAudioFiles[uri] = playableUri;
+      const playableUri = isRemoteFile ? await downloadAudio(uri) : uri;
 
       const { sound, status } = await Audio.Sound.createAsync(
         {
@@ -56,7 +52,9 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       if (!status.isLoaded) return;
       soundToClean = sound;
       setSound(sound);
-      setDurationSec((status.durationMillis ?? 0) / 1000);
+      setTimeout(() => {
+        setDurationSec((status.durationMillis ?? 0) / 1000);
+      }, 100);
     })();
     return function cleanUpSound() {
       soundToClean?.unloadAsync();
@@ -85,6 +83,7 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
   };
   return (
     <YStack
+      key={uri}
       pointerEvents="box-none"
       jc="center"
       alignItems="center"
@@ -92,25 +91,14 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       gap="$2"
       p="$4"
       bg="white"
+      width={SCREEN_WIDTH}
     >
-      <YStack w="100%" gap="$1.5">
+      <YStack w={SCREEN_WIDTH - 32} gap="$1.5">
         {/* @ts-expect-error */}
         <Slider
           step={1}
           max={100}
           min={0}
-          onValueChange={([value]) => {
-            if (!value) return;
-            const valueSec = convertPresentToPosition(value, durationSec);
-            if (valueSec < 0 || valueSec > durationSec) return;
-            setPositionSec(valueSec);
-            sound?.getStatusAsync().then((status) => {
-              if (status.isLoaded && status.isPlaying) {
-                sound?.pauseAsync();
-                wasPlaying.current = true;
-              }
-            });
-          }}
           onSlideMove={(_, value) => updateValue(value)}
           onSlideStart={(_, value) => updateValue(value)}
           onSlideEnd={(_, value) => {
@@ -178,24 +166,36 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
   );
 });
 
-const downloadAudio = async (uri: string) => {
-  const token = (await AsyncStorage.getItem("accessToken")) ?? "";
-  const file = await downloadAsync(
-    uri,
-    documentDirectory + Math.random().toString(36).substring(7) + ".mp3",
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-  return file.uri;
-};
-
 const convertPresentToPosition = (present: number, duration: number) => {
   return (present / 100) * duration;
 };
 
 const convertPositionToPresent = (position: number, duration: number) => {
   return (position / duration) * 100;
+};
+
+const recordingDir = `${FileSystem.cacheDirectory}recordings/`;
+
+// clean old files in recording dir
+const cleanAndCreateRecordingsDir = () =>
+  FileSystem.deleteAsync(recordingDir, { idempotent: true }).then(() => {
+    FileSystem.makeDirectoryAsync(recordingDir, { intermediates: true });
+  });
+
+// clean when app starts
+cleanAndCreateRecordingsDir();
+
+const downloadAudio = async (uri: string) => {
+  const token = (await AsyncStorage.getItem("accessToken")) ?? "";
+  const file = await FileSystem.downloadAsync(
+    uri,
+    recordingDir + Math.random().toString(36).substring(7) + ".mp3",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return file.uri;
 };
