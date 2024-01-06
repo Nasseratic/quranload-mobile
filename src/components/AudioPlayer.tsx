@@ -72,8 +72,10 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
     );
 
   const updateValue = (value: number) => {
-    if (value < 0 || value > durationSec) return;
-    setPositionSec(value);
+    const valueSec = convertPresentToPosition(value, durationSec);
+
+    if (valueSec < 0 || valueSec > durationSec) return;
+    setPositionSec(valueSec);
     sound?.getStatusAsync().then((status) => {
       if (status.isLoaded && status.isPlaying) {
         sound?.pauseAsync();
@@ -91,15 +93,17 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
       p="$4"
       bg="white"
     >
-      <YStack w="100%" gap="$2">
+      <YStack w="100%" gap="$0.5">
         {/* @ts-expect-error */}
         <Slider
-          step={durationSec / 100}
-          max={durationSec}
+          step={1}
+          max={100}
           min={0}
           onValueChange={([value]) => {
-            if (value < 0 || value > durationSec) return;
-            setPositionSec(value);
+            if (!value) return;
+            const valueSec = convertPresentToPosition(value, durationSec);
+            if (valueSec < 0 || valueSec > durationSec) return;
+            setPositionSec(valueSec);
             sound?.getStatusAsync().then((status) => {
               if (status.isLoaded && status.isPlaying) {
                 sound?.pauseAsync();
@@ -111,15 +115,15 @@ export const AudioPlayer = memo(({ uri }: { uri: string }) => {
           onSlideStart={(_, value) => updateValue(value)}
           onSlideEnd={(_, value) => {
             updateValue(value);
-            sound?.setPositionAsync(value * 1000);
+            sound?.setPositionAsync(convertPresentToPosition(value, durationSec) * 1000);
             if (wasPlaying.current) {
               sound?.playAsync();
               wasPlaying.current = false;
             }
           }}
-          value={[positionSec]}
+          value={[convertPositionToPresent(positionSec, durationSec)]}
         >
-          <Slider.Track w="100%" f={1} maxHeight={3}>
+          <Slider.Track w="100%" f={1} maxHeight={3} hitSlop={20}>
             <Slider.TrackActive />
           </Slider.Track>
           <Slider.Thumb size={12} bg="black" borderWidth={0} circular index={0} />
@@ -186,4 +190,12 @@ const downloadAudio = async (uri: string) => {
     }
   );
   return file.uri;
+};
+
+const convertPresentToPosition = (present: number, duration: number) => {
+  return (present / 100) * duration;
+};
+
+const convertPositionToPresent = (position: number, duration: number) => {
+  return (position / duration) * 100;
 };
