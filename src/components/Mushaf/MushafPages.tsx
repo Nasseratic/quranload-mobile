@@ -1,10 +1,10 @@
 import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MushafPage } from "./MushafPage";
 import { MushafPagesHeader } from "./MushafPagesHeader";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useState } from "react";
 import Chapters from "assets/data/chapters.json";
+import { ImageMushafPage } from "components/Mushaf/MushafPage";
 
 export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: number }) {
   const findSurahNameOfPage = (pageNumber: number) => {
@@ -55,7 +55,7 @@ export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: nu
           setSurahName(findSurahNameOfPage(pageFrom + index));
         }}
         data={Array.from({ length: pageTo - pageFrom + 1 }, (_, i) => pageFrom + i)}
-        renderItem={({ item: pageNumber }) => <MushafPage pageNumber={pageNumber} />}
+        renderItem={({ item: pageNumber }) => <ImageMushafPage pageNumber={pageNumber} />}
       />
     </SafeAreaView>
   );
