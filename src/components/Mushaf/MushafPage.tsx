@@ -1,12 +1,15 @@
 import { View } from "react-native";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { FontMap } from "utils/FontMap";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { Loader } from "components/Loader";
 import QuranPages from "assets/data/preprocessedQuranPages.json";
-import { Canvas, useFont, Text as SkText } from "@shopify/react-native-skia";
+import { Canvas, useFont, Text as SkText, Group } from "@shopify/react-native-skia";
+import { P, match } from "ts-pattern";
+import { BsmlSvg } from "components/svgs/BsmlSvg";
+import { MushafPageSurahHeader } from "./MushafPageSurahHeader";
 
-const QURAN_PAGE_PADDING = 12;
+const QURAN_PAGE_PADDING = 24;
 
 const APPBAR_HEIGHT = 54;
 
@@ -27,6 +30,19 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
   );
 
   if (!skFont) return <Loader />;
+  console.log(lines.length);
+  const BSMLHeight = (QURAN_PAGE_WIDTH / 2) * 0.14 + 12;
+  const SURHHeight = QURAN_PAGE_WIDTH * 0.12 + 12;
+  // TODO: refactor this to make more sense
+  const getLineHeight = (line: string[]) =>
+    match(line[0])
+      .with("BSML", () => BSMLHeight)
+      .with(P.string.startsWith("SURH"), () => SURHHeight)
+      .otherwise(() => fontSize + 16);
+
+  const lineYSpacing = lines.map((_, index) =>
+    lines.slice(0, index + 1).reduce((a, line) => a + getLineHeight(line), 0)
+  );
 
   return (
     <>
@@ -42,7 +58,7 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
         <Canvas
           style={{
             width: QURAN_PAGE_WIDTH,
-            height: 38 * 15.5,
+            height: lines.reduce((a, line) => a + getLineHeight(line), 32),
           }}
         >
           {lines.map((line, i) => {
@@ -53,17 +69,35 @@ export function MushafPage({ pageNumber }: { pageNumber: number }) {
               (line.length - 1);
 
             return (
-              <React.Fragment key={i}>
-                {line.map((word, j) => (
-                  <SkText
-                    key={j}
-                    font={skFont}
-                    text={word}
-                    y={(fontSize + 16) * (i + 1)}
-                    x={wordWidths.slice(0, j).reduce((a, b) => a + b + wordSpacing, 0)}
-                  />
-                ))}
-              </React.Fragment>
+              <Group key={i}>
+                {line.map((word, j) =>
+                  match(word)
+                    .with(P.string.startsWith("SURH"), () => (
+                      <Group key={j}>
+                        <MushafPageSurahHeader
+                          y={lineYSpacing[i]!}
+                          width={QURAN_PAGE_WIDTH}
+                          surahNumber={parseInt(word.split("-")[1]!)}
+                        />
+                      </Group>
+                    ))
+                    .with("BSML", () => (
+                      <Group key={j} transform={[{ translateX: QURAN_PAGE_WIDTH / 4 }]}>
+                        <BsmlSvg y={lineYSpacing[i]!} width={QURAN_PAGE_WIDTH / 2} />
+                      </Group>
+                    ))
+
+                    .otherwise(() => (
+                      <SkText
+                        key={j}
+                        font={skFont}
+                        text={word}
+                        y={lineYSpacing[i]}
+                        x={wordWidths.slice(0, j).reduce((a, b) => a + b + wordSpacing, 0)}
+                      />
+                    ))
+                )}
+              </Group>
             );
           })}
         </Canvas>
