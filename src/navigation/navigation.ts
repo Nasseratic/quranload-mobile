@@ -45,6 +45,7 @@ export type RootStackParamList = {
     startFromPage?: number;
   };
   TeacherStudentsList: { teamId: string };
+  Mushaf: undefined;
 };
 
 declare global {

@@ -25,6 +25,7 @@ import { useAuth } from "contexts/auth";
 import { NotificationsBottomSheet } from "components/NotificationsBottomSheet";
 import { TeacherStudentsListScreen } from "screens/teacher/TeacherStudentsListScreen";
 import { RootStackParamList } from "./navigation";
+import { MushafScreen } from "screens/mushuf/MushafScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -99,6 +100,7 @@ const Nav = () => {
               <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
             </>
           )}
+          <Stack.Screen name="Mushaf" component={MushafScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </>

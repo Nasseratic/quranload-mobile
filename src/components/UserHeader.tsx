@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, TouchableOpacity, View } from "react-native";
 import Typography from "components/Typography";
 import { CogIcon } from "assets/icons";
 import AuthContext from "contexts/auth";
@@ -18,9 +18,15 @@ const UserHeader = () => {
         paddingBottom: 4,
       }}
     >
-      <Typography type="BodyLight" style={{ opacity: 0.5 }}>
-        Assalamu alykum,
-      </Typography>
+      <Pressable
+        onLongPress={() => {
+          navigation.navigate("Mushaf");
+        }}
+      >
+        <Typography type="BodyLight" style={{ opacity: 0.5 }}>
+          Assalamu alykum,
+        </Typography>
+      </Pressable>
       <View
         style={{
           flexDirection: "row",
