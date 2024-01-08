@@ -7,6 +7,7 @@ export type User = {
   dateOfBirth: Date;
   teams: Team[];
   roles: UserRole[];
+  username?: string;
   percentageOfAcceptedOrSubmittedLessons: number;
 };
 

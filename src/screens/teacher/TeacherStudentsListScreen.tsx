@@ -21,13 +21,12 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
   const { data, isLoading } = useQuery(["students-list"], () => fetchStudentsList({ teamId }));
 
   const students: User[] = useMemo(() => {
-    // if (data?.list) {
-    //   return data.list.sort(
-    //     (a, b) =>
-    //       b.percentageOfAcceptedOrSubmittedLessons - a.percentageOfAcceptedOrSubmittedLessons
-    //   );
-    // }
-    return [];
+    return (
+      data?.list?.sort(
+        (a, b) =>
+          b.percentageOfAcceptedOrSubmittedLessons - a.percentageOfAcceptedOrSubmittedLessons
+      ) ?? []
+    );
   }, [data?.list]);
 
   const percentageToColor = (percentage: number) => {
@@ -71,13 +70,13 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
             gap="$1.5"
           >
             <Typography type="Body" style={{ color: Colors.Primary[1] }}>
-              {item.fullName}
+              {item.fullName ?? item.username ?? item.emailAddress}
             </Typography>
             <Typography
               type="Body"
               style={{ color: percentageToColor(item.percentageOfAcceptedOrSubmittedLessons) }}
             >
-              {` ${item.percentageOfAcceptedOrSubmittedLessons}%`}
+              {`${item.percentageOfAcceptedOrSubmittedLessons}%`}
             </Typography>
           </Card>
         )}
