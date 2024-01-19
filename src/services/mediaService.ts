@@ -1,6 +1,7 @@
 import apiClient from "api/apiClient";
 import { Media_Dto_MediaDto } from "__generated/apiTypes/models/Media_Dto_MediaDto";
 import { BASE_URL } from "api/apiClient";
+import { IS_ANDROID } from "constants/GeneralConstants";
 
 type MediaResponse = Pick<Required<Media_Dto_MediaDto>, "id" | "uri">;
 
@@ -15,7 +16,7 @@ export const uploadFile = async (formData: { uri: string }) => {
   form.append("File", {
     uri: formData.uri,
     name: "file",
-    type: "png",
+    type: IS_ANDROID ? "image/jpeg" : "png",
   });
   form.append("MediaType", "2");
   return apiClient.postForm<MediaResponse>("Media", form);
