@@ -14,6 +14,7 @@ import { t } from "locales/config";
 import { useMediaPicker } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "components/Toast";
 
 const today = new Date();
 
@@ -31,22 +32,26 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   });
 
   const handleSubmit = async () => {
-    const attachments = await uploadSelectedMedia();
-    await mutateAsync({
-      teamId: route.params.teamId,
-      startDate: (startDate ?? new Date()).toISOString(),
-      endDate: (endDate ?? new Date()).toISOString(),
-      description,
-      attachments: attachments
-        .filter(({ uri }) => uri)
-        .map((attachment, i) => ({
-          id: attachment.id,
-          uri: attachment.uri!,
-          sortOrder: i,
-        })),
-    });
-    navigation.goBack();
-    queryClient.refetchQueries(["assignments"]);
+    try {
+      const attachments = await uploadSelectedMedia();
+      await mutateAsync({
+        teamId: route.params.teamId,
+        startDate: (startDate ?? new Date()).toISOString(),
+        endDate: (endDate ?? new Date()).toISOString(),
+        description,
+        attachments: attachments
+          .filter(({ uri }) => uri)
+          .map((attachment, i) => ({
+            id: attachment.id,
+            uri: attachment.uri!,
+            sortOrder: i,
+          })),
+      });
+      navigation.goBack();
+      queryClient.refetchQueries(["assignments"]);
+    } catch (e) {
+      toast.reportError(e);
+    }
   };
 
   const isSubmitDisabled =
