@@ -19,7 +19,7 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
     <TouchableOpacity style={styles.assignmentItem} onPress={onPress} activeOpacity={0.65}>
       <AssignmentStatusCheckbox
         status={assignment.status}
-        isDue={assignment.endDate ? isPast(endOfDay(new Date(assignment.endDate))) : false}
+        isDue={assignment.endDate != null && isPast(endOfDay(new Date(assignment.endDate)))}
       />
       {assignment.startPage && assignment.endPage ? (
         <Typography style={styles.assignmentText} type="Body">

@@ -9,7 +9,7 @@ interface Props {
   isDue?: boolean;
 }
 
-const AssignmentStatusCheckbox = ({ status, isDue = true }: Props) => {
+const AssignmentStatusCheckbox = ({ status, isDue = false }: Props) => {
   return (
     <TouchableOpacity
       style={[

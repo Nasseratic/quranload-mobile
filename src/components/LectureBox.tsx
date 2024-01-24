@@ -8,6 +8,8 @@ import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
 import { Team } from "types/User";
 import { Assignment } from "hooks/queries/assignments";
 import { useNavigation } from "@react-navigation/native";
+import { t } from "locales/config";
+import { endOfDay, isPast } from "date-fns";
 
 interface Props {
   team: Team;
@@ -55,8 +57,19 @@ const LectureBox = ({
           style={styles.assignment}
           onPress={() => navigation.navigate("Record", { assignment: latestOpenAssignment })}
         >
-          <AssignmentStatusCheckbox status={latestOpenAssignment.status} />
-          <Typography type="BodyLight">{latestOpenAssignment.description}</Typography>
+          <AssignmentStatusCheckbox
+            status={latestOpenAssignment.status}
+            isDue={
+              latestOpenAssignment.endDate != null &&
+              isPast(endOfDay(new Date(latestOpenAssignment.endDate)))
+            }
+          />
+
+          <Typography type="BodyLight">
+            {latestOpenAssignment.startPage && latestOpenAssignment.endPage
+              ? `${t("read")}: ${latestOpenAssignment.startPage} - ${latestOpenAssignment.endPage}`
+              : latestOpenAssignment.description}
+          </Typography>
           <ChevronRightIcon
             style={{
               marginLeft: "auto",
