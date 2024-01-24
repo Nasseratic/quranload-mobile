@@ -129,7 +129,16 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
               <Square p="$3" px="$4" onPress={() => navigation.goBack()}>
                 <ChevronLeftIcon color={Colors.Black[1]} />
               </Square>
-              <Typography type="TitleLight">{assignment.description}</Typography>
+              <Typography
+                type="TitleLight"
+                style={{
+                  flex: 1,
+                }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {assignment.description}
+              </Typography>
             </XStack>
             {attachments && <ImagePages imageIds={attachments} />}
           </>

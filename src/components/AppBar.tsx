@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Typography from "./Typography";
 import { useNavigation } from "@react-navigation/native";
-import { Stack } from "tamagui";
 
 export const APPBAR_HEIGHT = 56;
 
@@ -36,6 +35,8 @@ export const AppBar = ({ title, disableGoBack, rightComponent }: AppBarProps) =>
       paddingLeft: canGoBack ? GeneralConstants.Spacing.md : 0,
     },
     title: {
+      flex: 1,
+      flexGrow: 1,
       color: Colors.Primary[1],
     },
   });
@@ -47,12 +48,10 @@ export const AppBar = ({ title, disableGoBack, rightComponent }: AppBarProps) =>
           <ChevronLeftIcon color={Colors.Primary[1]} />
         </TouchableOpacity>
       )}
-      <Typography style={styles.title} type="HeadlineHeavy">
+      <Typography style={styles.title} numberOfLines={1} ellipsizeMode="tail" type="HeadlineHeavy">
         {title}
       </Typography>
-      <Stack f={1} ai="flex-end">
-        {rightComponent}
-      </Stack>
+      {rightComponent}
     </View>
   );
 };

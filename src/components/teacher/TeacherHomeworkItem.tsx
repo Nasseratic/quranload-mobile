@@ -3,7 +3,7 @@ import ChevronRight from "components/icons/ChevronRight";
 import { Colors } from "constants/Colors";
 import { format } from "date-fns";
 import { useMemo } from "react";
-import { Card, Stack } from "tamagui";
+import { Card, Stack, XStack } from "tamagui";
 import { diffInDays } from "utils/formatTime";
 import { TouchableOpacity } from "react-native";
 import { Assignment } from "hooks/queries/assignments";
@@ -48,13 +48,23 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
         borderWidth={1}
         gap="$2"
       >
-        <Stack flexDirection="row" justifyContent="space-between" alignItems="center">
+        <XStack jc="space-between" alignItems="center" f={1}>
           {homework.startPage && homework.endPage ? (
             <Typography type="BodyHeavy">
               {t("read")}: {homework.startPage} - {homework.endPage}
             </Typography>
           ) : (
-            <Typography type="BodyHeavy">{homework.description}</Typography>
+            <Typography
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={{
+                flexGrow: 1,
+                flexShrink: 1,
+              }}
+              type="BodyHeavy"
+            >
+              {homework.description}
+            </Typography>
           )}
           <Stack flexDirection="row" gap="$2">
             <Typography type="CaptionLight" style={{ color: Colors.Black[2] }}>
@@ -62,7 +72,7 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
             </Typography>
             <ChevronRight color={Colors.Primary[1]} />
           </Stack>
-        </Stack>
+        </XStack>
         {homework && (
           <Stack flexDirection="row" gap={5} alignItems="center">
             <Typography type="CaptionHeavy" style={{ color: handedInColor }}>

@@ -65,7 +65,14 @@ const LectureBox = ({
             }
           />
 
-          <Typography type="BodyLight">
+          <Typography
+            style={{
+              flex: 1,
+            }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            type="BodyLight"
+          >
             {latestOpenAssignment.startPage && latestOpenAssignment.endPage
               ? `${t("read")}: ${latestOpenAssignment.startPage} - ${latestOpenAssignment.endPage}`
               : latestOpenAssignment.description}

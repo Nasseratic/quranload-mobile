@@ -26,8 +26,13 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
           {t("read")}: {assignment.startPage} - {assignment.endPage}
         </Typography>
       ) : (
-        <Typography style={styles.assignmentText} type="Body">
-          {assignment.description}
+        <Typography
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={styles.assignmentText}
+          type="Body"
+        >
+          {assignment.description?.trim()}
         </Typography>
       )}
 
@@ -61,6 +66,7 @@ const styles = StyleSheet.create({
   },
   assignmentText: {
     color: Colors.Primary[1],
+    flex: 1,
   },
   deadline: {
     color: Colors.Black[2],

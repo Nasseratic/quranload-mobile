@@ -9,7 +9,7 @@ interface Props extends TextProps {
   style?: StyleProp<TextStyle>;
 }
 
-const Typography = ({ type = "BodyLight", style, children }: Props) => {
+const Typography = ({ type = "BodyLight", style, children, ...rest }: Props) => {
   const typographyStyle = useMemo(() => typographiesStyles[type], [type]);
 
   return (
@@ -21,6 +21,7 @@ const Typography = ({ type = "BodyLight", style, children }: Props) => {
         },
         style,
       ]}
+      {...rest}
     >
       {children}
     </Text>
