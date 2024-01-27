@@ -152,5 +152,9 @@ const english = {
     deleteAssignmentDescription: "Are you sure you want to delete this assignment?",
   },
   defaultError: "Something went wrong 🫠",
+
+  // new translations
+  you_are_on_latest_version: "You are on the latest version",
+  check_and_update: "Check and apply latest updates",
 };
 export default english;
