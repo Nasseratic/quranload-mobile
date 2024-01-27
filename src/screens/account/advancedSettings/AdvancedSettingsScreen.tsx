@@ -29,7 +29,7 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
     const items: IMenuItemProps[] = [
       {
         text: t("check_and_update"),
-        icon: <ForwardIcon color={Colors.Primary[1]} />,
+        icon: <ForwardIcon color={Colors.Primary[1]} thin />,
         onPress: async () => {
           try {
             const { isNew } = await Updates.fetchUpdateAsync();
