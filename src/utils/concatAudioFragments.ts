@@ -1,7 +1,7 @@
 import { IS_IOS } from "constants/GeneralConstants";
 import { FFmpegKit, ReturnCode } from "ffmpeg-kit-react-native";
 
-const MP3_QUALITY = IS_IOS ? 5 : 2;
+const MP3_QUALITY = IS_IOS ? 4 : 1;
 
 export const concatAudioFragments = async (audioFiles: string[]) => {
   const audioInputFilesString = audioFiles.map((file) => `-i ${file}`).join(" ");
