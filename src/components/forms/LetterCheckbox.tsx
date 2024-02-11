@@ -16,7 +16,7 @@ const LetterCheckbox = ({ checked, onChange, letter }: Props) => {
   };
   return (
     <TouchableOpacity onPress={handleOnChange}>
-      <Circle bw={2} size="$3.5" borderColor={isChecked ? Colors.Success[1] : Colors.Black[3]}>
+      <Circle bw={2} size="$3" borderColor={isChecked ? Colors.Success[1] : Colors.Black[3]}>
         <Typography
           type="SubHeaderHeavy"
           style={{ color: isChecked ? Colors.Primary[1] : Colors.Black[3] }}

@@ -77,9 +77,9 @@ const TeacherLectureBox = ({ team }: Props) => {
     const date = startOfWeek(new Date(), { locale: dateNfsLocale });
     date.setDate(date.getDate() + index);
     return {
-      day: date.toLocaleString(i18n.locale, { weekday: "narrow" })[0],
+      day: date.toLocaleString(i18n.locale, { weekday: "narrow" })[0]!,
       hasHomeWork: latestAssignment?.days
-        ? resolveDaysRefToHasHomeWorkArray(latestAssignment.days)[index]
+        ? resolveDaysRefToHasHomeWorkArray(latestAssignment.days)[index]!
         : false,
     };
   });
@@ -131,7 +131,7 @@ const TeacherLectureBox = ({ team }: Props) => {
                 <Circle
                   key={index}
                   bw={2}
-                  size="$3.5"
+                  size="$3"
                   borderColor={hasHomeWork ? Colors.Success[1] : Colors.Black[3]}
                 >
                   <Typography
