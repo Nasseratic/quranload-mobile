@@ -175,7 +175,7 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
           <View style={{ alignItems: "center", marginTop: 25 }}>
             <ActionBtn
               isLoading={formik.isSubmitting}
-              title={i18n.t("createAccount")}
+              title={t("registerAccountScreen.createAccount")}
               onPress={formik.handleSubmit}
             />
             <TouchableOpacity
