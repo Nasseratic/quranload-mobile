@@ -28,6 +28,12 @@ import { concatAudioFragments } from "utils/concatAudioFragments";
 import { t } from "locales/config";
 import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
 import { IS_IOS } from "constants/GeneralConstants";
+import {
+  AndroidAudioEncoder,
+  AndroidOutputFormat,
+  IOSAudioQuality,
+  IOSOutputFormat,
+} from "expo-av/build/Audio";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -141,9 +147,28 @@ export const RecordingScreenRecorder = ({
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
         });
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HEIGH_QUALITY
-      );
+      const { recording } = await Audio.Recording.createAsync({
+        web: {},
+        ios: {
+          extension: ".m4a",
+          outputFormat: IOSOutputFormat.MPEG4AAC,
+          audioQuality: IOSAudioQuality.MAX,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        android: {
+          extension: ".mp4",
+          outputFormat: AndroidOutputFormat.MPEG_4, //mp4 (m4a)
+          audioEncoder: AndroidAudioEncoder.AMR_WB,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 108000,
+        },
+      });
       currentRecording = recording;
 
       await sleep(RECORDING_INTERVAL);
