@@ -50,7 +50,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
             size="md"
             icon={<BinIcon size={20} color={Colors.Black[2]} />}
             onPress={async () => {
-              Alert.prompt(
+              Alert.alert(
                 t("submissionScreen.deleteAssignment"),
                 t("submissionScreen.deleteAssignmentDescription"),
                 [
