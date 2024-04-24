@@ -59,7 +59,7 @@ export const TeacherSubmissionItem = ({ submission, onPress }: Props) => {
                   color: isFeedbackGiven ? Colors.Success[1] : Colors.Error[1],
                 }}
               >
-                t("feedback")
+                {t("feedback")}
               </Typography>
             </>
           )}
