@@ -48,6 +48,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
 
   const { user, role, isTeacher } = useAuth();
 
+  const isReadOnly = route.params.readOnly;
   const assignment = route.params.assignment;
   const studentId = route.params.studentId ?? user!.id;
   const lessonId = assignment.id;
@@ -150,104 +151,106 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           />
         ))
         .otherwise(() => null)}
-      <Stack
-        style={[
-          styles.shadow,
-          {
-            backgroundColor: "#fff",
-            paddingBottom: insets.bottom,
-          },
-        ]}
-      >
-        <Stack pt="$3" px="$4" jc="flex-end" ai="center">
-          <Carousel
-            data={carouselItems}
-            width={SCREEN_WIDTH}
-            height={(IS_IOS ? 40 : 90) + insets.bottom}
-            renderItem={({ item, index }) =>
-              item === "RECORDER" ? (
-                <RecordingScreenRecorder
-                  lessonId={lessonId}
-                  onSubmit={({ uri, duration }) => {
-                    setAudioUrl(uri);
-                    match(role)
-                      .with("Teacher", () => {
-                        teacherFeedback.mutateAsync({
-                          uri,
-                          lessonId,
-                          studentId,
-                          lessonState: AssignmentStatusEnum.accepted,
-                        });
-                      })
-                      .with("Student", () =>
-                        studentSubmission.mutateAsync({
-                          uri,
-                          lessonId,
-                          duration,
+      {!isReadOnly && (
+        <Stack
+          style={[
+            styles.shadow,
+            {
+              backgroundColor: "#fff",
+              paddingBottom: insets.bottom,
+            },
+          ]}
+        >
+          <Stack pt="$3" px="$4" jc="flex-end" ai="center">
+            <Carousel
+              data={carouselItems}
+              width={SCREEN_WIDTH}
+              height={(IS_IOS ? 40 : 90) + insets.bottom}
+              renderItem={({ item, index }) =>
+                item === "RECORDER" ? (
+                  <RecordingScreenRecorder
+                    lessonId={lessonId}
+                    onSubmit={({ uri, duration }) => {
+                      setAudioUrl(uri);
+                      match(role)
+                        .with("Teacher", () => {
+                          teacherFeedback.mutateAsync({
+                            uri,
+                            lessonId,
+                            studentId,
+                            lessonState: AssignmentStatusEnum.accepted,
+                          });
                         })
-                      )
-                      .exhaustive();
+                        .with("Student", () =>
+                          studentSubmission.mutateAsync({
+                            uri,
+                            lessonId,
+                            duration,
+                          })
+                        )
+                        .exhaustive();
+                    }}
+                  />
+                ) : (
+                  <AudioPlayer uri={item} isVisible={index === carouselIndex} />
+                )
+              }
+              ref={carouselRef}
+              scrollAnimationDuration={750}
+              loop={false}
+              enabled={false}
+            />
+            <XStack
+              jc="space-between"
+              pointerEvents="box-none"
+              ai="flex-end"
+              w="100%"
+              position="absolute"
+              bottom={IS_IOS ? -4 : 10}
+            >
+              {(isTeacher || (feedbackId && recordingId)) && (
+                <IconSwitch
+                  value={carouselIndex === 1}
+                  offIcon={(val) => (
+                    <SpeakerIcon size={18} color={val ? Colors.Gray[1] : Colors.White[1]} />
+                  )}
+                  onIcon={(val) => (
+                    <BookIcon size={24} color={val ? Colors.White[1] : Colors.Gray[1]} />
+                  )}
+                  invertIcons={isTeacher}
+                  onChange={(value) => {
+                    setCarouselIndex(value ? 1 : 0);
+                    carouselRef.current?.scrollTo({ index: value ? 1 : 0 });
                   }}
                 />
-              ) : (
-                <AudioPlayer uri={item} isVisible={index === carouselIndex} />
-              )
-            }
-            ref={carouselRef}
-            scrollAnimationDuration={750}
-            loop={false}
-            enabled={false}
-          />
-          <XStack
-            jc="space-between"
-            pointerEvents="box-none"
-            ai="flex-end"
-            w="100%"
-            position="absolute"
-            bottom={IS_IOS ? -4 : 10}
-          >
-            {(isTeacher || (feedbackId && recordingId)) && (
-              <IconSwitch
-                value={carouselIndex === 1}
-                offIcon={(val) => (
-                  <SpeakerIcon size={18} color={val ? Colors.Gray[1] : Colors.White[1]} />
-                )}
-                onIcon={(val) => (
-                  <BookIcon size={24} color={val ? Colors.White[1] : Colors.Gray[1]} />
-                )}
-                invertIcons={isTeacher}
-                onChange={(value) => {
-                  setCarouselIndex(value ? 1 : 0);
-                  carouselRef.current?.scrollTo({ index: value ? 1 : 0 });
-                }}
-              />
-            )}
-            {shouldAllowDeleteForIndex && (
-              <IconButton
-                onPress={() =>
-                  Alert.alert(
-                    t("recordingScreen.deleteRecording"),
-                    t("recordingScreen.deleteRecordingDescription"),
-                    [
-                      {
-                        text: t("cancel"),
-                        style: "cancel",
-                      },
-                      {
-                        text: t("delete"),
-                        style: "destructive",
-                        onPress: onDelete,
-                      },
-                    ]
-                  )
-                }
-                icon={<BinIcon size={20} color={Colors.Black[2]} />}
-                size="sm"
-              />
-            )}
-          </XStack>
+              )}
+              {shouldAllowDeleteForIndex && (
+                <IconButton
+                  onPress={() =>
+                    Alert.alert(
+                      t("recordingScreen.deleteRecording"),
+                      t("recordingScreen.deleteRecordingDescription"),
+                      [
+                        {
+                          text: t("cancel"),
+                          style: "cancel",
+                        },
+                        {
+                          text: t("delete"),
+                          style: "destructive",
+                          onPress: onDelete,
+                        },
+                      ]
+                    )
+                  }
+                  icon={<BinIcon size={20} color={Colors.Black[2]} />}
+                  size="sm"
+                />
+              )}
+            </XStack>
+          </Stack>
         </Stack>
-      </Stack>
+      )}
     </View>
   );
 };

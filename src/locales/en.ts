@@ -1,4 +1,5 @@
 const english = {
+  view: "View",
   welcome: "Welcome",
   save: "Save",
   done: "Done",
@@ -19,6 +20,7 @@ const english = {
   delete: "Delete",
   feedback: "Feedback",
   handedIn: "Handed in",
+  notHandedIn: "Not handed in",
   enable: "Enable",
   discard: "Discard",
   enableNotifications: "Enable Notifications",
@@ -151,9 +153,7 @@ const english = {
     deleteAssignment: "Delete assignment",
     deleteAssignmentDescription: "Are you sure you want to delete this assignment?",
   },
-  defaultError: "Something went wrong 🫠",
-
-  // new translations
+  defaultError: "Something went wrong! 🫠",
   you_are_on_latest_version: "You are on the latest version",
   check_and_update: "Check and apply latest updates",
 };

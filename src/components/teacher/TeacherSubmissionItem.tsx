@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Card, Stack } from "tamagui";
 import { TouchableOpacity } from "react-native";
 import { Lessons_Dto_LessonSubmissionDto } from "__generated/apiTypes/models/Lessons_Dto_LessonSubmissionDto";
+import { t } from "locales/config";
 
 interface Props {
   submission: Lessons_Dto_LessonSubmissionDto;
@@ -44,7 +45,7 @@ export const TeacherSubmissionItem = ({ submission, onPress }: Props) => {
         </Stack>
         <Stack flexDirection="row" gap="$1" alignItems="center">
           <Typography type="CaptionHeavy" style={{ color: handedInColor }}>
-            {isSubmitted ? "Handed in" : "Not handed in"}
+            {isSubmitted ? t("handedIn") : t("notHandedIn")}
           </Typography>
           {isSubmitted && (
             <>
@@ -58,7 +59,7 @@ export const TeacherSubmissionItem = ({ submission, onPress }: Props) => {
                   color: isFeedbackGiven ? Colors.Success[1] : Colors.Error[1],
                 }}
               >
-                Feedback
+                t("feedback")
               </Typography>
             </>
           )}

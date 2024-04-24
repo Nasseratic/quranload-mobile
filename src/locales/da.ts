@@ -1,6 +1,7 @@
-import { english } from "./en";
+import english from "./en";
 
 const danish: typeof english = {
+  view: "View",
   welcome: "Velkommen",
   save: "Gem",
   done: "Færdig",
@@ -21,6 +22,7 @@ const danish: typeof english = {
   delete: "Slet",
   feedback: "Feedback",
   handedIn: "Afleveret",
+  notHandedIn: "Not handed in",
   enable: "Slå til",
   discard: "Slå fra",
   enableNotifications: "Slå notifikationer til",
@@ -151,7 +153,7 @@ const danish: typeof english = {
     deleteAssignment: "Slet lektier",
     deleteAssignmentDescription: "Er du sikker på, at du vil slette denne lektie?",
   },
-  defaultError: "Noget gik galt...",
+  defaultError: "Noget gik galt! 🫠",
   check_and_update: "Tjek og opdater",
   you_are_on_latest_version: "Du har den nyeste version",
 };

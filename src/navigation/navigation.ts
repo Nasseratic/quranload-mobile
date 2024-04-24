@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Login: undefined;
   Profile: undefined;
   Record: {
+    readOnly?: boolean;
     studentId?: string;
     assignment: Pick<
       Assignment,
