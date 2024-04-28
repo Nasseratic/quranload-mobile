@@ -1,7 +1,7 @@
 import english from "./en";
 
 const danish: typeof english = {
-  viewLesson: "Se lektier",
+  open: "Åben",
   welcome: "Velkommen",
   save: "Gem",
   done: "Færdig",

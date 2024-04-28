@@ -1,5 +1,5 @@
 const english = {
-  view: "View",
+  open: "Open",
   welcome: "Welcome",
   save: "Save",
   done: "Done",

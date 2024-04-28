@@ -105,7 +105,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                   });
                 }}
               >
-                <Text>{t("view")}</Text>
+                <Text>{t("open")}</Text>
                 <OpenLinkIcon size={20} color={Colors.Black[2]} />
               </XStack>
               <XStack
@@ -132,8 +132,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                           }
                         },
                       },
-                    ],
-                    "default"
+                    ]
                   );
                 }}
               >

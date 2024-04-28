@@ -23,7 +23,7 @@ const calculateDaysRef = (
   // sun = 1; mon = 2; tue = 4; wed = 8; thu = 16; fri = 32; sat = 64;
   const weightsArray = [2, 4, 8, 16, 32, 64, 1];
   let daysRef = 0;
-  weekDays.forEach((day, index) => day.hasHomeWork && (daysRef += weightsArray[index]));
+  weekDays.forEach((day, index) => day.hasHomeWork && (daysRef += weightsArray[index] ?? 0));
   return daysRef;
 };
 
@@ -118,8 +118,11 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
                   key={index}
                   checked={day.hasHomeWork}
                   onChange={() => {
-                    weekDaysInput[index].hasHomeWork = !weekDaysInput[index].hasHomeWork;
-                    setWeekDaysInput(weekDaysInput);
+                    const day = weekDaysInput[index];
+                    if (day) {
+                      day.hasHomeWork = !day.hasHomeWork;
+                      setWeekDaysInput(weekDaysInput);
+                    }
                   }}
                 />
               );
