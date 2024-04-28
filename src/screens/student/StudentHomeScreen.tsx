@@ -61,7 +61,7 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
 };
 
 const StatusSection = ({ teamId }: { teamId: string }) => {
-  const { data, isLoading, error } = useQuery(["student-stats"], () =>
+  const { data, isLoading, error } = useQuery(["student-stats", teamId], () =>
     fetchStudentStatistics({ teamId })
   );
 

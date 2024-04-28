@@ -32,7 +32,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
     [data]
   );
 
-  const queryClint = useQueryClient();
+  const queryClient = useQueryClient();
 
   const formik = useFormik({
     initialValues,
@@ -45,7 +45,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
     onSubmit(values) {
       updateUserProfile(values)
         .then(() => {
-          queryClint.invalidateQueries([profileQueryKey]);
+          queryClient.invalidateQueries([profileQueryKey]);
           Alert.alert(i18n.t("profileScreen.profileUpdated"));
         })
         .catch((error) => {

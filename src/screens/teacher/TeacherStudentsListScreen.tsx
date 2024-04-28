@@ -18,7 +18,9 @@ type Props = NativeStackScreenProps<RootStackParamList, "TeacherStudentsList">;
 
 export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) => {
   const { teamId } = route.params;
-  const { data, isLoading } = useQuery(["students-list"], () => fetchStudentsList({ teamId }));
+  const { data, isLoading } = useQuery(["students-list", teamId], () =>
+    fetchStudentsList({ teamId })
+  );
 
   const students: User[] = useMemo(() => {
     return (
