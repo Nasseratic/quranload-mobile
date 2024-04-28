@@ -53,13 +53,13 @@ const StatusSection = ({ teamId }: { teamId: string }) => {
       <StatsBox
         icon={<ClockIcon width={40} height={40} color={Colors.Warning[5]} />}
         label={t("teacherHomeScreen.submitted")}
-        value={data?.totalSubmissions.toString() ?? ""}
+        value={`${data?.totalSubmissions ?? 0}`}
         backgroundColor={Colors.Primary[1]}
       />
       <StatsBox
         icon={<BookIcon width={40} height={40} color={Colors.Success[5]} />}
         label={t("teacherHomeScreen.pagesRead")}
-        value={data?.totalApprovedPages.toString() ?? ""}
+        value={`${data?.totalApprovedPages ?? 0}`}
         backgroundColor={Colors.Success[1]}
       />
     </XStack>

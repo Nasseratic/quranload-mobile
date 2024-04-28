@@ -75,7 +75,9 @@ export const intlFormat = (date: Date, format: "date" | "date-short") => {
 export const fMinutesDuration = ({ mins }: { mins: number }) => {
   const duration = intervalToDuration({ start: 0, end: minutesToMilliseconds(mins) });
 
-  return `${duration.minutes ? `${duration.minutes}${t("time.m")}` : ""} ${
-    duration.seconds ? `${duration.seconds}${t("time.s")}` : ""
-  }`;
+  return (
+    `${duration.minutes ? `${duration.minutes}${t("time.m")}` : ""} ${
+      duration.seconds ? `${duration.seconds}${t("time.s")}` : ""
+    }`.trim() || "0"
+  );
 };
