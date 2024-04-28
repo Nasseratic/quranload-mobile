@@ -22,7 +22,7 @@ const TeacherLectureBox = ({ team }: Props) => {
   const navigation = useNavigation();
 
   const { data, isLoading } = useQuery(
-    ["auto-assignment"],
+    ["auto-assignment", team.id],
     () => fetchAutoAssignment({ teamId: team.id, typeId: 1 }) // typeId 1 is the auto assignment
   );
 
