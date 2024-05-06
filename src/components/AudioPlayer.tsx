@@ -136,8 +136,9 @@ export const AudioPlayer = memo(({ uri, isVisible }: { uri: string; isVisible: b
         <IconButton
           size="xs"
           onPress={() => {
-            sound?.setPositionAsync((positionSec - 3) * 1000);
-            setPositionSec(positionSec - 3);
+            const newPosition = Math.max(positionSec - 3, 0);
+            sound?.setPositionAsync(newPosition * 1000);
+            setPositionSec(newPosition);
           }}
           icon={<ForwardIcon backward />}
         />
@@ -158,8 +159,9 @@ export const AudioPlayer = memo(({ uri, isVisible }: { uri: string; isVisible: b
         <IconButton
           size="xs"
           onPress={() => {
-            sound?.setPositionAsync((positionSec + 3) * 1000);
-            setPositionSec(positionSec + 3);
+            const newPosition = Math.min(positionSec + 3, durationSec);
+            sound?.setPositionAsync(newPosition * 1000);
+            setPositionSec(newPosition);
           }}
           icon={<ForwardIcon />}
         />
