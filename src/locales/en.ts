@@ -1,4 +1,7 @@
 const english = {
+  add: "Add",
+  chooseStartDate: "Choose start date",
+  chooseEndDate: "Choose end date",
   open: "Open",
   welcome: "Welcome",
   save: "Save",

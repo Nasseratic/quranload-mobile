@@ -1,6 +1,9 @@
 import english from "./en";
 
 const danish: typeof english = {
+  add: "Tilføje",
+  chooseStartDate: "Vælg startdato",
+  chooseEndDate: "Vælg slutdato",
   open: "Åben",
   welcome: "Velkommen",
   save: "Gem",

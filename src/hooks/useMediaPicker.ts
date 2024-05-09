@@ -15,6 +15,8 @@ export const useMediaPicker = () => {
     const { assets } = await launchImageLibraryAsync({
       mediaTypes: MediaTypeOptions.Images,
       quality: 0.2,
+      allowsMultipleSelection: true,
+      selectionLimit: 10,
     });
 
     if (assets) {

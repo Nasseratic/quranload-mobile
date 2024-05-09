@@ -1,6 +1,17 @@
 import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Avatar, Card, Circle, Form, Label, ScrollView, TextArea, View, XStack } from "tamagui";
+import {
+  Card,
+  Circle,
+  Form,
+  Image,
+  Label,
+  ScrollView,
+  Stack,
+  TextArea,
+  View,
+  XStack,
+} from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import { RootStackParamList } from "navigation/navigation";
 import { DatePickerInput } from "components/DatePicker";
@@ -15,6 +26,7 @@ import { useMediaPicker } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";
+import ImageView from "react-native-image-viewing";
 
 const today = new Date();
 
@@ -24,7 +36,11 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [description, setDescription] = useState<string>("");
+  const [isImagesModalVisible, setIsImagesModalVisible] = useState(false);
+  const [imagesModalIndex, setImagesModalIndex] = useState(0);
+
   const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaPicker();
+
   const queryClient = useQueryClient();
   const { mutateAsync, isLoading } = useMutation({
     mutationKey: ["createCustomAssignment"],
@@ -65,6 +81,15 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   return (
     <SafeAreaView>
       <AppBar title={t("createHomework")} />
+      <ImageView
+        // Change the images type from string[] to ImageSource[]
+        images={images.map((image) => ({
+          uri: image,
+        }))}
+        imageIndex={imagesModalIndex}
+        visible={isImagesModalVisible}
+        onRequestClose={() => setIsImagesModalVisible(false)}
+      />
       <Form onSubmit={handleSubmit} gap="$3.5" marginHorizontal={16}>
         <View gap="$2">
           <Label htmlFor="startDate" unstyled>
@@ -72,7 +97,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
           </Label>
           <DatePickerInput
             minDate={today}
-            placeholder="Choose start date"
+            placeholder={t("chooseStartDate")}
             value={startDate}
             onChange={(date) => {
               if (endDate && date > endDate) setEndDate(date);
@@ -86,7 +111,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
           </Label>
           <DatePickerInput
             minDate={startDate}
-            placeholder="Choose end date"
+            placeholder={t("chooseEndDate")}
             value={endDate}
             onChange={setEndDate}
           />
@@ -95,42 +120,67 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
           <Label htmlFor="attachment" unstyled>
             {t("attachments")}
           </Label>
-          <ScrollView
-            // hack to horizontally scroll to start from the beginning of the screen
-            left={-16}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-            }}
-            w={SCREEN_WIDTH}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            <XStack gap="$2">
-              <Card onPress={pickImage} p="$4" w="$10" h="$10" jc="center" ai="center">
-                <PlusIcon color="black" />
-                <Typography type="BodyLight">Add</Typography>
-              </Card>
-              {images?.map((image) => (
-                <Avatar key={image} size="$10" borderRadius="$2">
-                  <Avatar.Image source={{ uri: image }} />
-                  <Circle
-                    position="absolute"
-                    right={4}
-                    top={4}
-                    bg="black"
-                    p={4}
-                    zIndex={1}
-                    pressStyle={{
-                      opacity: 0.5,
+          <View gap="$2" marginBottom={5} marginStart={5}>
+            <ScrollView
+              // Q: Why does this work?
+              // hack to horizontally scroll to start from the beginning of the screen
+              left={-16}
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                paddingTop: 10,
+                paddingLeft: 10,
+              }}
+              w={SCREEN_WIDTH}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              <XStack gap="$2">
+                <Card onPress={pickImage} h={104} w={104} jc="center" ai="center">
+                  <PlusIcon color="black" />
+                  <Typography type="BodyLight">{t("add")}</Typography>
+                </Card>
+                {images?.map((image, index) => (
+                  <Stack
+                    ov="visible"
+                    key={index}
+                    borderRadius="$2"
+                    borderStyle="solid"
+                    borderColor="$gray6Light"
+                    bw={1}
+                    h={100}
+                    w={100}
+                    onPress={() => {
+                      setImagesModalIndex(index);
+                      setIsImagesModalVisible(true);
                     }}
-                    onPress={() => removeImage(image)}
+                    pressStyle={{ opacity: 0.5 }}
                   >
-                    <CrossIcon width={16} height={16} />
-                  </Circle>
-                </Avatar>
-              ))}
-            </XStack>
-          </ScrollView>
+                    <Image
+                      key={image}
+                      source={{ uri: image }}
+                      borderRadius="$2"
+                      height="100%"
+                      width="100%"
+                    />
+                    <Circle
+                      position="absolute"
+                      right={-5}
+                      top={-5}
+                      bg="black"
+                      p={4}
+                      zIndex={1}
+                      pressStyle={{
+                        opacity: 0.5,
+                      }}
+                      onPress={() => removeImage(image)}
+                    >
+                      <CrossIcon width={16} height={16} />
+                    </Circle>
+                  </Stack>
+                ))}
+              </XStack>
+            </ScrollView>
+          </View>
         </View>
         <View gap="$2">
           <Label htmlFor="description" unstyled>
@@ -142,7 +192,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
             height={100}
             id="description"
             borderWidth={0}
-            placeholder="Description"
+            placeholder={t("description")}
           />
         </View>
         <Form.Trigger asChild disabled={isSubmitDisabled}>
