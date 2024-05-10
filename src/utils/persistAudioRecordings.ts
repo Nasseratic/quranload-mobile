@@ -30,7 +30,7 @@ export const persistAudioRecordings = async ({
   }
 };
 
-export const clearAudioRecordings = async ({ lessonId }: { lessonId: string }) => {
+export const eraseAudioRecordingsFromStorage = async ({ lessonId }: { lessonId: string }) => {
   try {
     await AsyncStorage.removeItem(getStorageKey(lessonId));
   } catch (e) {

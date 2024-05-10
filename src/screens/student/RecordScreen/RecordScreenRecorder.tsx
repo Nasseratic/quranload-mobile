@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
 import { RecordIcon } from "components/icons/RecordIcon";
@@ -20,7 +20,7 @@ import { IconButton } from "components/buttons/IconButton";
 import { XStack } from "tamagui";
 import { sleep } from "utils/sleep";
 import {
-  clearAudioRecordings,
+  eraseAudioRecordingsFromStorage,
   getPersistentAudioRecordings,
   persistAudioRecordings,
 } from "utils/persistAudioRecordings";
@@ -37,10 +37,22 @@ import {
 
 let currentRecording: Audio.Recording | null = null;
 
+const cleanCurrentRecording = async () => {
+  if (currentRecording) {
+    await currentRecording.stopAndUnloadAsync();
+    currentRecording = null;
+  }
+};
+
 let recordings: {
   uri: string;
   duration: number;
 }[] = [];
+
+const cleanRecordings = async ({ lessonId }: { lessonId: string }) => {
+  recordings = [];
+  await Promise.all([cleanCurrentRecording(), eraseAudioRecordingsFromStorage({ lessonId })]);
+};
 
 const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
@@ -53,7 +65,7 @@ export const RecordingScreenRecorder = ({
   onSubmit,
 }: {
   lessonId: string;
-  onSubmit: (params: { uri: string; duration: number }) => void;
+  onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
 }) => {
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
@@ -92,8 +104,8 @@ export const RecordingScreenRecorder = ({
   const cutRecording = async () => {
     if (!currentRecording) return;
     const { durationMillis } = await currentRecording.getStatusAsync();
-    await currentRecording.stopAndUnloadAsync();
     const uri = currentRecording.getURI();
+    await cleanCurrentRecording();
     if (uri) {
       recordings.push({
         uri,
@@ -101,7 +113,6 @@ export const RecordingScreenRecorder = ({
       });
       persistAudioRecordings({ lessonId, recordings });
     }
-    currentRecording = null;
   };
 
   const pauseRecording = async () => {
@@ -110,17 +121,14 @@ export const RecordingScreenRecorder = ({
     await cutRecording();
   };
 
-  async function discardRecording() {
-    await currentRecording?.stopAndUnloadAsync();
-    currentRecording = null;
-    recordings = [];
+  const discardRecording = useCallback(async () => {
+    await cleanRecordings({ lessonId });
     setRecordingState("idle");
-    clearAudioRecordings({ lessonId });
     if (IS_IOS)
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
       });
-  }
+  }, [lessonId]);
 
   const submitRecording = async () => {
     setRecordingState("idle");
@@ -135,10 +143,20 @@ export const RecordingScreenRecorder = ({
     setIsConcatenatingAudio(false);
 
     if (!uri) return;
-    onSubmit({
-      uri,
-      duration: Math.round(recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000),
-    });
+
+    // in case of error, we want to keep the recordings
+    const tempRecordings = recordings;
+    try {
+      recordings = [];
+      await onSubmit({
+        uri,
+        duration: Math.round(recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000),
+      });
+      await cleanRecordings({ lessonId });
+    } catch {
+      recordings = tempRecordings;
+      //TODO: Error handling
+    }
   };
 
   async function startRecordingWithAutoFragmenting() {
@@ -207,11 +225,24 @@ export const RecordingScreenRecorder = ({
       }
     });
     return () => {
-      recordings = [];
-      clearAudioRecordings({ lessonId });
-      if (currentRecording) {
-        currentRecording.stopAndUnloadAsync();
-      }
+      cutRecording().then(() => {
+        if (recordings.length === 0) return;
+        Alert.alert(
+          t("recordingScreen.discardRecording"),
+          t("recordingScreen.discardRecordingDescription"),
+          [
+            {
+              text: t("cancel"),
+              style: "cancel",
+            },
+            {
+              text: t("discard"),
+              style: "destructive",
+              onPress: discardRecording,
+            },
+          ]
+        );
+      });
     };
   }, [lessonId]);
 
