@@ -22,6 +22,7 @@ import { RootStackParamList } from "navigation/navigation";
 import { AppBar } from "components/AppBar";
 import { ScrollView } from "tamagui";
 import Logo from "@assets/logo.png";
+import { toast } from "components/Toast";
 
 // min 8 characters, 1 upper case letter, 1 lower case letter, 1 special character and 1 number
 const passwordRules = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+]).{8,}$/;
@@ -36,7 +37,7 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
     isLoading: isResendingVerification,
   } = useMutation(resendVerificationEmail, {
     onError: (err: AxiosError) => {
-      //Implement error handling
+      toast.show({ status: "Error", title: t("defaultError") });
       err;
     },
   });

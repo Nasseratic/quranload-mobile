@@ -33,7 +33,6 @@ export const signUp = async (data: {
 
 export const resendVerificationEmail = async (data: { email: string }): Promise<void> => {
   return await authClient.post("Account/ResendConfirmationEmail", {
-    ...data,
     username: data.email,
   });
 };
