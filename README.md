@@ -1,20 +1,15 @@
 # Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+Mobile application for QuranLoad ✨
+
+QuranLoad App is a cross-platform mobile application built with React Native and Expo.
+
+We use Tamagui as the UI library for the app.
+
 
 # Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
-
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
-
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
-
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+1. Download one of the following development builds:
+- [Android](https://expo.dev//accounts/quranload-app/projects/quranload/builds/dd5fda44-5f53-4714-9f5f-d3b545051393)
+- [iOS](https://expo.dev//accounts/quranload-app/projects/quranload/builds/949ef589-4c85-4fb8-8f18-29889c2d5ca8)
+- [IOS Simulator](https://expo.dev/accounts/quranload-app/projects/quranload/builds/f098ed6f-0392-40f1-9d4a-aa7ce099ef85)
+2. `npm install`
+3. `npm start`
