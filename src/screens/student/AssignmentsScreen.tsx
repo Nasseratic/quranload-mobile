@@ -51,7 +51,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
           <TabBox
             list={[i18n.t("assignmentScreen.pending"), i18n.t("assignmentScreen.all")]}
             index={tabs.indexOf(tabKey)}
-            setIndex={(index) => setTabKey(tabs[index])}
+            setIndex={(index) => setTabKey(tabs[index] ?? "pending")}
           />
         }
         ListFooterComponent={isAssignmentsLoading ? <Spinner py="$12" size="large" /> : null}

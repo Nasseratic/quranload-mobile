@@ -312,6 +312,7 @@ const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
       showsHorizontalScrollIndicator={false}
       pagingEnabled
       horizontal
+      inverted
       renderItem={({ item }) =>
         item ? (
           <Image
