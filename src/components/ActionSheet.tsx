@@ -3,9 +3,12 @@ import { useRef, useState } from "react";
 import { Separator, Stack } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Typography from "./Typography";
+import { t } from "locales/config";
+import { Colors } from "constants/Colors";
 
 type ActionSheetParams = {
-  options: { title: string; onPress: () => void }[];
+  showCancelButton?: boolean;
+  options: Array<{ title: string; onPress: () => void; destructive?: boolean }>;
 };
 
 export const actionSheet = {
@@ -18,6 +21,8 @@ export const RootActionSheetContainer = () => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { bottom } = useSafeAreaInsets();
   const [currentParams, setCurrentParams] = useState<ActionSheetParams | null>(null);
+
+  const showCancelButton = currentParams?.showCancelButton ?? true;
 
   actionSheet.show = (params: ActionSheetParams) => {
     setCurrentParams(params);
@@ -35,9 +40,29 @@ export const RootActionSheetContainer = () => {
       onDismiss={() => {
         setCurrentParams(null);
       }}
+      handleStyle={{
+        backgroundColor: "white",
+        marginHorizontal: 16,
+        borderTopRightRadius: 16,
+        borderTopLeftRadius: 16,
+      }}
+      handleIndicatorStyle={{ backgroundColor: "grey" }}
+      style={{ borderRadius: 16, overflow: "hidden" }}
+      containerStyle={{ borderRadius: 16, overflow: "hidden" }}
+      backgroundStyle={{
+        backgroundColor: "transparent",
+      }}
     >
       <BottomSheetView>
-        <Stack px="$6" pb={bottom + 16}>
+        <Stack
+          bbrr={16}
+          bblr={16}
+          mx={16}
+          pt="$3"
+          transform={[{ translateY: -16 }]}
+          mb={bottom + 16}
+          backgroundColor="white"
+        >
           {currentParams?.options.map((option, index) => (
             <Stack key={index}>
               <Stack
@@ -46,15 +71,31 @@ export const RootActionSheetContainer = () => {
                   option.onPress();
                   bottomSheetModalRef.current?.close();
                 }}
-                py="$3"
+                py="$4"
+                ai="center"
               >
-                <Typography type="Body" style={{ color: "black" }}>
+                <Typography
+                  type="SubHeaderHeavy"
+                  style={{ color: option.destructive ? Colors.Error[1] : "black" }}
+                >
                   {option.title}
                 </Typography>
               </Stack>
-              {index !== currentParams.options.length - 1 && <Separator />}
+              {(index !== currentParams.options.length - 1 || showCancelButton) && <Separator />}
             </Stack>
           ))}
+          {showCancelButton && (
+            <Stack
+              pressStyle={{ opacity: 0.7 }}
+              onPress={() => bottomSheetModalRef.current?.close()}
+              py="$4"
+              ai="center"
+            >
+              <Typography type="SubHeaderLight" style={{ color: "black" }}>
+                {t("cancel")}
+              </Typography>
+            </Stack>
+          )}
         </Stack>
       </BottomSheetView>
     </BottomSheetModal>

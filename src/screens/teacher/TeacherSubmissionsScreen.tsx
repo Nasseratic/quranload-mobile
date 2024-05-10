@@ -5,16 +5,17 @@ import { RootStackParamList } from "navigation/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchLessonDetails } from "services/lessonsService";
 import { t } from "locales/config";
-import { Spinner, Text, XStack } from "tamagui";
+import { Spinner, XStack } from "tamagui";
 import { AppBar } from "components/AppBar";
 import { Lessons_Dto_LessonSubmissionDto } from "__generated/apiTypes";
 import { Alert, FlatList } from "react-native";
-import { BinIcon } from "components/icons/BinIcon";
-import { OpenLinkIcon } from "components/icons/OpenLinkIcon";
 import { Colors } from "constants/Colors";
 import { deleteAssignment } from "services/assigmentService";
 import { toast } from "components/Toast";
 import { SafeView } from "components/SafeView";
+import { IconButton } from "components/buttons/IconButton";
+import { actionSheet } from "components/ActionSheet";
+import { OptionsIcon } from "components/icons/OptionsIcon";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherSubmissions">;
 export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
@@ -45,39 +46,66 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
             ? `${t("read")}: ${homework.startPage} - ${homework.endPage}`
             : homework.description) ?? ""
         }
-        // Old implementation of the delete option in the header
-        /*    rightComponent={
-              <IconButton
-                size="md"
-                icon={<BinIcon size={20} color={Colors.Black[2]} />}
-                onPress={async () => {
-                  Alert.alert(
-                    t("submissionScreen.deleteAssignment"),
-                    t("submissionScreen.deleteAssignmentDescription"),
-                    [
-                      {
-                        text: t("cancel"),
-                        style: "cancel",
+        rightComponent={
+          <XStack>
+            <IconButton
+              size="sm"
+              icon={<OptionsIcon color={Colors.Primary[1]} />}
+              onPress={() => {
+                actionSheet.show({
+                  options: [
+                    {
+                      title: t("open"),
+                      onPress: () => {
+                        navigation.navigate("Record", {
+                          readOnly: true,
+                          assignment: homework,
+                        });
                       },
-                      {
-                        text: t("delete"),
-                        style: "destructive",
-                        onPress: async () => {
-                          try {
-                            await mutateAsync(homework.assignmentId);
-                            queryClient.refetchQueries(["assignments"]);
-                          } catch (e) {
-                            toast.reportError(e);
-                          }
-                        },
+                    },
+                    {
+                      title: t("update"),
+                      onPress: () => {
+                        navigation.navigate("TeacherCreateHomework", {
+                          teamId: homework.teamId,
+                          assignment: homework,
+                        });
                       },
-                    ],
-                    "default"
-                  );
-                }}
-              />
-            }
-        */
+                    },
+                    {
+                      title: t("delete"),
+                      destructive: true,
+                      onPress: () => {
+                        Alert.alert(
+                          t("submissionScreen.deleteAssignment"),
+                          t("submissionScreen.deleteAssignmentDescription"),
+                          [
+                            {
+                              text: t("cancel"),
+                              style: "cancel",
+                            },
+                            {
+                              text: t("delete"),
+                              style: "destructive",
+                              onPress: async () => {
+                                try {
+                                  await mutateAsync(homework.assignmentId);
+                                  queryClient.refetchQueries(["assignments"]);
+                                } catch (e) {
+                                  toast.reportError(e);
+                                }
+                              },
+                            },
+                          ]
+                        );
+                      },
+                    },
+                  ],
+                });
+              }}
+            />
+          </XStack>
+        }
       />
       {isLoading || !data ? (
         <Spinner py="$10" />
@@ -90,57 +118,6 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
             marginHorizontal: 16,
             paddingBottom: 40,
           }}
-          // View and delete homework options
-          ListHeaderComponent={
-            <XStack ai="center" jc="flex-end" mb={20} gap={20}>
-              <XStack
-                gap={10}
-                pressStyle={{ opacity: 0.6 }}
-                onPress={async () => {
-                  navigation.navigate("Record", {
-                    readOnly: true,
-                    assignment: {
-                      ...homework,
-                    },
-                  });
-                }}
-              >
-                <Text>{t("open")}</Text>
-                <OpenLinkIcon size={20} color={Colors.Black[2]} />
-              </XStack>
-              <XStack
-                gap={10}
-                pressStyle={{ opacity: 0.6 }}
-                onPress={async () => {
-                  Alert.alert(
-                    t("submissionScreen.deleteAssignment"),
-                    t("submissionScreen.deleteAssignmentDescription"),
-                    [
-                      {
-                        text: t("cancel"),
-                        style: "cancel",
-                      },
-                      {
-                        text: t("delete"),
-                        style: "destructive",
-                        onPress: async () => {
-                          try {
-                            await mutateAsync(homework.assignmentId);
-                            queryClient.refetchQueries(["assignments"]);
-                          } catch (e) {
-                            toast.reportError(e);
-                          }
-                        },
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Text>{t("delete")}</Text>
-                <BinIcon size={20} color={Colors.Black[2]} />
-              </XStack>
-            </XStack>
-          }
           renderItem={({ item }) => (
             <TeacherSubmissionItem
               submission={item}

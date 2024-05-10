@@ -9,6 +9,7 @@ interface AuthContextData {
   initialized: boolean;
   signed: boolean;
   user: User | undefined;
+  accessToken: string | null;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   handleSignIn: () => void;
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [user, setUser] = useState<User | undefined>();
-
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const trySignIn = async (username: string, password: string) => {
     const res = await signIn({ username, password });
     if (res.data.accessToken) {
@@ -51,6 +52,7 @@ export const AuthProvider = ({ children }: Props) => {
   };
 
   const handleSignIn = () => {
+    AsyncStorage.getItem("accessToken").then(setAccessToken);
     fetchUserProfile()
       .then((res) => {
         setUser(res);
@@ -82,6 +84,7 @@ export const AuthProvider = ({ children }: Props) => {
         user,
         handleSignIn,
         signOut,
+        accessToken,
       }}
     >
       {children}

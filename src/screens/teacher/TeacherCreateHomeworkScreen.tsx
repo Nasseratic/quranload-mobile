@@ -1,17 +1,6 @@
 import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {
-  Card,
-  Circle,
-  Form,
-  Image,
-  Label,
-  ScrollView,
-  Stack,
-  TextArea,
-  View,
-  XStack,
-} from "tamagui";
+import { Card, Circle, Form, Label, ScrollView, Stack, TextArea, View, XStack } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
 import { RootStackParamList } from "navigation/navigation";
 import { DatePickerInput } from "components/DatePicker";
@@ -20,49 +9,83 @@ import Typography from "components/Typography";
 import { CrossIcon } from "components/icons/CrossIcon";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createCustomAssignment } from "services/assigmentService";
+import { createCustomAssignment, updateCustomAssignment } from "services/assigmentService";
 import { t } from "locales/config";
 import { useMediaPicker } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";
 import ImageView from "react-native-image-viewing";
+import { isNotNullish } from "utils/notNullish";
+import { useAuth } from "contexts/auth";
+import { ImageWithAuth } from "components/Image";
 
 const today = new Date();
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
 
 export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, navigation }) => {
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [description, setDescription] = useState<string>("");
+  const isEditing = !!route.params.assignment;
+
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    route.params.assignment?.startDate ? new Date(route.params.assignment.startDate) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    route.params.assignment?.endDate ? new Date(route.params.assignment.endDate) : undefined
+  );
+  const [description, setDescription] = useState<string>(
+    route.params.assignment?.description ?? ""
+  );
   const [isImagesModalVisible, setIsImagesModalVisible] = useState(false);
   const [imagesModalIndex, setImagesModalIndex] = useState(0);
-
-  const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaPicker();
-
+  const { accessToken } = useAuth();
+  const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaPicker({
+    initialRemoteMedia: route.params.assignment?.attachments ?? undefined,
+  });
   const queryClient = useQueryClient();
   const { mutateAsync, isLoading } = useMutation({
     mutationKey: ["createCustomAssignment"],
-    mutationFn: createCustomAssignment,
-  });
-
-  const handleSubmit = async () => {
-    try {
+    mutationFn: async () => {
       const attachments = await uploadSelectedMedia();
-      await mutateAsync({
+      const deletedAttachments = route.params.assignment?.attachments
+        ?.filter(isNotNullish)
+        .filter((attachment) => !attachments.find((a) => a?.id === attachment.id));
+      const assignment = {
         teamId: route.params.teamId,
         startDate: (startDate ?? new Date()).toISOString(),
         endDate: (endDate ?? new Date()).toISOString(),
         description,
-        attachments: attachments
-          .filter(({ uri }) => uri)
-          .map((attachment, i) => ({
+        attachments: [
+          ...attachments
+            .filter(isNotNullish)
+            .filter(({ uri }) => uri)
+            .map((attachment, i) => ({
+              id: attachment.id,
+              uri: attachment.uri,
+              sortOrder: i,
+              isActive: true,
+            })),
+          ...(deletedAttachments?.map((attachment, i) => ({
             id: attachment.id,
-            uri: attachment.uri!,
-            sortOrder: i,
-          })),
-      });
+            uri: attachment.uri,
+            sortOrder: attachments.length + i,
+            isDeleted: true,
+          })) ?? []),
+        ],
+      };
+      return isEditing
+        ? updateCustomAssignment({
+            id: route.params.assignment.assignmentId,
+            ...assignment,
+          })
+        : createCustomAssignment(assignment);
+    },
+  });
+
+  const handleSubmit = async () => {
+    try {
+      await mutateAsync();
+      navigation.goBack();
       navigation.goBack();
       queryClient.refetchQueries(["assignments"]);
     } catch (e) {
@@ -85,6 +108,9 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
         // Change the images type from string[] to ImageSource[]
         images={images.map((image) => ({
           uri: image,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }))}
         imageIndex={imagesModalIndex}
         visible={isImagesModalVisible}
@@ -135,10 +161,13 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
               showsHorizontalScrollIndicator={false}
             >
               <XStack gap="$2">
-                <Card onPress={pickImage} h={104} w={104} jc="center" ai="center">
-                  <PlusIcon color="black" />
-                  <Typography type="BodyLight">{t("add")}</Typography>
-                </Card>
+                {/* Allow adding images to the homework when editing, when backend supports it */}
+                {!isEditing && (
+                  <Card onPress={pickImage} h={104} w={104} jc="center" ai="center">
+                    <PlusIcon color="black" />
+                    <Typography type="BodyLight">{t("add")}</Typography>
+                  </Card>
+                )}
                 {images?.map((image, index) => (
                   <Stack
                     ov="visible"
@@ -155,9 +184,11 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
                     }}
                     pressStyle={{ opacity: 0.5 }}
                   >
-                    <Image
+                    <ImageWithAuth
                       key={image}
-                      source={{ uri: image }}
+                      source={{
+                        uri: image,
+                      }}
                       borderRadius="$2"
                       height="100%"
                       width="100%"
@@ -196,7 +227,10 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
           />
         </View>
         <Form.Trigger asChild disabled={isSubmitDisabled}>
-          <ActionButton title={t("create")} isLoading={isLoading || isUploading} />
+          <ActionButton
+            title={t(isEditing ? "update" : "create")}
+            isLoading={isLoading || isUploading}
+          />
         </Form.Trigger>
       </Form>
     </SafeAreaView>

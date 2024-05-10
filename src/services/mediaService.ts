@@ -3,7 +3,7 @@ import { Media_Dto_MediaDto } from "__generated/apiTypes/models/Media_Dto_MediaD
 import { BASE_URL } from "api/apiClient";
 import { IS_ANDROID } from "constants/GeneralConstants";
 
-type MediaResponse = Pick<Required<Media_Dto_MediaDto>, "id" | "uri">;
+export type MediaResponse = Pick<Required<Media_Dto_MediaDto>, "id" | "uri">;
 
 declare global {
   interface FormData {

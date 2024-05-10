@@ -1,4 +1,4 @@
-import { FunctionComponent, useState, useRef, useMemo, useEffect } from "react";
+import { FunctionComponent, useState, useRef, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { View, Alert, StyleSheet, FlatList } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
@@ -15,7 +15,7 @@ import {
 } from "services/lessonsService";
 import { IconButton } from "components/buttons/IconButton";
 import { BinIcon } from "components/icons/BinIcon";
-import { Image, Square, Stack, XStack } from "tamagui";
+import { Square, Stack, XStack } from "tamagui";
 import { t } from "locales/config";
 import { IconSwitch } from "components/IconSwitch";
 import Carousel from "react-native-reanimated-carousel";
@@ -33,10 +33,8 @@ import { MushafPages } from "components/Mushaf/MushafPages";
 import { ChevronLeftIcon } from "assets/icons";
 import Typography from "components/Typography";
 import { getMediaUri } from "services/mediaService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { downloadAsync, documentDirectory, getInfoAsync } from "expo-file-system";
-import { Loader } from "components/Loader";
 import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScreen";
+import { ImageWithAuth } from "components/Image";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -172,15 +170,15 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                     lessonId={lessonId}
                     onSubmit={({ uri, duration }) => {
                       setAudioUrl(uri);
-                      match(role)
-                        .with("Teacher", () => {
+                      return match(role)
+                        .with("Teacher", () =>
                           teacherFeedback.mutateAsync({
                             uri,
                             lessonId,
                             studentId,
                             lessonState: AssignmentStatusEnum.accepted,
-                          });
-                        })
+                          })
+                        )
                         .with("Student", () =>
                           studentSubmission.mutateAsync({
                             uri,
@@ -270,58 +268,28 @@ const styles = StyleSheet.create({
   },
 });
 
-const downloadImage = async (id: string) => {
-  const { exists } = await getInfoAsync(documentDirectory + id + ".png");
-  if (exists) {
-    return documentDirectory + id + ".png";
-  }
-  const token = (await AsyncStorage.getItem("accessToken")) ?? "";
-  const file = await downloadAsync(getMediaUri(id), documentDirectory + id + ".png", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return file.uri;
-};
-
 const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
-  const [downloadedImages, setDownloadedImages] = useState<string[]>([]);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const images = imageIds.map((id) => getMediaUri(id));
 
-  useEffect(() => {
-    setIsDownloading(true);
-    Promise.all(
-      imageIds?.map(async (imageId) => {
-        if (imageId) {
-          return await downloadImage(imageId);
-        }
-      }) ?? []
-    )
-      .then((images) => setDownloadedImages(images.filter(isNotNullish)))
-      .finally(() => setIsDownloading(false));
-  }, [imageIds]);
-
-  return isDownloading ? (
-    <Stack f={1}>
-      <Loader />
-    </Stack>
-  ) : (
+  return (
     <FlatList
       style={{ flex: 1 }}
-      data={downloadedImages}
+      data={images}
       showsHorizontalScrollIndicator={false}
       pagingEnabled
       horizontal
       inverted
       renderItem={({ item }) =>
         item ? (
-          <Image
+          <ImageWithAuth
             resizeMode="contain"
             key={item}
+            bg="$background"
             source={{
               uri: item,
-              width: SCREEN_WIDTH,
             }}
+            w={SCREEN_WIDTH}
+            h="100%"
           />
         ) : null
       }

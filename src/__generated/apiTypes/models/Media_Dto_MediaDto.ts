@@ -4,9 +4,8 @@
 /* eslint-disable */
 
 export type Media_Dto_MediaDto = {
-    id?: string;
-    uri?: string | null;
-    sortOrder?: number | null;
-    isActive?: boolean;
+  id: string;
+  uri: string;
+  sortOrder?: number | null;
+  isActive?: boolean;
 };
-

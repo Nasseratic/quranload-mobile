@@ -37,6 +37,7 @@ export type RootStackParamList = {
   TeacherSubmissions: { homework: Assignment };
   TeacherCreateHomework: {
     teamId: string;
+    assignment?: Assignment;
   };
   TeacherAutoHomework: {
     teamId: string;
