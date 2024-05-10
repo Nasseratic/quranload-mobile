@@ -9,7 +9,7 @@
       "distribution": "internal",
       "channel": "dev"
     },
-    "dev-simulator": {
+    "dev-sim": {
       "extends": "dev",
       "ios": {
         "simulator": true
@@ -20,7 +20,7 @@
       "distribution": "internal",
       "channel": "production"
     },
-    "production": {
+    "prod": {
       "channel": "production",
       "autoIncrement": true
     }

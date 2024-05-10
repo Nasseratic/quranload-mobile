@@ -16,6 +16,8 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Audio } from "expo-av";
 import { RootActionSheetContainer } from "components/ActionSheet";
 import { RootToastContainer } from "components/Toast";
+import { useEffect } from "react";
+import { AvoidSoftInput } from "react-native-avoid-softinput";
 
 require("./src/locales/config");
 
@@ -34,6 +36,10 @@ function App() {
     "NotoSans-semibold": NotoSans_600SemiBold,
     "NotoSans-bold": NotoSans_700Bold,
   });
+
+  useEffect(() => {
+    AvoidSoftInput.setEnabled(true);
+  }, []);
 
   if (!fontsLoaded) return null;
 

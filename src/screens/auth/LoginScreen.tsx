@@ -12,6 +12,7 @@ import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
 import { RootStackParamList } from "navigation/navigation";
 import Logo from "@assets/logo.png";
+import { ScrollView } from "tamagui";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -40,55 +41,57 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ alignItems: "center" }}>
-        <Image source={Logo as ImageSourcePropType} />
-      </View>
-      <FormikProvider value={formik}>
-        <MyTextInput
-          placeHolder={t("loginScreen.username")}
-          label={t("loginScreen.username")}
-          onChange={formik.handleChange("username")}
-          onBlur={formik.handleBlur("username")}
-          value={formik.values.username}
-          error={formik.errors.username}
-          touched={formik.touched.username}
-        />
-        <MyTextInput
-          placeHolder={t("loginScreen.password")}
-          label={t("loginScreen.password")}
-          onChange={formik.handleChange("password")}
-          onBlur={formik.handleBlur("password")}
-          value={formik.values.password}
-          error={formik.errors.password}
-          touched={formik.touched.password}
-        />
-        <FormErrorView error={formik.errors.error} />
-        <View style={{ alignItems: "center", marginTop: 25 }}>
-          <ActionBtn
-            isLoading={formik.isSubmitting}
-            title={t("loginScreen.signIn")}
-            onPress={handleSubmit}
-          />
-          <TouchableOpacity
-            onPress={() => navigation.navigate("ResetPassword")}
-            style={{ alignItems: "center", marginTop: 15 }}
-          >
-            <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
-              {t("loginScreen.forgotPassword")}
-            </Typography>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate("RegisterAccount")}
-            style={{ alignItems: "center", marginTop: 15 }}
-          >
-            <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-              {t("loginScreen.notRegistered")}
-            </Typography>
-          </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={{ alignItems: "center" }}>
+          <Image source={Logo as ImageSourcePropType} />
         </View>
-      </FormikProvider>
+        <FormikProvider value={formik}>
+          <MyTextInput
+            placeHolder={t("loginScreen.username")}
+            label={t("loginScreen.username")}
+            onChange={formik.handleChange("username")}
+            onBlur={formik.handleBlur("username")}
+            value={formik.values.username}
+            error={formik.errors.username}
+            touched={formik.touched.username}
+          />
+          <MyTextInput
+            placeHolder={t("loginScreen.password")}
+            label={t("loginScreen.password")}
+            onChange={formik.handleChange("password")}
+            onBlur={formik.handleBlur("password")}
+            value={formik.values.password}
+            error={formik.errors.password}
+            touched={formik.touched.password}
+          />
+          <FormErrorView error={formik.errors.error} />
+          <View style={{ alignItems: "center", marginTop: 25 }}>
+            <ActionBtn
+              isLoading={formik.isSubmitting}
+              title={t("loginScreen.signIn")}
+              onPress={handleSubmit}
+            />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ResetPassword")}
+              style={{ alignItems: "center", marginTop: 15 }}
+            >
+              <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
+                {t("loginScreen.forgotPassword")}
+              </Typography>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("RegisterAccount")}
+              style={{ alignItems: "center", marginTop: 15 }}
+            >
+              <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+                {t("loginScreen.notRegistered")}
+              </Typography>
+            </TouchableOpacity>
+          </View>
+        </FormikProvider>
+      </ScrollView>
     </SafeAreaView>
   );
 };
