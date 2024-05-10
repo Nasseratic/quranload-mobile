@@ -147,10 +147,13 @@ export const RecordingScreenRecorder = ({
     // in case of error, we want to keep the recordings
     const tempRecordings = recordings;
     try {
+      const duration = Math.round(
+        recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000
+      );
       recordings = [];
       await onSubmit({
         uri,
-        duration: Math.round(recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000),
+        duration,
       });
       await cleanRecordings({ lessonId });
     } catch {

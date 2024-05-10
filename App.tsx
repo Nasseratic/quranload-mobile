@@ -17,7 +17,7 @@ import { Audio } from "expo-av";
 import { RootActionSheetContainer } from "components/ActionSheet";
 import { RootToastContainer } from "components/Toast";
 import { useEffect } from "react";
-import { AvoidSoftInput } from "react-native-avoid-softinput";
+// import { AvoidSoftInput } from "react-native-avoid-softinput";
 
 require("./src/locales/config");
 
@@ -38,7 +38,7 @@ function App() {
   });
 
   useEffect(() => {
-    AvoidSoftInput.setEnabled(true);
+    // AvoidSoftInput.setEnabled(true);
   }, []);
 
   if (!fontsLoaded) return null;
