@@ -206,7 +206,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
               position="absolute"
               bottom={IS_IOS ? -4 : 10}
             >
-              {(isTeacher || (feedbackId && recordingId)) && (
+              {(isTeacher ? recordingId : feedbackId) && (
                 <IconSwitch
                   value={carouselIndex === 1}
                   offIcon={(val) => (

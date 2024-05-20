@@ -116,6 +116,7 @@ export const RecordingScreenRecorder = ({
   };
 
   const pauseRecording = async () => {
+    if (!currentRecording) return;
     setRecordingState("paused");
     if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     await cutRecording();
@@ -208,9 +209,10 @@ export const RecordingScreenRecorder = ({
           }
         })(),
       ]);
-
-      await cutRecording();
-      startRecordingWithAutoFragmenting();
+      if (currentRecording) {
+        await cutRecording();
+        startRecordingWithAutoFragmenting();
+      }
     } catch (err) {
       console.error("Failed to start recording", err);
     }
