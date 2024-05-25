@@ -75,7 +75,7 @@ export const RootActionSheetContainer = () => {
                 ai="center"
               >
                 <Typography
-                  type="SubHeaderHeavy"
+                  type="SubHeader"
                   style={{ color: option.destructive ? Colors.Error[1] : "black" }}
                 >
                   {option.title}
@@ -91,9 +91,7 @@ export const RootActionSheetContainer = () => {
               py="$4"
               ai="center"
             >
-              <Typography type="SubHeaderLight" style={{ color: "black" }}>
-                {t("cancel")}
-              </Typography>
+              <Typography type="SubHeaderLight">{t("cancel")}</Typography>
             </Stack>
           )}
         </Stack>

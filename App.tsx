@@ -3,6 +3,7 @@ import {
   NotoSans_700Bold,
   NotoSans_600SemiBold,
   NotoSans_400Regular,
+  NotoSans_500Medium,
 } from "@expo-google-fonts/noto-sans";
 import Nav from "navigation/Nav";
 import { AuthProvider } from "contexts/auth";
@@ -35,6 +36,7 @@ function App() {
     "NotoSans-regular": NotoSans_400Regular,
     "NotoSans-semibold": NotoSans_600SemiBold,
     "NotoSans-bold": NotoSans_700Bold,
+    "NotoSans-medium": NotoSans_500Medium,
   });
 
   useEffect(() => {

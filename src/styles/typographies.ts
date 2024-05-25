@@ -4,6 +4,7 @@ const fontFamily = {
   NSRegular: "NotoSans-regular",
   NSSemibold: "NotoSans-semibold",
   NSBold: "NotoSans-bold",
+  NSMedium: "NotoSans-medium",
 };
 
 const typographiesStyles = StyleSheet.create({
@@ -14,6 +15,7 @@ const typographiesStyles = StyleSheet.create({
   TitleHeavy: { fontFamily: fontFamily.NSBold, fontSize: 20 },
   TitleLight: { fontFamily: fontFamily.NSRegular, fontSize: 20 },
   SubHeaderHeavy: { fontFamily: fontFamily.NSBold, fontSize: 16 },
+  SubHeader: { fontFamily: fontFamily.NSMedium, fontSize: 16 },
   SubHeaderLight: { fontFamily: fontFamily.NSRegular, fontSize: 16 },
   BodyHeavy: { fontFamily: fontFamily.NSBold, fontSize: 14 },
   Body: { fontFamily: fontFamily.NSSemibold, fontSize: 14 },
