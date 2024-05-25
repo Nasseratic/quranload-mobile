@@ -91,6 +91,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                                 try {
                                   await mutateAsync(homework.assignmentId);
                                   queryClient.refetchQueries(["assignments"]);
+                                  navigation.goBack();
                                 } catch (e) {
                                   toast.reportError(e);
                                 }
