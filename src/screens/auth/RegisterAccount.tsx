@@ -25,7 +25,8 @@ import Logo from "@assets/logo.png";
 import { toast } from "components/Toast";
 
 // min 8 characters, 1 upper case letter, 1 lower case letter, 1 special character and 1 number
-const passwordRules = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+]).{8,}$/;
+export const passwordRules =
+  /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+]).{8,}$/;
 
 type Props = NativeStackScreenProps<RootStackParamList, "RegisterAccount">;
 

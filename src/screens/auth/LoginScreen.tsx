@@ -73,7 +73,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
               onPress={handleSubmit}
             />
             <TouchableOpacity
-              onPress={() => navigation.navigate("ResetPassword")}
+              onPress={() => navigation.navigate("ForgotPassword")}
               style={{ alignItems: "center", marginTop: 15 }}
             >
               <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>

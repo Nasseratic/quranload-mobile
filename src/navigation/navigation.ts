@@ -23,7 +23,14 @@ export type RootStackParamList = {
     >;
   };
   RecordSettings: undefined;
-  ResetPassword: undefined;
+  ResetPassword: {
+    code: string;
+  };
+  ConfirmEmailScreen: {
+    code: string;
+    userId: string;
+  };
+  ForgotPassword: undefined;
   RegisterAccount: undefined;
   AdvancedSettings: undefined;
   ChangePassword: undefined;

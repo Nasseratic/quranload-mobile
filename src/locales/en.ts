@@ -95,6 +95,7 @@ const english = {
     title: "Reset password",
     codeSent:
       "If the username was found in the system, you will receive an reset password link from us",
+    resetPasswordSuccess: "Password reset successfully",
   },
   form: {
     required: "Field required",
@@ -123,6 +124,10 @@ const english = {
     emailResent: "Email resent",
     backToLogin: "Back to login",
     alreadyRegistered: "Already have an account?",
+  },
+  confirmEmailScreen: {
+    confirming: "Confirming your email",
+    emailVerified: "Your account has been verified",
   },
   teacherHomeScreen: {
     submitted: "Submitted",
@@ -159,5 +164,6 @@ const english = {
   defaultError: "Something went wrong! 🫠",
   you_are_on_latest_version: "You are on the latest version",
   check_and_update: "Check and apply latest updates",
+  retry: "Retry",
 };
 export default english;

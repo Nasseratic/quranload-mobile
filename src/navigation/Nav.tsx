@@ -13,7 +13,6 @@ import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswor
 import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguageScreen";
 import SubscriptionScreen from "screens/account/advancedSettings/SubscriptionsScreen";
 import CancelSubscriptionScreen from "screens/account/advancedSettings/CancelSubscriptionScreen";
-import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import RegisterAccount from "screens/auth/RegisterAccount";
 import { RecordScreen } from "screens/student/RecordScreen/RecordScreen";
 import { TeacherHomeScreen } from "screens/teacher/TeacherHomeScreen";
@@ -26,6 +25,10 @@ import { NotificationsBottomSheet } from "components/NotificationsBottomSheet";
 import { TeacherStudentsListScreen } from "screens/teacher/TeacherStudentsListScreen";
 import { RootStackParamList } from "./navigation";
 import { MushafScreen } from "screens/mushuf/MushafScreen";
+import { useDeepLinks } from "hooks/useDeeplinks";
+import { ForgotPasswordScreen } from "screens/auth/ForgotPasswordScreen";
+import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
+import { ConfirmEmailScreen } from "screens/auth/ConfirmEmailScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -56,6 +59,7 @@ const Nav = () => {
     <>
       {signed && <NotificationsBottomSheet />}
       <NavigationContainer>
+        <DeepLinks />
         <Stack.Navigator
           initialRouteName={signed ? "StudentHome" : "Login"}
           screenOptions={{
@@ -96,7 +100,9 @@ const Nav = () => {
           ) : (
             <>
               <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
               <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+              <Stack.Screen name="ConfirmEmailScreen" component={ConfirmEmailScreen} />
               <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
             </>
           )}
@@ -108,3 +114,8 @@ const Nav = () => {
 };
 
 export default Nav;
+
+const DeepLinks = () => {
+  useDeepLinks();
+  return null;
+};

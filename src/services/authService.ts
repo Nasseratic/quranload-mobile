@@ -16,6 +16,22 @@ export const forgotPassword = async (data: { userName: string }): Promise<void> 
   return await authClient.post("Account/forgotPassword", data);
 };
 
+export const resetPassword = (data: {
+  code: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+}) =>
+  authClient.post("Account/ResetPassword", {
+    ...data,
+    code: encodeURIComponent(data.code),
+  });
+
+export const confirmEmail = (data: { code: string; userId: string }) =>
+  authClient.put(
+    `Account/ConfirmEmail?Code=${decodeURIComponent(data.code)}&UserId=${data.userId}`
+  );
+
 export const signUp = async (data: {
   password: string;
   confirmPassword: string;
