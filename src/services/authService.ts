@@ -29,7 +29,9 @@ export const resetPassword = (data: {
 
 export const confirmEmail = (data: { code: string; userId: string }) =>
   authClient.put(
-    `Account/ConfirmEmail?Code=${decodeURIComponent(data.code)}&UserId=${data.userId}`
+    `Account/ConfirmEmail?Code=${encodeURIComponent(encodeURIComponent(data.code))}&UserId=${
+      data.userId
+    }`
   );
 
 export const signUp = async (data: {
