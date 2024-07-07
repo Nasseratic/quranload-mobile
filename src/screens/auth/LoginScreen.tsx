@@ -13,6 +13,7 @@ import { Colors } from "constants/Colors";
 import { RootStackParamList } from "navigation/navigation";
 import Logo from "@assets/logo.png";
 import { ScrollView } from "tamagui";
+import * as Updates from "expo-updates";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -92,6 +93,16 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
           </View>
         </FormikProvider>
       </ScrollView>
+      <Typography
+        style={{
+          alignSelf: "flex-end",
+          fontSize: 8,
+          color: Colors.Black[2],
+          paddingRight: 10,
+        }}
+      >
+        Version: {(Updates.updateId ?? "").slice(0, 7) || "dev"}
+      </Typography>
     </SafeAreaView>
   );
 };
