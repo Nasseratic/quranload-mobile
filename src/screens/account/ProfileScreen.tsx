@@ -14,10 +14,10 @@ import { RootStackParamList } from "navigation/navigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppBar } from "components/AppBar";
 import { View } from "tamagui";
+import { profileQueryKey } from "contexts/auth";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
-const profileQueryKey = "userProfile";
 const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
   const { data, isLoading } = useQuery([profileQueryKey], fetchUserProfile);
 

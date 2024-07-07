@@ -4,6 +4,7 @@ import { User } from "types/User";
 import { fetchUserProfile } from "services/profileService";
 import * as SplashScreen from "expo-splash-screen";
 import { signIn } from "services/authService";
+import { useQuery } from "@tanstack/react-query";
 
 interface AuthContextData {
   initialized: boolean;
@@ -37,11 +38,16 @@ export const useUser = () => {
 interface Props {
   children: React.ReactNode;
 }
+export const profileQueryKey = "userProfile";
+
 export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
-  const [user, setUser] = useState<User | undefined>();
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const { refetch, data: user } = useQuery([profileQueryKey], fetchUserProfile, {
+    enabled: false,
+  });
+
   const trySignIn = async (username: string, password: string) => {
     const res = await signIn({ username, password });
     if (res.data.accessToken) {
@@ -53,9 +59,8 @@ export const AuthProvider = ({ children }: Props) => {
 
   const handleSignIn = () => {
     AsyncStorage.getItem("accessToken").then(setAccessToken);
-    fetchUserProfile()
-      .then((res) => {
-        setUser(res);
+    refetch()
+      .then(() => {
         setSignedIn(true);
       })
       .catch(() => {
@@ -69,6 +74,7 @@ export const AuthProvider = ({ children }: Props) => {
         }, 300);
       });
   };
+
   const signOut = async () => {
     await AsyncStorage.removeItem("accessToken");
     await AsyncStorage.removeItem("refreshToken");
