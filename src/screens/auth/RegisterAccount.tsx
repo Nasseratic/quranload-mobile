@@ -143,6 +143,8 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
             />
 
             <InputField
+              autoCapitalize="none"
+              keyboardType="email-address"
               value={formik.values.email}
               touched={formik.touched.email}
               error={formik.errors.email}
