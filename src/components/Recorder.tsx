@@ -26,7 +26,7 @@ import {
 } from "utils/persistAudioRecordings";
 import { concatAudioFragments } from "utils/concatAudioFragments";
 import { t } from "locales/config";
-import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
+import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import { IS_IOS } from "constants/GeneralConstants";
 import {
   AndroidAudioEncoder,

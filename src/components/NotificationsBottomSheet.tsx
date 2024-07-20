@@ -15,7 +15,7 @@ import notificationBell from "../assets/lottie/notification-bell.json";
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "api/apiClient";
 import { match } from "ts-pattern";
-import { useAppStatusEffect } from "hooks/queries/useAppStatusEffect";
+import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
