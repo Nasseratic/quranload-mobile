@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      featureFlags: {
+        Row: {
+          created_at: string
+          id: number
+          isEnabled: boolean | null
+          name: Database["public"]["Enums"]["featureFlag"]
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          isEnabled?: boolean | null
+          name: Database["public"]["Enums"]["featureFlag"]
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          isEnabled?: boolean | null
+          name?: Database["public"]["Enums"]["featureFlag"]
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           createdAt: string
@@ -94,6 +115,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      featureFlag: "chat"
       mediaType: "image" | "audio"
     }
     CompositeTypes: {

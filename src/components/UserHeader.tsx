@@ -7,10 +7,12 @@ import { Colors } from "constants/Colors";
 import { useNavigation } from "@react-navigation/native";
 import { XStack } from "tamagui";
 import { ChatIcon } from "./icons/ChatIcon";
+import { useFeatureFlags } from "hooks/queries/useFeatureFlags";
 
 const UserHeader = () => {
   const navigation = useNavigation();
   const { user } = useContext(AuthContext);
+  const { ff } = useFeatureFlags();
   if (!user) return;
 
   return (
@@ -39,7 +41,7 @@ const UserHeader = () => {
         <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
         <XStack gap={16} jc="center" ai="center">
           {/* TODO?: If there's only 1 active team, navigate to ChatListScreen OR show team status + archive option */}
-          {user && (
+          {user && ff.chat && (
             <TouchableOpacity onPress={() => navigation.navigate("TeamListScreen")}>
               <ChatIcon size={20} color={Colors.Primary[1]} />
             </TouchableOpacity>
