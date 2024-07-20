@@ -1,4 +1,5 @@
 import { Assignment } from "hooks/queries/assignments";
+import { User, Team } from "types/User";
 
 export type RootStackParamList = {
   StudentHome: undefined;
@@ -55,6 +56,10 @@ export type RootStackParamList = {
   };
   TeacherStudentsList: { teamId: string };
   Mushaf: undefined;
+  ChatScreen: { teamId: string; interlocutorId?: string; title: string };
+  ChatListScreen: { team: Team };
+  ChatNewScreen: { team: Team };
+  TeamListScreen: undefined;
 };
 
 declare global {

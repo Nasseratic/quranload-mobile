@@ -7,7 +7,7 @@ export type User = {
   dateOfBirth: Date;
   teams: Team[];
   roles: UserRole[];
-  username?: string;
+  username?: string; // username is same as email 🤷‍♀️
   percentageOfAcceptedOrSubmittedLessons: number;
 };
 

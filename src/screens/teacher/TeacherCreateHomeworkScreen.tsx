@@ -11,7 +11,7 @@ import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCustomAssignment, updateCustomAssignment } from "services/assigmentService";
 import { t } from "locales/config";
-import { useMediaPicker } from "hooks/useMediaPicker";
+import { useMediaPicker, useMediaUploader } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";
@@ -39,7 +39,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   const [isImagesModalVisible, setIsImagesModalVisible] = useState(false);
   const [imagesModalIndex, setImagesModalIndex] = useState(0);
   const { accessToken } = useAuth();
-  const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaPicker({
+  const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaUploader({
     initialRemoteMedia: route.params.assignment?.attachments ?? undefined,
   });
   const queryClient = useQueryClient();
@@ -148,7 +148,6 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
           </Label>
           <View gap="$2" marginBottom={5} marginStart={5}>
             <ScrollView
-              // Q: Why does this work?
               // hack to horizontally scroll to start from the beginning of the screen
               left={-16}
               contentContainerStyle={{

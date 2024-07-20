@@ -1,10 +1,11 @@
 import { useCallback, useEffect } from "react";
-import * as Linking from "expo-linking";
-import { P, match } from "ts-pattern";
 import { useNavigation } from "@react-navigation/native";
-
-// Nasseratic+8876782@gmail.com
-// 1234Qwer!!
+import { useMaybeUser, useUser } from "contexts/auth";
+import Constants from "expo-constants";
+import * as Linking from "expo-linking";
+import * as Notifications from "expo-notifications";
+import { P, match } from "ts-pattern";
+import { navigationRef } from "navigation/navRef";
 
 const patterns = {
   //eg. com.quranloadapp.quranload://?code=CfDJ8JOKDTiAr3BNhh4CzGepFlNsOMPVUylNOmmNDb2xqTKUuKPE%2fBSHqjW%2b3%2bcIOE0jVLDp4AqIpEyhQogRoBocDm1wVbbeGQLO6QW6K5lA%2btycRAXWyrdCYeAjuFokR7HXGoE0Zbwk9MgedPKqI67G5bvtt9ukCwCuIYWLr4FAN86hc%2f7qstTKETbaxqljZ%2fjXheejUqudAI%2bpUec%2bEhuiTm%2bU%2fOXlK9K%2fArRyj6geaznJ&type=resetPassword
@@ -18,31 +19,113 @@ const patterns = {
     code: P.string,
     userId: P.string,
   },
+  message: {
+    type: "message",
+    message: {
+      teamId: P.string,
+      senderId: P.string,
+      senderName: P.string,
+      receiverId: P.string.optional().or(P.nullish),
+    },
+  },
 };
 
 type DeepLinkParams = P.infer<typeof patterns>[keyof typeof patterns];
 
-export const useDeepLinks = () => {
-  const { navigate } = useNavigation();
+const useHandleDeepLink = () => {
+  const { navigate, goBack } = useNavigation();
+  const user = useMaybeUser();
 
-  const handleOpenURL = useCallback(
-    (event: { url: string }) => {
-      const params = Linking.parse(event.url).queryParams as DeepLinkParams;
-      match(params)
-        .with(patterns.resetPassword, (params) => navigate("ResetPassword", params))
-        .with(patterns.confirmEmail, (params) => navigate("ConfirmEmailScreen", params))
-        .otherwise(() => {
-          console.log(params);
-          console.log("Unknown deeplink", event.url);
+  const handleDeepLink = async (deepLink: DeepLinkParams) => {
+    match(deepLink)
+      .with(patterns.message, ({ message }) => {
+        if (navigationRef.current?.getCurrentRoute()?.name === "ChatScreen") goBack();
+        navigate("ChatScreen", {
+          teamId: message.teamId,
+          interlocutorId: message.receiverId ? message.senderId : undefined,
+          title: message.receiverId
+            ? message.senderName
+            : user?.teams.find((team) => team.id == message.teamId)?.name ?? "",
         });
-    },
-    [navigate]
-  );
+      })
+      .with(patterns.resetPassword, (params) => navigate("ResetPassword", params))
+      .with(patterns.confirmEmail, (params) => navigate("ConfirmEmailScreen", params))
+      .otherwise(() => {
+        console.log("Unknown deeplink with params:", deepLink);
+      });
+  };
+
+  return { handleDeepLink };
+};
+
+export function useDeepLinkHandler() {
+  const { handleDeepLink } = useHandleDeepLink();
 
   useEffect(() => {
-    const listener = Linking.addEventListener("url", handleOpenURL);
+    const urlEventListener = Linking.addEventListener("url", (event) => {
+      try {
+        const urlParams = Linking.parse(event.url ?? `${Constants.expoConfig?.slug}://`);
+        handleDeepLink(urlParams.queryParams as DeepLinkParams);
+      } catch {
+        console.error("Failed to parse deep link");
+      }
+    });
+
     return () => {
-      listener.remove();
+      urlEventListener.remove();
     };
-  }, [handleOpenURL]);
+  }, []);
+}
+
+export const useNotificationActionHandler = () => {
+  const { handleDeepLink } = useHandleDeepLink();
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
+
+  useEffect(() => {
+    if (lastNotificationResponse?.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) {
+      return;
+    }
+
+    const data = lastNotificationResponse.notification.request.content.data;
+
+    if (!data) {
+      return;
+    }
+
+    handleDeepLink(data as DeepLinkParams);
+  }, [lastNotificationResponse]);
 };
+
+Notifications.setNotificationHandler({
+  handleNotification: async ({ request: { content } }) => {
+    const currentRoute = navigationRef.current?.getCurrentRoute();
+    return match([content.data, currentRoute])
+      .with(
+        [
+          patterns.message,
+          {
+            name: "ChatScreen",
+            params: {
+              teamId: P.string,
+              interlocutorId: P.string.optional(),
+            },
+          },
+        ],
+        ([{ message }, { params }]) => {
+          const isSameChat = params.interlocutorId
+            ? params.interlocutorId == message.senderId
+            : message.teamId === params.teamId;
+          return {
+            shouldShowAlert: !isSameChat,
+            shouldPlaySound: !isSameChat,
+            shouldSetBadge: false,
+          };
+        }
+      )
+      .otherwise(() => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }));
+  },
+});

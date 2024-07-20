@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
-import { useAuth } from "contexts/auth";
+import { useAuth, useUser } from "contexts/auth";
 import { BottomSheetModal, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import { t } from "locales/config";
 import Typography from "./Typography";
@@ -20,36 +20,46 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
 import { isDevelopmentBuild } from "expo-dev-client";
+import { supabase } from "utils/supabase";
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
 export const NotificationsBottomSheet = () => {
   const { signed } = useAuth();
   const [status, requestPermission] = Notifications.usePermissions();
   const insets = useSafeAreaInsets();
+  const { teams, id } = useUser();
   const { mutate } = useMutation({
     mutationKey: ["PushNotificationsKey"],
-    mutationFn: ({ token }: { token: string }) =>
-      apiClient.post("Devices", {
+    mutationFn: async ({ token }: { token: string }) => {
+      await supabase
+        .from("pushTokens")
+        .upsert(teams.map(({ id: teamId }) => ({ expoPushToken: token, teamId, userId: id })));
+      await apiClient.post("Devices", {
         token,
         name: deviceName,
-      }),
+      });
+    },
   });
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
-    if (signed && status && !status?.granted) {
-      getLastShownNotificationBottomSheet().then((lastShownAt) => {
-        if (!lastShownAt || differenceInDays(new Date(), lastShownAt) >= 7) {
-          bottomSheetRef.current?.present();
-        }
-      });
+    if (signed && status) {
+      if (status.granted) {
+        storeToken();
+      } else {
+        getLastShownNotificationBottomSheet().then((lastShownAt) => {
+          if (!lastShownAt || differenceInDays(new Date(), lastShownAt) >= 7) {
+            bottomSheetRef.current?.present();
+          }
+        });
+      }
     }
   }, [signed, status]);
 
   const storeToken = useCallback(async () => {
-    if (isDevelopmentBuild()) {
-      return console.log("skipping push notification registration in development build");
-    }
+    // if (isDevelopmentBuild()) {
+    //   return console.log("skipping push notification registration in development build");
+    // }
     const token = (
       await Notifications.getExpoPushTokenAsync({
         projectId: Constants.easConfig?.projectId,

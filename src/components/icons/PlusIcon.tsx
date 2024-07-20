@@ -1,8 +1,8 @@
 import { G, Path, Svg } from "react-native-svg";
 
-const PlusIcon = ({ color = "#fff" }) => {
+const PlusIcon = ({ color = "#fff", size = 24 }) => {
   return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <G id="heroicons-mini/plus">
         <Path
           id="Union"

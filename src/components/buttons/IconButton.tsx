@@ -29,6 +29,7 @@ export const IconButton = ({
           borderRadius: sizeMap[size ?? "md"],
         },
       ]}
+      hitSlop={10}
       onPress={onPress}
     >
       {icon}

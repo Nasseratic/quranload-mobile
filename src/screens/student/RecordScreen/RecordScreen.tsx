@@ -2,7 +2,7 @@ import { FunctionComponent, useState, useRef, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { View, Alert, StyleSheet, FlatList } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
-import { useAuth } from "contexts/auth";
+import { useAuth, useUser } from "contexts/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "constants/Colors";
 import { AudioPlayer } from "components/AudioPlayer";
@@ -24,7 +24,7 @@ import { IS_IOS, SCREEN_WIDTH } from "constants/GeneralConstants";
 import { match } from "ts-pattern";
 import { deleteFeedback, submitFeedback } from "services/feedbackService";
 import { isNotNullish } from "utils/notNullish";
-import { RecordingScreenRecorder } from "screens/student/RecordScreen/RecordScreenRecorder";
+import { Recorder } from "components/Recorder";
 import { AssignmentStatusEnum } from "types/Lessons";
 import { BookIcon } from "components/icons/BookIcon";
 import { SpeakerIcon } from "components/icons/SpeakerIcon";
@@ -34,6 +34,7 @@ import { ChevronLeftIcon } from "assets/icons";
 import Typography from "components/Typography";
 import { getMediaUri } from "services/mediaService";
 import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScreen";
+import { supabase } from "utils/supabase";
 import { ImageWithAuth } from "components/Image";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
@@ -44,7 +45,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
 
-  const { user, role, isTeacher } = useAuth();
+  const { role, isTeacher } = useAuth();
+  const user = useUser();
 
   const isReadOnly = route.params.readOnly;
   const assignment = route.params.assignment;
@@ -166,7 +168,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
               height={(IS_IOS ? 40 : 90) + insets.bottom}
               renderItem={({ item, index }) =>
                 item === "RECORDER" ? (
-                  <RecordingScreenRecorder
+                  <Recorder
                     lessonId={lessonId}
                     onSubmit={({ uri, duration }) => {
                       setAudioUrl(uri);
@@ -179,13 +181,30 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                             lessonState: AssignmentStatusEnum.accepted,
                           })
                         )
-                        .with("Student", () =>
-                          studentSubmission.mutateAsync({
+                        .with("Student", async () => {
+                          await studentSubmission.mutateAsync({
                             uri,
                             lessonId,
                             duration,
-                          })
-                        )
+                          });
+                          await supabase
+                            .from("messages")
+                            .insert([
+                              {
+                                text: `✨ MashaAllah 🤩, ${
+                                  user?.fullName
+                                } has submitted the recording for ${
+                                  assignment.description
+                                    ? `assignment : "${assignment.description}"`
+                                    : `page ${assignment.startPage} to page ${assignment.endPage}`
+                                }!`,
+                                senderId: user.id,
+                                teamId: "1",
+                                isSystem: true,
+                              },
+                            ])
+                            .select();
+                        })
                         .exhaustive();
                     }}
                   />

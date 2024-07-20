@@ -1,4 +1,8 @@
 const english = {
+  active: "Active",
+  inactive: "Inactive",
+  teams: "Teams",
+  chats: "Chats",
   add: "Add",
   chooseStartDate: "Choose start date",
   chooseEndDate: "Choose end date",
@@ -165,5 +169,7 @@ const english = {
   you_are_on_latest_version: "You are on the latest version",
   check_and_update: "Check and apply latest updates",
   retry: "Retry",
+  image: "Image",
+  audio: "Audio",
 };
 export default english;

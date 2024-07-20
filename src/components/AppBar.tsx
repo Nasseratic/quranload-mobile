@@ -26,7 +26,7 @@ export const AppBar = ({ title, disableGoBack, rightComponent }: AppBarProps) =>
       flexDirection: "row",
       justifyContent: "flex-start",
       alignItems: "center",
-      paddingRight: GeneralConstants.Spacing.md,
+      paddingRight: GeneralConstants.Spacing.xs,
       paddingLeft: !canGoBack ? GeneralConstants.Spacing.md : 0,
     },
     goBackButton: {

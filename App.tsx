@@ -17,6 +17,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Audio } from "expo-av";
 import { RootActionSheetContainer } from "components/ActionSheet";
 import { RootToastContainer } from "components/Toast";
+import "react-native-url-polyfill/auto";
 import { useEffect } from "react";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
 
@@ -27,7 +28,7 @@ Audio.setAudioModeAsync({
 });
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnMount: false } } });
 
 SplashScreen.preventAutoHideAsync();
 

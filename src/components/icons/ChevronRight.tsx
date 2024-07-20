@@ -6,7 +6,7 @@ const ChevronRight = ({ color = "#fff", size = 16 }) => {
       <Path
         d="M5.3125 3.625L9.6875 8L5.3125 12.375"
         stroke={color}
-        strokeWidth="1.5"
+        strokeWidth="1.1"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

@@ -22,7 +22,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
 
   const formik = useFormik({
     initialValues: {
-      username: "zaab-student",
+      username: "dahan14734@ociun.com",
       password: "P@ssw0rd",
       error: "",
     },

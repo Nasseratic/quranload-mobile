@@ -32,6 +32,14 @@ export const useAuth = () => {
 
 export const useUser = () => {
   const { user } = useContext(AuthContext);
+  if (!user) {
+    throw new Error("Cannot use useUser when user is not authenticated");
+  }
+  return user;
+};
+
+export const useMaybeUser = () => {
+  const { user } = useContext(AuthContext);
   return user;
 };
 

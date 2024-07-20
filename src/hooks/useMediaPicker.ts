@@ -1,17 +1,61 @@
 import { MediaTypeOptions, launchImageLibraryAsync } from "expo-image-picker";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { uploadChatMedia } from "utils/uploadChatMedia";
 import { MediaResponse, getMediaUri, uploadFile } from "services/mediaService";
 import { isNotNullish } from "utils/notNullish";
 
-export const useMediaPicker = ({
+export const useSupabaseMediaUploader = ({
   initialRemoteMedia,
 }: { initialRemoteMedia?: MediaResponse[] } = {}) => {
+  const picker = useMediaPicker({ initialRemoteMedia });
+
+  const supabaseUploadChatImages = async () => {
+    const uploadImages = await Promise.all(
+      picker.images.map((uri) => uploadChatMedia(uri, "image"))
+    );
+    picker.setImages([]);
+    return uploadImages;
+  };
+
+  const { mutateAsync: upload, isLoading } = useMutation({
+    mutationKey: ["media"],
+    mutationFn: supabaseUploadChatImages,
+  });
+
+  return {
+    ...picker,
+    isUploading: isLoading,
+    upload,
+  };
+};
+
+export const useMediaUploader = ({
+  initialRemoteMedia,
+}: { initialRemoteMedia?: MediaResponse[] } = {}) => {
+  const picker = useMediaPicker({ initialRemoteMedia });
   const { mutateAsync, isLoading } = useMutation({
     mutationKey: ["media"],
     mutationFn: uploadFile,
   });
 
+  const uploadSelectedMedia = () =>
+    Promise.all(
+      picker.images.map((uri) =>
+        uri.startsWith("http")
+          ? Promise.resolve(initialRemoteMedia?.find((media) => getMediaUri(media.id) === uri))
+          : mutateAsync({ uri })
+      )
+    );
+
+  return {
+    ...picker,
+    uploadSelectedMedia,
+    isUploading: isLoading,
+  };
+};
+
+const useMediaPicker = ({ initialRemoteMedia }: { initialRemoteMedia?: MediaResponse[] } = {}) => {
   const [images, setImages] = useState<string[]>(
     initialRemoteMedia?.map((media) => getMediaUri(media.id)).filter(isNotNullish) ?? []
   );
@@ -31,14 +75,10 @@ export const useMediaPicker = ({
 
   const removeImage = (image: string) => setImages((images) => images.filter((i) => i !== image));
 
-  const uploadSelectedMedia = () =>
-    Promise.all(
-      images.map((uri) =>
-        uri.startsWith("http")
-          ? Promise.resolve(initialRemoteMedia?.find((media) => getMediaUri(media.id) === uri))
-          : mutateAsync({ uri })
-      )
-    );
-
-  return { pickImage, images, removeImage, uploadSelectedMedia, isUploading: isLoading };
+  return {
+    setImages,
+    pickImage,
+    images,
+    removeImage,
+  };
 };

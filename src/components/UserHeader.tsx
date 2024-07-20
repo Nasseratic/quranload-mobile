@@ -5,6 +5,8 @@ import { CogIcon } from "assets/icons";
 import AuthContext from "contexts/auth";
 import { Colors } from "constants/Colors";
 import { useNavigation } from "@react-navigation/native";
+import { XStack } from "tamagui";
+import { ChatIcon } from "./icons/ChatIcon";
 
 const UserHeader = () => {
   const navigation = useNavigation();
@@ -35,9 +37,17 @@ const UserHeader = () => {
         }}
       >
         <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
-        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-          <CogIcon width={18} height={18} color={Colors.Primary[1]} />
-        </TouchableOpacity>
+        <XStack gap={16} jc="center" ai="center">
+          {/* TODO?: If there's only 1 active team, navigate to ChatListScreen OR show team status + archive option */}
+          {user && (
+            <TouchableOpacity onPress={() => navigation.navigate("TeamListScreen")}>
+              <ChatIcon size={20} color={Colors.Primary[1]} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+            <CogIcon width={20} height={18} color={Colors.Primary[1]} />
+          </TouchableOpacity>
+        </XStack>
       </View>
     </View>
   );

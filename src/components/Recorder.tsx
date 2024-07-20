@@ -34,13 +34,16 @@ import {
   IOSAudioQuality,
   IOSOutputFormat,
 } from "expo-av/build/Audio";
+import { toast } from "./Toast";
+import { PermissionStatus } from "../../node_modules/expo-modules-core/src/PermissionsInterface";
 
 let currentRecording: Audio.Recording | null = null;
 
 const cleanCurrentRecording = async () => {
   if (currentRecording) {
-    await currentRecording.stopAndUnloadAsync();
+    const stopAndUnloadPromise = currentRecording.stopAndUnloadAsync();
     currentRecording = null;
+    await stopAndUnloadPromise;
   }
 };
 
@@ -49,31 +52,47 @@ let recordings: {
   duration: number;
 }[] = [];
 
-const cleanRecordings = async ({ lessonId }: { lessonId: string }) => {
+const cleanRecordings = async ({ lessonId }: { lessonId?: string }) => {
   recordings = [];
-  await Promise.all([cleanCurrentRecording(), eraseAudioRecordingsFromStorage({ lessonId })]);
+  await Promise.all([
+    cleanCurrentRecording(),
+    lessonId ? eraseAudioRecordingsFromStorage({ lessonId }) : Promise.resolve(),
+  ]);
 };
 
 const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
 const METERING_CHECK_INTERVAL = 300;
 
-type RecordingState = "idle" | "recording" | "paused";
+export type RecordingState = "idle" | "recording" | "paused" | "submitting";
 
-export const RecordingScreenRecorder = ({
+export const Recorder = ({
   lessonId,
   onSubmit,
+  onStatusChange,
 }: {
-  lessonId: string;
+  lessonId?: string;
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
+  onStatusChange?: (status: RecordingState) => void;
 }) => {
+  const [permissionStatus, requestPermission] = Audio.usePermissions({ request: false });
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
-  const [isConcatenatingAudio, setIsConcatenatingAudio] = useState(false);
 
+  const handleStatusChange = useCallback(
+    (status: RecordingState) => {
+      setRecordingState(status);
+      onStatusChange?.(status);
+    },
+    [onStatusChange]
+  );
   async function startRecording() {
-    const { granted } = await Audio.requestPermissionsAsync();
+    let isDenied = permissionStatus && permissionStatus.status === PermissionStatus.DENIED;
+    if (!permissionStatus || permissionStatus.status === PermissionStatus.UNDETERMINED) {
+      const { granted } = await requestPermission();
+      if (!granted) isDenied = true;
+    }
 
-    if (!granted) {
+    if (isDenied) {
       Alert.alert(
         "Permission required",
         "You need to grant permission to record audio to use this app.",
@@ -91,13 +110,13 @@ export const RecordingScreenRecorder = ({
 
     try {
       if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setRecordingState("recording");
+      handleStatusChange("recording");
 
       await startRecordingWithAutoFragmenting();
     } catch (err) {
       //Implement error handling
       err;
-      setRecordingState("idle");
+      handleStatusChange("idle");
     }
   }
 
@@ -111,20 +130,20 @@ export const RecordingScreenRecorder = ({
         uri,
         duration: durationMillis,
       });
-      persistAudioRecordings({ lessonId, recordings });
+      if (lessonId) persistAudioRecordings({ lessonId, recordings });
     }
   };
 
   const pauseRecording = async () => {
     if (!currentRecording) return;
-    setRecordingState("paused");
+    handleStatusChange("paused");
     if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     await cutRecording();
   };
 
   const discardRecording = useCallback(async () => {
     await cleanRecordings({ lessonId });
-    setRecordingState("idle");
+    handleStatusChange("idle");
     if (IS_IOS)
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -132,34 +151,36 @@ export const RecordingScreenRecorder = ({
   }, [lessonId]);
 
   const submitRecording = async () => {
-    setRecordingState("idle");
-    if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    await cutRecording();
-    if (IS_IOS)
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-      });
-    setIsConcatenatingAudio(true);
-    const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
-    setIsConcatenatingAudio(false);
-
-    if (!uri) return;
-
-    // in case of error, we want to keep the recordings
-    const tempRecordings = recordings;
     try {
-      const duration = Math.round(
-        recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000
-      );
-      recordings = [];
-      await onSubmit({
-        uri,
-        duration,
-      });
-      await cleanRecordings({ lessonId });
-    } catch {
-      recordings = tempRecordings;
-      //TODO: Error handling
+      if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      await cutRecording();
+      handleStatusChange("submitting");
+      if (IS_IOS)
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+        });
+      const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
+
+      if (!uri) return;
+
+      // in case of error, we want to keep the recordings
+      const tempRecordings = recordings;
+      try {
+        const duration = Math.round(
+          recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000
+        );
+        recordings = [];
+        await onSubmit({
+          uri,
+          duration,
+        });
+        await cleanRecordings({ lessonId });
+      } catch {
+        recordings = tempRecordings;
+        //TODO: Error handling
+      }
+    } finally {
+      handleStatusChange("idle");
     }
   };
 
@@ -169,6 +190,10 @@ export const RecordingScreenRecorder = ({
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
         });
+      if (currentRecording) {
+        await cleanCurrentRecording();
+        toast.show({ title: "want to record while having current recording", status: "Warning" });
+      }
       const { recording } = await Audio.Recording.createAsync({
         web: {},
         ios: {
@@ -223,12 +248,15 @@ export const RecordingScreenRecorder = ({
   });
 
   useEffect(() => {
-    getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {
-      if (savedRecordings.length > 0) {
-        recordings = savedRecordings;
-        setRecordingState("paused");
-      }
-    });
+    if (lessonId) {
+      getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {
+        if (savedRecordings.length > 0) {
+          recordings = savedRecordings;
+          handleStatusChange("paused");
+          console.log("Restored recordings", savedRecordings);
+        }
+      });
+    }
     return () => {
       cutRecording().then(() => {
         if (recordings.length === 0) return;
@@ -251,7 +279,7 @@ export const RecordingScreenRecorder = ({
     };
   }, [lessonId]);
 
-  if (isConcatenatingAudio) return <ActivityIndicator />;
+  if (recordingState === "submitting") return <ActivityIndicator />;
 
   return (
     <XStack jc="center" ai="center" gap="$2">

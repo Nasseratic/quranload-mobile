@@ -1,6 +1,10 @@
 import english from "./en";
 
 const danish: typeof english = {
+  active: "Aktiv",
+  inactive:"Inaktiv",
+  teams: "Hold",
+  chats: "Chats",
   add: "Tilføje",
   chooseStartDate: "Vælg startdato",
   chooseEndDate: "Vælg slutdato",
