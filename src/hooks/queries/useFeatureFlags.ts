@@ -1,7 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
+import { isDevelopmentBuild } from "expo-dev-client";
 import { useMemo } from "react";
 import { Database } from "types/Supabase";
 import { supabase } from "utils/supabase";
+
+type FF = Database["public"]["Enums"]["featureFlag"];
+
+const devFF = {
+  chat: true,
+  inAppEnrolment: true,
+} satisfies Record<FF, boolean>;
 
 export const useFeatureFlags = () => {
   const { data } = useQuery(["featureFlags"], async () => {
@@ -12,10 +20,11 @@ export const useFeatureFlags = () => {
 
   const ff = useMemo(
     () =>
-      Object.fromEntries(data?.map((flag) => [flag.name, flag.isEnabled] as const) ?? []) as Record<
-        Database["public"]["Enums"]["featureFlag"],
-        boolean
-      >,
+      isDevelopmentBuild()
+        ? devFF
+        : (Object.fromEntries(
+            data?.map((flag) => [flag.name, flag.isEnabled] as const) ?? []
+          ) as typeof devFF),
     [data]
   );
 

@@ -7,8 +7,12 @@ import { EmptySvg } from "components/svgs/EmptySvg";
 import ActionButton from "./buttons/ActionBtn";
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
+import { useOrganizations } from "hooks/queries/useOrganizations";
+import { Avatar, Card, Separator, Stack, Text, XStack } from "tamagui";
+import { useFeatureFlags } from "hooks/queries/useFeatureFlags";
 
 const NoClasses = ({ role }: { role: "teacher" | "student" }) => {
+  const { ff } = useFeatureFlags();
   const text = useMemo(
     () =>
       role === "teacher" ? t("teacherHomeScreen.noClasses") : t("studentDashboard.notEnrolled"),
@@ -16,26 +20,32 @@ const NoClasses = ({ role }: { role: "teacher" | "student" }) => {
   );
   return (
     <View style={styles.container}>
-      <EmptySvg size={SCREEN_WIDTH * 0.5} />
-      <View style={styles.errorDetail}>
-        <Typography
-          type="TitleLight"
-          style={{
-            color: Colors.Black[2],
-            textAlign: "center",
-            width: 280,
-          }}
-        >
-          {text}
-        </Typography>
-      </View>
-      {role === "student" && (
-        <View>
-          <ActionButton
-            title={t("studentDashboard.enroll")}
-            onPress={() => Linking.openURL("https://www.quranload.com")}
-          />
-        </View>
+      {ff.inAppEnrolment ? (
+        <Schools />
+      ) : (
+        <Stack gap={GeneralConstants.Spacing.xl}>
+          <EmptySvg size={SCREEN_WIDTH * 0.5} />
+          <View style={styles.errorDetail}>
+            <Typography
+              type="TitleLight"
+              style={{
+                color: Colors.Black[2],
+                textAlign: "center",
+                width: 280,
+              }}
+            >
+              {text}
+            </Typography>
+          </View>
+          {role === "student" && (
+            <View>
+              <ActionButton
+                title={t("studentDashboard.enroll")}
+                onPress={() => Linking.openURL("https://www.quranload.com")}
+              />
+            </View>
+          )}
+        </Stack>
       )}
     </View>
   );
@@ -46,7 +56,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 124,
-    gap: GeneralConstants.Spacing.xl,
   },
   errorWrapper: {
     padding: GeneralConstants.Spacing.lg,
@@ -61,3 +70,25 @@ const styles = StyleSheet.create({
 });
 
 export default NoClasses;
+
+const Schools = () => {
+  const { organizations } = useOrganizations();
+
+  return organizations?.map((org) => (
+    <Card bg="$gray1" shadowColor="#000" elevation={15} key={org.id} w="100%" ai="center" p={24}>
+      <Avatar br={100}>
+        {org.logo && <Avatar.Image source={{ uri: org.logo }} />}
+        <Avatar.Fallback jc="center" ai="center" bg="lightgrey">
+          <Text textTransform="uppercase">{org.fullName?.slice(0, 2)}</Text>
+        </Avatar.Fallback>
+      </Avatar>
+      <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
+        {org.fullName}
+      </Typography>
+      <Separator />
+      <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
+        Phone: {org.phoneNumber}
+      </Typography>
+    </Card>
+  ));
+};

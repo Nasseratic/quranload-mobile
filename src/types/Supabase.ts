@@ -115,7 +115,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      featureFlag: "chat"
+      featureFlag: "chat" | "inAppEnrolment"
       mediaType: "image" | "audio"
     }
     CompositeTypes: {
