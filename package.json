@@ -27,6 +27,7 @@
     "@react-navigation/native-stack": "^6.9.12",
     "@sentry/react-native": "5.5.0",
     "@shopify/react-native-skia": "0.1.196",
+    "@stripe/stripe-react-native": "0.28.0",
     "@supabase/supabase-js": "^2.42.0",
     "@tamagui/shorthands": "^1.52.9",
     "@tamagui/themes": "^1.52.9",
