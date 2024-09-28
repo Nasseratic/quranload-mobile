@@ -40,6 +40,12 @@ export const AudioPlayer = memo(
     }
 
     useEffect(() => {
+      if (!isVisible) {
+        sound?.pauseAsync();
+      }
+    }, [isVisible]);
+
+    useEffect(() => {
       let soundToClean: Audio.Sound | null = null;
 
       (async () => {
