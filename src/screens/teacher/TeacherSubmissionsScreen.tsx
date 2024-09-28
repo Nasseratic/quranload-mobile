@@ -16,6 +16,8 @@ import { SafeView } from "components/SafeView";
 import { IconButton } from "components/buttons/IconButton";
 import { actionSheet } from "components/ActionSheet";
 import { OptionsIcon } from "components/icons/OptionsIcon";
+import { addIf } from "utils/addIf";
+import { Enum_AssignmentType } from "__generated/apiTypes/models/Enum_AssignmentType";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherSubmissions">;
 export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
@@ -63,7 +65,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                         });
                       },
                     },
-                    {
+                    ...addIf(homework.typeId === Enum_AssignmentType._2, {
                       title: t("update"),
                       onPress: () => {
                         navigation.navigate("TeacherCreateHomework", {
@@ -71,7 +73,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                           assignment: homework,
                         });
                       },
-                    },
+                    }),
                     {
                       title: t("delete"),
                       destructive: true,
