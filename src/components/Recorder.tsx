@@ -282,7 +282,7 @@ export const Recorder = ({
   if (recordingState === "submitting") return <ActivityIndicator />;
 
   return (
-    <XStack jc="center" ai="center" gap="$2">
+    <XStack jc="center" ai="center" gap="$8">
       <View>
         {recordingState !== "idle" && (
           <IconButton
@@ -335,7 +335,7 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      width: isExpanded ? withSpring(120) : withTiming(45),
+      width: isExpanded ? withSpring(155) : withTiming(45),
       transform: [
         {
           scale:
@@ -352,7 +352,7 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
   const animatedTextStyle = useAnimatedStyle(() => {
     return {
       opacity: withTiming(isExpanded ? 1 : 0),
-      width: withTiming(isExpanded ? 54 : 0),
+      width: withTiming(isExpanded ? 75 : 0),
       marginLeft: withTiming(isExpanded ? 6 : 0),
     };
   });
