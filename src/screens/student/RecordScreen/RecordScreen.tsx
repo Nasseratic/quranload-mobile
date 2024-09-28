@@ -36,10 +36,12 @@ import { getMediaUri } from "services/mediaService";
 import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScreen";
 import { supabase } from "utils/supabase";
 import { ImageWithAuth } from "components/Image";
+import { useKeepAwake } from "expo-keep-awake";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
 export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) => {
+  useKeepAwake();
   const queryClient = useQueryClient();
 
   const carouselRef = useRef<ICarouselInstance>(null);

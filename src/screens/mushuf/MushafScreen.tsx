@@ -1,8 +1,11 @@
 import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ImageMushafPage } from "components/Mushaf/MushafPage";
+import { useKeepAwake } from "expo-keep-awake";
 
 export function MushafScreen() {
+  useKeepAwake();
+
   return (
     <SafeAreaView
       edges={["top"]}
