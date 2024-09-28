@@ -9,7 +9,7 @@ import Animated, {
 import Typography from "./Typography";
 import { Stack } from "tamagui";
 import { Colors } from "constants/Colors";
-import { SCREEN_WIDTH } from "constants/GeneralConstants";
+import { IS_ANDROID, SCREEN_WIDTH } from "constants/GeneralConstants";
 import { XStack } from "tamagui";
 import { CrossIcon } from "./icons/CrossIcon";
 import { TouchableOpacity } from "react-native";
@@ -55,7 +55,7 @@ export const RootToastContainer = () => {
       if (currentTimeout) clearTimeout(currentTimeout);
       currentTimeout = setTimeout(hide, params.duration ?? 4500);
     };
-  }, []);
+  }, [bottom]);
 
   const animatedStyle = useAnimatedStyle(
     () => ({
@@ -80,7 +80,13 @@ export const RootToastContainer = () => {
     >
       <Animated.View style={animatedStyle}>
         {currentParams && (
-          <Stack bg={Colors[currentParams.status][1]} p="$4" borderRadius="$4" m={16}>
+          <Stack
+            bg={Colors[currentParams.status][1]}
+            p="$4"
+            borderRadius="$4"
+            mx={16}
+            my={IS_ANDROID ? 16 : 4}
+          >
             <XStack jc="space-between" ai="flex-start">
               <Stack jc="center" h="100%">
                 <Typography type="BodyHeavy" style={{ color: "white" }}>

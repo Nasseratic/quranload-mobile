@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppBar } from "components/AppBar";
 import { View } from "tamagui";
 import { profileQueryKey } from "contexts/auth";
+import { toast } from "components/Toast";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
@@ -46,7 +47,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
       updateUserProfile(values)
         .then(() => {
           queryClient.invalidateQueries([profileQueryKey]);
-          Alert.alert(i18n.t("profileScreen.profileUpdated"));
+          toast.show({ status: "Success", title: i18n.t("profileScreen.profileUpdated") });
         })
         .catch((error) => {
           if (error.validation) {
