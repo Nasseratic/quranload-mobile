@@ -46,10 +46,12 @@ export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: nu
           offset: SCREEN_WIDTH * index,
         })}
         onMomentumScrollEnd={(event) => {
-          const index = Math.floor(
+          const maxVal = pageTo - pageFrom;
+          const currentIndex = Math.floor(
             Math.floor(event.nativeEvent.contentOffset.x) /
               Math.floor(event.nativeEvent.layoutMeasurement.width)
           );
+          const index = Math.min(Math.max(currentIndex, 0), maxVal);
           setPageOrderInHW(index + 1);
           setCurrentPageNumber(pageFrom + index);
           setSurahName(findSurahNameOfPage(pageFrom + index));
