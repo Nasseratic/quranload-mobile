@@ -1,4 +1,4 @@
-import { FunctionComponent, useContext } from "react";
+import { FunctionComponent, useContext, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Image, StyleSheet, View, TouchableOpacity, ImageSourcePropType } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,16 +14,16 @@ import { RootStackParamList } from "navigation/navigation";
 import Logo from "@assets/logo.png";
 import { ScrollView } from "tamagui";
 import * as Updates from "expo-updates";
+import { isDevelopmentBuild } from "expo-dev-client";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
 const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);
-
   const formik = useFormik({
     initialValues: {
-      username: "dahan14734@ociun.com",
-      password: "P@ssw0rd",
+      username: "",
+      password: isDevelopmentBuild() ? "P@ssw0rd" : "",
       error: "",
     },
     onSubmit: (values, { setErrors }) => {
@@ -58,6 +58,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
             touched={formik.touched.username}
           />
           <MyTextInput
+            isSecure
             placeHolder={t("loginScreen.password")}
             label={t("loginScreen.password")}
             onChange={formik.handleChange("password")}

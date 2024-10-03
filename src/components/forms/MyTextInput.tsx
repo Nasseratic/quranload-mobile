@@ -12,6 +12,9 @@ import {
 import Typography from "components/Typography";
 import typographiesStyles from "styles/typographies";
 import GeneralConstants from "constants/GeneralConstants";
+import { EyeIcon } from "components/icons/EyeIcon";
+import { EyeOffIcon } from "components/icons/EyeOffIcon";
+import { Button, Stack } from "tamagui";
 
 interface OwnProps {
   label?: string;
@@ -28,6 +31,7 @@ interface OwnProps {
   editable?: boolean;
   autofocus?: boolean;
   textarea?: boolean;
+  isSecure?: boolean;
 }
 
 type Props = OwnProps;
@@ -44,8 +48,10 @@ const MyTextInput: FunctionComponent<Props> = ({
   placeHolder,
   autofocus,
   textarea,
+  isSecure,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [isSecureOn, setIsSecureOn] = useState(isSecure);
 
   const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
     setIsFocused(false);
@@ -66,20 +72,38 @@ const MyTextInput: FunctionComponent<Props> = ({
         </Typography>
       )}
 
-      <TextInput
-        keyboardType={autoCompleteType}
-        returnKeyType="next"
-        editable={editable}
-        autoFocus={autofocus}
-        placeholder={placeHolder}
-        onChangeText={onChange}
-        onBlur={handleOnBlur}
-        onFocus={() => setIsFocused(true)}
-        style={[styles.input, error && touched ? styles.error : null, isFocused && styles.focused]}
-        value={value}
-        multiline={textarea}
-        numberOfLines={textarea ? 10 : 1}
-      />
+      <Stack>
+        <TextInput
+          keyboardType={autoCompleteType}
+          returnKeyType="next"
+          editable={editable}
+          autoFocus={autofocus}
+          placeholder={placeHolder}
+          onChangeText={onChange}
+          onBlur={handleOnBlur}
+          onFocus={() => setIsFocused(true)}
+          style={[
+            styles.input,
+            error && touched ? styles.error : null,
+            isFocused && styles.focused,
+            isSecure && { paddingRight: 50 },
+          ]}
+          value={value}
+          multiline={textarea}
+          numberOfLines={textarea ? 10 : 1}
+          secureTextEntry={isSecureOn}
+        />
+        <Button
+          position="absolute"
+          right={8}
+          pressStyle={{ opacity: 0.5, borderWidth: 0 }}
+          variant="outlined"
+          w={25}
+          onPress={() => setIsSecureOn(!isSecureOn)}
+        >
+          {isSecure && (isSecureOn ? <EyeOffIcon /> : <EyeIcon />)}
+        </Button>
+      </Stack>
       {touched && error && <Text style={{ marginVertical: 4 }}>{error}</Text>}
     </View>
   );
