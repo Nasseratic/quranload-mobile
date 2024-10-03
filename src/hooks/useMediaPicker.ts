@@ -39,14 +39,17 @@ export const useMediaUploader = ({
     mutationFn: uploadFile,
   });
 
-  const uploadSelectedMedia = () =>
-    Promise.all(
-      picker.images.map((uri) =>
-        uri.startsWith("http")
+  const uploadSelectedMedia = async () => {
+    let images = [];
+    for (const uri of picker.images) {
+      images.push(
+        await (uri.startsWith("http")
           ? Promise.resolve(initialRemoteMedia?.find((media) => getMediaUri(media.id) === uri))
-          : mutateAsync({ uri })
-      )
-    );
+          : mutateAsync({ uri }))
+      );
+    }
+    return images;
+  };
 
   return {
     ...picker,
