@@ -15,12 +15,12 @@ import {
 } from "services/lessonsService";
 import { IconButton } from "components/buttons/IconButton";
 import { BinIcon } from "components/icons/BinIcon";
-import { Square, Stack, XStack } from "tamagui";
+import { Button, Square, Stack, XStack } from "tamagui";
 import { t } from "locales/config";
 import { IconSwitch } from "components/IconSwitch";
 import Carousel from "react-native-reanimated-carousel";
 import { ICarouselInstance } from "react-native-reanimated-carousel";
-import { IS_IOS, SCREEN_WIDTH } from "constants/GeneralConstants";
+import { IS_IOS, SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
 import { match } from "ts-pattern";
 import { deleteFeedback, submitFeedback } from "services/feedbackService";
 import { isNotNullish } from "utils/notNullish";
@@ -37,17 +37,17 @@ import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScre
 import { supabase } from "utils/supabase";
 import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
+import { CrossIcon } from "components/icons/CrossIcon";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
 export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) => {
   useKeepAwake();
   const queryClient = useQueryClient();
-
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
 
-  const { role, isTeacher } = useAuth();
+  const { role, isTeacher, isStudent } = useAuth();
   const user = useUser();
 
   const isReadOnly = route.params.readOnly;
@@ -60,8 +60,10 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
     [assignment.attachments]
   );
-  const type = route.params.assignment.typeId;
+  const type = route.params.assignment.typeId as unknown as AssignmentTypeEnum;
+  const isCustomAssignment = type === AssignmentTypeEnum.Custom;
 
+  const [isCustomHomeworkDetailsShown, setIsCustomHomeworkDetailsShown] = useState(isStudent);
   const [carouselIndex, setCarouselIndex] = useState<0 | 1>(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -125,7 +127,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
 
   return (
     <View style={{ flex: 1 }}>
-      {match(type as unknown as AssignmentTypeEnum)
+      {match(type)
         .with(AssignmentTypeEnum.Custom, () => (
           <>
             <XStack mt={insets.top} gap="$2" ai="center">
@@ -142,8 +144,36 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
               >
                 {assignment.description}
               </Typography>
+              {isCustomAssignment && !isCustomHomeworkDetailsShown && (
+                <Square p="$3" px="$4" onPress={() => setIsCustomHomeworkDetailsShown(true)}>
+                  <BookIcon color={Colors.Black[1]} />
+                </Square>
+              )}
             </XStack>
-            {attachments && <ImagePages imageIds={attachments} />}
+            <Stack f={1}>
+              {attachments && <ImagePages imageIds={attachments} />}
+              {isCustomAssignment && isCustomHomeworkDetailsShown && (
+                <Stack
+                  backgroundColor="rgba(255, 255, 255, 0.8)"
+                  p="$4"
+                  position="absolute"
+                  h="100%"
+                  w="100%"
+                  jc="space-between"
+                  ai="center"
+                >
+                  <Stack gap={4} w={"100%"}>
+                    <Typography type="TitleHeavy">{t("assignmentScreen.title")}</Typography>
+                    <Typography type="Body">{assignment.description}</Typography>
+                  </Stack>
+                  <IconButton
+                    bg="gray"
+                    icon={<CrossIcon color="white" />}
+                    onPress={() => setIsCustomHomeworkDetailsShown(false)}
+                  />
+                </Stack>
+              )}
+            </Stack>
           </>
         ))
         .with(AssignmentTypeEnum.Auto, () => (
