@@ -28,7 +28,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
     },
     onSubmit: (values, { setErrors }) => {
       setErrors({});
-      signIn(values.username, values.password).catch((err: ISignInErrorResponse) => {
+      signIn(values.username.trim(), values.password).catch((err: ISignInErrorResponse) => {
         if (err.response?.data?.message) {
           setErrors({ error: err.response.data.message });
         }
