@@ -163,7 +163,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                   ai="center"
                 >
                   <Stack gap={4} w={"100%"}>
-                    <Typography type="TitleHeavy">{t("assignmentScreen.title")}</Typography>
+                    <Typography type="TitleHeavy">{t("description")}:</Typography>
                     <Typography type="Body">{assignment.description}</Typography>
                   </Stack>
                   <IconButton
