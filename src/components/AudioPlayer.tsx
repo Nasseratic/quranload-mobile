@@ -12,6 +12,7 @@ import * as FileSystem from "expo-file-system";
 import { IconButton } from "./buttons/IconButton";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
+import { useAudioManager } from "hooks/useAudioManager";
 
 export const AudioPlayer = memo(
   ({
@@ -25,29 +26,24 @@ export const AudioPlayer = memo(
     width?: number;
     isCompact?: boolean;
   }) => {
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
+    const { playSound, pauseSound, sound, setSound } = useAudioManager();
     const [durationSec, setDurationSec] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [positionSec, setPositionSec] = useState(0);
     const wasPlaying = useRef(false);
 
-    async function playSound() {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-      });
+    async function play() {
       if (durationSec - positionSec < 0.3) sound?.setPositionAsync(0);
-      sound?.playAsync();
+      playSound();
     }
 
     useEffect(() => {
       if (!isVisible) {
-        sound?.pauseAsync();
+        pauseSound();
       }
     }, [isVisible]);
 
     useEffect(() => {
-      let soundToClean: Audio.Sound | null = null;
-
       (async () => {
         if (!uri) return;
 
@@ -67,20 +63,16 @@ export const AudioPlayer = memo(
           }
         );
         if (!status.isLoaded) return;
-        soundToClean = sound;
         setSound(sound);
         setTimeout(() => {
           setDurationSec((status.durationMillis ?? 0) / 1000);
         }, 100);
       })();
-      return function cleanUpSound() {
-        soundToClean?.unloadAsync();
-      };
     }, [uri]);
 
     const onTogglePlay = () => {
-      if (isPlaying) sound?.pauseAsync();
-      else playSound();
+      if (isPlaying) pauseSound();
+      else play();
     };
 
     // sound did load yet
@@ -102,7 +94,7 @@ export const AudioPlayer = memo(
       setPositionSec(valueSec);
       sound?.getStatusAsync().then((status) => {
         if (status.isLoaded && status.isPlaying) {
-          sound?.pauseAsync();
+          pauseSound();
           wasPlaying.current = true;
         }
       });
@@ -140,7 +132,7 @@ export const AudioPlayer = memo(
                   updateValue(value);
                   sound?.setPositionAsync(convertPresentToPosition(value, durationSec) * 1000);
                   if (wasPlaying.current) {
-                    sound?.playAsync();
+                    playSound();
                     wasPlaying.current = false;
                   }
                 }}
