@@ -172,5 +172,6 @@ const english = {
   image: "Image",
   audio: "Audio",
   audioRecordingPaused: "Audio recording paused",
+  invalid: "Invalid",
 };
 export default english;

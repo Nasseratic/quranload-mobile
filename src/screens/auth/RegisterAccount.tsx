@@ -28,6 +28,9 @@ import { toast } from "components/Toast";
 export const passwordRules =
   /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+?]).{8,}$/;
 
+export const nameRules = /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/;
+export const phoneNumberRules = /^\+?\d{7,}$/;
+
 type Props = NativeStackScreenProps<RootStackParamList, "RegisterAccount">;
 
 const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
@@ -53,8 +56,12 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
       confirmPassword: "",
     },
     validationSchema: Yup.object().shape({
-      firstName: Yup.string().required(),
-      lastName: Yup.string().required(),
+      firstName: Yup.string()
+        .matches(nameRules, { message: t("invalid") })
+        .required(),
+      lastName: Yup.string()
+        .matches(nameRules, { message: t("invalid") })
+        .required(),
       email: Yup.string().email().required(),
       password: Yup.string()
         .required()

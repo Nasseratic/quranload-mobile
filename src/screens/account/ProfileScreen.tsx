@@ -1,6 +1,6 @@
 import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { i18n } from "locales/config";
+import { i18n, t } from "locales/config";
 import { useFormik } from "formik";
 import ActionButton from "components/buttons/ActionBtn";
 import TextButton from "components/buttons/TextButton";
@@ -16,6 +16,7 @@ import { AppBar } from "components/AppBar";
 import { View } from "tamagui";
 import { profileQueryKey } from "contexts/auth";
 import { toast } from "components/Toast";
+import { nameRules, phoneNumberRules } from "screens/auth/RegisterAccount";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
@@ -39,9 +40,12 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
     initialValues,
     enableReinitialize: true,
     validationSchema: yup.object().shape({
-      fullName: yup.string().required(i18n.t("form.required")),
-      emailAddress: yup.string().required(i18n.t("form.required")).email(i18n.t("form.validEmail")),
-      phoneNumber: yup.string().required(i18n.t("form.required")),
+      fullName: yup.string().matches(nameRules, t("invalid")).required(t("form.required")),
+      emailAddress: yup.string().required(t("form.required")).email(t("form.validEmail")),
+      phoneNumber: yup
+        .string()
+        .matches(phoneNumberRules, { message: t("invalid") })
+        .required(t("form.required")),
     }),
     onSubmit(values) {
       updateUserProfile(values)
@@ -79,6 +83,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
           error={formik.errors.phoneNumber}
           placeholder={formik.values.phoneNumber}
           onChangeText={formik.handleChange("phoneNumber")}
+          onBlur={formik.handleBlur("phoneNumber")}
           keyboardType="phone-pad"
         />
 
@@ -100,6 +105,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
           placeholder={formik.values.emailAddress}
           onChangeText={formik.handleChange("emailAddress")}
           keyboardType="email-address"
+          onBlur={formik.handleBlur("emailAddress")}
         />
 
         <TextButton
