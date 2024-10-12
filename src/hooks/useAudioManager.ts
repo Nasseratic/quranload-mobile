@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 let activeSound: Audio.Sound | null = null;
 
+const audioListeners = new Set<() => void>();
+
 export const useAudioManager = (initialSound?: Audio.Sound | null) => {
   const [sound, setSound] = useState<Audio.Sound | null | undefined>(initialSound);
 
@@ -11,6 +13,7 @@ export const useAudioManager = (initialSound?: Audio.Sound | null) => {
       await activeSound.pauseAsync();
     }
     if (sound) {
+      audioListeners.forEach((listener) => listener());
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
       });
@@ -41,4 +44,13 @@ export const useAudioManager = (initialSound?: Audio.Sound | null) => {
     sound: sound as Omit<Audio.Sound, "playAsync" | "pauseAsync">,
     setSound,
   };
+};
+
+export const useOnAudioPlayCallback = (onPlay: () => void) => {
+  useEffect(() => {
+    audioListeners.add(onPlay);
+    return () => {
+      audioListeners.delete(onPlay);
+    };
+  }, [onPlay]);
 };

@@ -171,5 +171,6 @@ const english = {
   retry: "Retry",
   image: "Image",
   audio: "Audio",
+  audioRecordingPaused: "Audio recording paused",
 };
 export default english;

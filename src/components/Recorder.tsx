@@ -36,6 +36,7 @@ import {
 } from "expo-av/build/Audio";
 import { toast } from "./Toast";
 import { PermissionStatus } from "../../node_modules/expo-modules-core/src/PermissionsInterface";
+import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -137,7 +138,6 @@ export const Recorder = ({
   const pauseRecording = async () => {
     if (!currentRecording) return;
     handleStatusChange("paused");
-    if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     await cutRecording();
   };
 
@@ -247,6 +247,13 @@ export const Recorder = ({
     onBackground: pauseRecording,
   });
 
+  useOnAudioPlayCallback(() => {
+    if (recordingState === "recording") {
+      pauseRecording();
+      toast.show({ title: t("audioRecordingPaused"), status: "Warning" });
+    }
+  });
+
   useEffect(() => {
     if (lessonId) {
       getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {
@@ -311,7 +318,14 @@ export const Recorder = ({
       </View>
 
       <TouchableOpacity
-        onPress={recordingState === "recording" ? () => pauseRecording() : startRecording}
+        onPress={
+          recordingState === "recording"
+            ? () => {
+                if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                pauseRecording();
+              }
+            : startRecording
+        }
         activeOpacity={0.9}
       >
         <RecordingButton recordingState={recordingState} />
