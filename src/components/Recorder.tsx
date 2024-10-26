@@ -296,30 +296,30 @@ export const Recorder = ({
     };
   }, [lessonId]);
 
-  // if (recordingState === "submitting")
-  return (
-    <Stack>
-      <ActivityIndicator />
-      <Modal visible transparent>
-        <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
-          <LottieView
-            source={UploadingLottie}
-            autoPlay
-            loop={true}
-            style={{ width: 180, height: 180 }}
-          />
-          <Stack gap={8} ai="center">
-            <Text color="whitesmoke" fontSize={20}>
-              Uploading...
-            </Text>
-            <Text fontSize={16} color="$gray8Light">
-              Please do not close the app
-            </Text>
+  if (recordingState === "submitting")
+    return (
+      <Stack>
+        <ActivityIndicator />
+        <Modal visible transparent>
+          <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
+            <LottieView
+              source={UploadingLottie}
+              autoPlay
+              loop={true}
+              style={{ width: 180, height: 180 }}
+            />
+            <Stack gap={8} ai="center">
+              <Text color="whitesmoke" fontSize={20}>
+                Uploading...
+              </Text>
+              <Text fontSize={16} color="$gray8Light">
+                Please do not close the app
+              </Text>
+            </Stack>
           </Stack>
-        </Stack>
-      </Modal>
-    </Stack>
-  );
+        </Modal>
+      </Stack>
+    );
 
   return (
     <XStack jc="center" ai="center" gap="$8">
