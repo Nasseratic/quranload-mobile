@@ -202,9 +202,9 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                 item === "RECORDER" ? (
                   <Recorder
                     lessonId={lessonId}
-                    onSubmit={({ uri, duration }) => {
-                      setAudioUrl(uri);
-                      return match(role)
+                    onFinished={(uri) => setAudioUrl(uri)}
+                    onSubmit={({ uri, duration }) =>
+                      match(role)
                         .with("Teacher", () =>
                           teacherFeedback.mutateAsync({
                             uri,
@@ -237,8 +237,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                             ])
                             .select();
                         })
-                        .exhaustive();
-                    }}
+                        .exhaustive()
+                    }
                   />
                 ) : (
                   <AudioPlayer uri={item} isVisible={index === carouselIndex} />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
 import { Audio } from "expo-av";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
@@ -17,7 +17,7 @@ import * as Haptics from "expo-haptics";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { IconButton } from "components/buttons/IconButton";
 
-import { XStack } from "tamagui";
+import { Stack, Text, XStack } from "tamagui";
 import { sleep } from "utils/sleep";
 import {
   eraseAudioRecordingsFromStorage,
@@ -37,6 +37,10 @@ import {
 import { toast } from "./Toast";
 import { PermissionStatus } from "../../node_modules/expo-modules-core/src/PermissionsInterface";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
+import LottieView from "lottie-react-native";
+import UploadingLottie from "assets/lottie/uploading.json";
+import Typography from "./Typography";
+import { fi } from "date-fns/locale";
 
 let currentRecording: Audio.Recording | null = null;
 
@@ -71,9 +75,11 @@ export const Recorder = ({
   lessonId,
   onSubmit,
   onStatusChange,
+  onFinished,
 }: {
   lessonId?: string;
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
+  onFinished: (uri: string) => void;
   onStatusChange?: (status: RecordingState) => void;
 }) => {
   const [permissionStatus, requestPermission] = Audio.usePermissions({ request: false });
@@ -110,7 +116,7 @@ export const Recorder = ({
     }
 
     try {
-      if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleStatusChange("recording");
 
       await startRecordingWithAutoFragmenting();
@@ -151,36 +157,40 @@ export const Recorder = ({
   }, [lessonId]);
 
   const submitRecording = async () => {
+    if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
     try {
-      if (IS_IOS) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      await cutRecording();
       handleStatusChange("submitting");
+      await cutRecording();
+
+      const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
+
+      const duration = Math.round(
+        recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000
+      );
+      await cleanRecordings({ lessonId });
+
+      try {
+        await Promise.all([
+          onSubmit({
+            uri,
+            duration,
+          }),
+          sleep(3000), // to make sure uploading animation is visible and not flashing
+        ]);
+        onFinished(uri);
+        handleStatusChange("idle");
+      } catch {
+        recordings = [{ uri, duration }];
+        handleStatusChange("paused");
+      }
+    } catch {
+      handleStatusChange("paused");
+    } finally {
       if (IS_IOS)
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
         });
-      const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
-
-      if (!uri) return;
-
-      // in case of error, we want to keep the recordings
-      const tempRecordings = recordings;
-      try {
-        const duration = Math.round(
-          recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000
-        );
-        recordings = [];
-        await onSubmit({
-          uri,
-          duration,
-        });
-        await cleanRecordings({ lessonId });
-      } catch {
-        recordings = tempRecordings;
-        //TODO: Error handling
-      }
-    } finally {
-      handleStatusChange("idle");
     }
   };
 
@@ -286,7 +296,30 @@ export const Recorder = ({
     };
   }, [lessonId]);
 
-  if (recordingState === "submitting") return <ActivityIndicator />;
+  // if (recordingState === "submitting")
+  return (
+    <Stack>
+      <ActivityIndicator />
+      <Modal visible transparent>
+        <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
+          <LottieView
+            source={UploadingLottie}
+            autoPlay
+            loop={true}
+            style={{ width: 180, height: 180 }}
+          />
+          <Stack gap={8} ai="center">
+            <Text color="whitesmoke" fontSize={20}>
+              Uploading...
+            </Text>
+            <Text fontSize={16} color="$gray8Light">
+              Please do not close the app
+            </Text>
+          </Stack>
+        </Stack>
+      </Modal>
+    </Stack>
+  );
 
   return (
     <XStack jc="center" ai="center" gap="$8">
