@@ -296,6 +296,26 @@ export const Recorder = ({
     };
   }, [lessonId]);
 
+  const handleDiscard = () => {
+    pauseRecording();
+    Alert.alert(
+      t("recordingScreen.discardRecording"),
+      t("recordingScreen.discardRecordingDescription"),
+      [
+        {
+          text: t("cancel"),
+          style: "cancel",
+          onPress: startRecording,
+        },
+        {
+          text: t("discard"),
+          style: "destructive",
+          onPress: discardRecording,
+        },
+      ]
+    );
+  };
+
   if (recordingState === "submitting")
     return (
       <Stack>
@@ -325,28 +345,7 @@ export const Recorder = ({
     <XStack jc="center" ai="center" gap="$8">
       <View>
         {recordingState !== "idle" && (
-          <IconButton
-            size="sm"
-            bg={Colors.Black[2]}
-            icon={<CrossIcon />}
-            onPress={() =>
-              Alert.alert(
-                t("recordingScreen.discardRecording"),
-                t("recordingScreen.discardRecordingDescription"),
-                [
-                  {
-                    text: t("cancel"),
-                    style: "cancel",
-                  },
-                  {
-                    text: t("discard"),
-                    style: "destructive",
-                    onPress: discardRecording,
-                  },
-                ]
-              )
-            }
-          />
+          <IconButton size="sm" bg={Colors.Black[2]} icon={<CrossIcon />} onPress={handleDiscard} />
         )}
       </View>
 

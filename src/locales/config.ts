@@ -1,5 +1,5 @@
 import * as Localization from "expo-localization";
-import { I18n } from "i18n-js";
+import { I18n, TranslateOptions } from "i18n-js";
 import danish from "locales/da";
 import english from "locales/en";
 import { P, match } from "ts-pattern";
@@ -39,8 +39,8 @@ type Prev = [never, 0, 1, 2, 3, 4];
 
 type Join<K, P> = K extends string | number
   ? P extends string | number
-    ? `${K}${"" extends P ? "" : "."}${P}`
-    : never
+  ? `${K}${"" extends P ? "" : "."}${P}`
+  : never
   : never;
 
 type Leaves<T, D extends number = 4> = [D] extends [never]
@@ -49,7 +49,7 @@ type Leaves<T, D extends number = 4> = [D] extends [never]
   ? { [K in keyof T]-?: Join<K, Leaves<T[K], Prev[D]>> }[keyof T]
   : "";
 
-export const t = <T extends Leaves<typeof english>>(path: T): string => i18n.t(path);
+export const t = <T extends Leaves<typeof english>>(path: T, options?: TranslateOptions): string => i18n.t(path, options);
 
 setLocale({
   mixed: {

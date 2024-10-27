@@ -173,5 +173,6 @@ const english = {
   audio: "Audio",
   audioRecordingPaused: "Audio recording paused",
   invalid: "Invalid",
+  readFromTo: "Read from page {{from}} to {{to}}, inclusive",
 };
 export default english;

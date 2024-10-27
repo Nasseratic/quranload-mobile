@@ -2,7 +2,7 @@ import english from "./en";
 
 const danish: typeof english = {
   active: "Aktiv",
-  inactive:"Inaktiv",
+  inactive: "Inaktiv",
   teams: "Hold",
   chats: "Chats",
   add: "Tilføje",
@@ -23,7 +23,7 @@ const danish: typeof english = {
   username: "Brugernavn",
   password: "Kode",
   timePerPage: "Tid pr. side",
-  pages: "Siger",
+  pages: "Sider",
   read: "Læs",
   cancel: "Fortryd",
   delete: "Slet",
@@ -31,7 +31,7 @@ const danish: typeof english = {
   handedIn: "Afleveret",
   notHandedIn: "Ikke afleveret",
   enable: "Slå til",
-  discard: "Slå fra",
+  discard: "Slet",
   enableNotifications: "Slå notifikationer til",
   enableNotificationsDescription:
     "Få en notifikation, når du har en ny lektie eller når din underviser sender dig feedback",
@@ -66,12 +66,12 @@ const danish: typeof english = {
   },
   advancedSettingsScreen: {
     title: "Avancerede indstillinger",
-    changePassword: "Ændre kode",
-    changeLanguage: "Ændre sprog",
-    cancelSubscription: "Afmeld abonnement",
+    changePassword: "Skift kode",
+    changeLanguage: "Skift sprog",
+    cancelSubscription: "Opsig abonnement",
   },
   changePasswordScreen: {
-    title: "Ændrer kode",
+    title: "Skift kode",
     currentPassword: "Nuværende kode",
     newPassword: "Ny kode",
     newPasswordAgain: "Gentag kode",
@@ -83,7 +83,7 @@ const danish: typeof english = {
     passwordUpdated: "Din kode er opdateret",
   },
   changeLanguageScreen: {
-    title: "Ændre sprog",
+    title: "Skift sprog",
   },
   subscriptionsScreen: {
     title: "Abonnementer",
@@ -99,6 +99,7 @@ const danish: typeof english = {
   resetPassword: {
     title: "Gendan kode",
     codeSent: "Hvis din bruger findes i systemet vil du modtage et gendannelseslink",
+    resetPasswordSuccess: "Din adgangskode er nu blevet skiftet"
   },
   form: {
     required: "Påkrævet felt",
@@ -163,5 +164,15 @@ const danish: typeof english = {
   defaultError: "Noget gik galt! 🫠",
   check_and_update: "Tjek og opdater",
   you_are_on_latest_version: "Du har den nyeste version",
+  audio: "Lydoptagelse",
+  audioRecordingPaused: "Lydoptagelsen er sat på pause",
+  image: "Billede",
+  invalid: "Ugyldig",
+  retry: "Prøv igen",
+  confirmEmailScreen: {
+    confirming: "Bekræfter din email",
+    emailVerified: "Din konto er blevet verificeret",
+  },
+  readFromTo: "Læs fra side {{from}} til og med {{to}}",
 };
 export default danish;

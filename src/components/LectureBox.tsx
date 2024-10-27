@@ -74,7 +74,9 @@ const LectureBox = ({
             type="BodyLight"
           >
             {latestOpenAssignment.startPage && latestOpenAssignment.endPage
-              ? `${t("read")}: ${latestOpenAssignment.startPage} - ${latestOpenAssignment.endPage}`
+              ? t("readFromTo", {
+                from: latestOpenAssignment.startPage, to: latestOpenAssignment.endPage
+              })
               : latestOpenAssignment.description}
           </Typography>
           <ChevronRightIcon

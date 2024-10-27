@@ -1,4 +1,4 @@
-import { FunctionComponent, useContext, useState } from "react";
+import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Image, StyleSheet, View, TouchableOpacity, ImageSourcePropType } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +15,7 @@ import Logo from "@assets/logo.png";
 import { ScrollView } from "tamagui";
 import * as Updates from "expo-updates";
 import { isDevelopmentBuild } from "expo-dev-client";
+import DevelopmentUserSelection, { DevelopmentUser } from "components/DevelopmentUserSelection";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -41,12 +42,21 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
     formik.handleSubmit();
   };
 
+  const setUserCredentials = ({ username, password }: DevelopmentUser) => {
+    formik.setValues({
+      username,
+      password,
+      error: ''
+    });
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={{ alignItems: "center" }}>
           <Image source={Logo as ImageSourcePropType} />
         </View>
+        <DevelopmentUserSelection setUserCredentials={setUserCredentials} />
         <FormikProvider value={formik}>
           <MyTextInput
             placeHolder={t("loginScreen.username")}
