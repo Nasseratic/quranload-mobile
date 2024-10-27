@@ -104,7 +104,6 @@ export const AudioPlayer = memo(
       <XStack
         bg="white"
         borderRadius="$4"
-        m="$2"
         p={isCompact ? "$2" : "$4"}
         gap="$3"
         h={isCompact ? 40 : undefined}
