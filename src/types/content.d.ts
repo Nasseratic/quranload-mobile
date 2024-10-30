@@ -52,4 +52,9 @@ declare namespace Frontend.Content {
     pagesPerDay: number;
     startFromPage: number;
   }
+
+  export interface Option<T> {
+    label: string;
+    value: T;
+  }
 }

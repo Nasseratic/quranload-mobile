@@ -55,11 +55,22 @@ const english = {
     title: "Homework",
     all: "All",
     pending: "Pending",
+    submitted: "Submitted",
+    accepted: "Accepted",
+    rejected: "Rejected",
     page: "Page",
     outOf: "out of",
     empty: "No homework yet",
     emptyDescriptionStudent:
       "Homework from your teachers will appear here when they assign them to you",
+    emptyDescriptionStudentPending:
+      "Pending homework will appear here. You don't have any, good job!",
+    emptyDescriptionStudentSubmitted:
+      "Submitted homework will appear here. You don't have any, better get to it!",
+    emptyDescriptionStudentAccepted:
+      "Accepted homework will appear here. You don't have any, better get to it!",
+    emptyDescriptionStudentRejected:
+      "Rejected homework will appear here. You don't have any, good job!",
     emptyDescriptionTeacher:
       "You haven't created any homework yet. You can view all homework you've created here as well as recurring homework",
   },
