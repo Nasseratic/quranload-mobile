@@ -56,7 +56,7 @@ const danish: typeof english = {
   assignmentScreen: {
     title: "Lektier",
     all: "Alle",
-    pending: "Afventer",
+    pending: "Afventende",
     submitted: "Afleverede",
     accepted: "Godkendte",
     rejected: "Afviste",

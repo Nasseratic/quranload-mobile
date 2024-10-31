@@ -10,7 +10,11 @@ interface PillProps<T> {
 }
 
 const Pill = <T,>({ onPress, option, active }: PillProps<T>) => (
-  <TouchableOpacity style={styles.pill} activeOpacity={0.9} onPress={() => onPress(option.value)}>
+  <TouchableOpacity
+    style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
+    activeOpacity={active ? 1 : 0.8}
+    onPress={() => (!active ? onPress(option.value) : null)}
+  >
     <Typography style={active ? styles.active : styles.inactive} type="CaptionHeavy">
       {option.label}
     </Typography>
@@ -19,16 +23,21 @@ const Pill = <T,>({ onPress, option, active }: PillProps<T>) => (
 
 const styles = StyleSheet.create({
   pill: {
-    backgroundColor: Colors.Primary[1],
     borderRadius: GeneralConstants.BorderRadius.lg,
     paddingVertical: GeneralConstants.Spacing.xs,
     paddingHorizontal: GeneralConstants.Spacing.lg,
+  },
+  pillActive: {
+    backgroundColor: Colors.Primary[1],
+  },
+  pillInactive: {
+    backgroundColor: Colors.Black[5],
   },
   active: {
     color: Colors.White[1],
   },
   inactive: {
-    color: Colors.White[3],
+    color: Colors.Primary[1],
   },
 });
 
