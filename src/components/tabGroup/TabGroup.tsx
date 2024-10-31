@@ -1,13 +1,13 @@
 import { ScrollView, View } from "tamagui";
-import Pill from "./Pill";
+import { Tab, TabOption } from "./Tab";
 import GeneralConstants from "constants/GeneralConstants";
 
-interface PillGroupProps<T> {
-  options: Frontend.Content.Option<T>[];
+interface TabGroupProps<T> {
+  options: TabOption<T>[];
   selected: T;
   onChange: (value: T) => void;
 }
-const PillGroup = <T,>({ options, selected, onChange }: PillGroupProps<T>) => (
+export const TabGroup = <T,>({ options, selected, onChange }: TabGroupProps<T>) => (
   <View pb={GeneralConstants.Spacing.md}>
     <ScrollView
       horizontal
@@ -19,7 +19,7 @@ const PillGroup = <T,>({ options, selected, onChange }: PillGroupProps<T>) => (
       }}
     >
       {options.map((option) => (
-        <Pill
+        <Tab
           key={option.label}
           onPress={onChange}
           option={option}
@@ -29,5 +29,3 @@ const PillGroup = <T,>({ options, selected, onChange }: PillGroupProps<T>) => (
     </ScrollView>
   </View>
 );
-
-export default PillGroup;

@@ -1,5 +1,5 @@
 declare namespace Frontend.Content {
-  export type AssignmentStatus = "submitted" | "pending" | "rejected";
+  export type AssignmentStatus = "submitted" | "pending" | "accepted" | "rejected";
 
   enum AssignmentStatusEnum {
     pending,
@@ -51,10 +51,5 @@ declare namespace Frontend.Content {
     weekDays: [{ day: string; hasHomeWork: boolean }];
     pagesPerDay: number;
     startFromPage: number;
-  }
-
-  export interface Option<T> {
-    label: string;
-    value: T;
   }
 }

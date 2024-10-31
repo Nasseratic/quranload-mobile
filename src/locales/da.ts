@@ -63,15 +63,13 @@ const danish: typeof english = {
     page: "Side",
     outOf: "ud af",
     empty: "Ingen lektier endnu",
-    emptyDescriptionStudent: "Lektier fra din underviser vil fremgå her, når de oprettes",
-    emptyDescriptionStudentPending:
-      "Afventende lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
-    emptyDescriptionStudentSubmitted:
-      "Afleverede lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
-    emptyDescriptionStudentAccepted:
-      "Godkendte lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
-    emptyDescriptionStudentRejected:
-      "Afviste lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
+    emptyDescriptionStudent: {
+      all: "Lektier fra din underviser vil fremgå her, når de oprettes",
+      pending: "Afventende lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
+      submitted: "Afleverede lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
+      accepted: "Godkendte lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
+      rejected: "Afviste lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
+    },
     emptyDescriptionTeacher:
       "Du har ikke oprettet nogen lektie endnu. Du kan se alle lektier, som du har oprettet såvel som automatiserede lektier",
   },

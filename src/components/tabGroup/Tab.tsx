@@ -3,15 +3,20 @@ import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
-interface PillProps<T> {
-  option: Frontend.Content.Option<T>;
+export interface TabOption<T> {
+  label: string;
+  value: T;
+}
+
+interface TabProps<T> {
+  option: TabOption<T>;
   active: boolean;
   onPress: (value: T) => void;
 }
 
-const Pill = <T,>({ onPress, option, active }: PillProps<T>) => (
+export const Tab = <T,>({ onPress, option, active }: TabProps<T>) => (
   <TouchableOpacity
-    style={[styles.pill, active ? styles.pillActive : styles.pillInactive]}
+    style={[styles.tab, active ? styles.tabActive : styles.tabInactive]}
     activeOpacity={active ? 1 : 0.8}
     onPress={() => (!active ? onPress(option.value) : null)}
   >
@@ -22,15 +27,15 @@ const Pill = <T,>({ onPress, option, active }: PillProps<T>) => (
 );
 
 const styles = StyleSheet.create({
-  pill: {
+  tab: {
     borderRadius: GeneralConstants.BorderRadius.lg,
     paddingVertical: GeneralConstants.Spacing.xs,
     paddingHorizontal: GeneralConstants.Spacing.lg,
   },
-  pillActive: {
+  tabActive: {
     backgroundColor: Colors.Primary[1],
   },
-  pillInactive: {
+  tabInactive: {
     backgroundColor: Colors.Black[5],
   },
   active: {
@@ -40,5 +45,3 @@ const styles = StyleSheet.create({
     color: Colors.Primary[1],
   },
 });
-
-export default Pill;
