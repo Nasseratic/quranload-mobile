@@ -2,29 +2,57 @@ import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AssignmentItem from "components/AssignmentItem";
 import { FlatList } from "react-native";
-import TabBox from "components/TabBox";
-import { i18n, t } from "locales/config";
-import { AssignmentStatusEnum } from "types/Lessons";
+import { t } from "locales/config";
+import { AssignmentStatusEnum, lessonStatusFromEnumToType } from "types/Lessons";
 import { useAssignments } from "hooks/queries/assignments";
 import { RootStackParamList } from "navigation/navigation";
 import { SafeView } from "components/SafeView";
 import { AppBar } from "components/AppBar";
 import { Spinner } from "tamagui";
 import { EmptyState } from "components/EmptyState";
-const tabs = ["pending", "all"] as const;
+import { TabOption } from "components/tabGroup/Tab";
+import { TabGroup } from "components/tabGroup";
+
+const options: TabOption<AssignmentStatusEnum | null>[] = [
+  {
+    label: t("assignmentScreen.all"),
+    value: null,
+  },
+  {
+    label: t("assignmentScreen.pending"),
+    value: AssignmentStatusEnum.pending,
+  },
+  {
+    label: t("assignmentScreen.submitted"),
+    value: AssignmentStatusEnum.submitted,
+  },
+  {
+    label: t("assignmentScreen.accepted"),
+    value: AssignmentStatusEnum.accepted,
+  },
+  {
+    label: t("assignmentScreen.rejected"),
+    value: AssignmentStatusEnum.rejected,
+  },
+] as const;
 
 type Props = NativeStackScreenProps<RootStackParamList, "Assignments">;
 const AssignmentsScreen = ({ route, navigation }: Props) => {
-  const [tabKey, setTabKey] = useState<(typeof tabs)[number]>("pending");
+  const [selectedFilter, setSelectedFilter] = useState<AssignmentStatusEnum | null>(null);
 
   const { assignments, isAssignmentsLoading } = useAssignments({
-    status: tabKey === "all" ? null : AssignmentStatusEnum.pending,
+    status: selectedFilter,
   });
 
   const teamAssignments = assignments?.[route.params.teamId];
   return (
     <SafeView side="top" f={1}>
       <AppBar title={t("assignmentScreen.title")} />
+      <TabGroup
+        options={options}
+        selected={selectedFilter}
+        onChange={(value) => setSelectedFilter(value)}
+      />
       <FlatList
         data={teamAssignments}
         renderItem={({ item }) => (
@@ -37,7 +65,11 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
           isAssignmentsLoading ? null : (
             <EmptyState
               title={t("assignmentScreen.empty")}
-              description={t("assignmentScreen.emptyDescriptionStudent")}
+              description={t(
+                `assignmentScreen.emptyDescriptionStudent.${
+                  selectedFilter ? lessonStatusFromEnumToType(selectedFilter) : "all"
+                }`
+              )}
             />
           )
         }
@@ -47,13 +79,6 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
           paddingHorizontal: 16,
           paddingBottom: 40,
         }}
-        ListHeaderComponent={
-          <TabBox
-            list={[i18n.t("assignmentScreen.pending"), i18n.t("assignmentScreen.all")]}
-            index={tabs.indexOf(tabKey)}
-            setIndex={(index) => setTabKey(tabs[index] ?? "pending")}
-          />
-        }
         ListFooterComponent={isAssignmentsLoading ? <Spinner py="$12" size="large" /> : null}
       />
     </SafeView>

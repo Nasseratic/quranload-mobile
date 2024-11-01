@@ -56,11 +56,20 @@ const danish: typeof english = {
   assignmentScreen: {
     title: "Lektier",
     all: "Alle",
-    pending: "Igang",
+    pending: "Afventende",
+    submitted: "Afleverede",
+    accepted: "Godkendte",
+    rejected: "Afviste",
     page: "Side",
     outOf: "ud af",
     empty: "Ingen lektier endnu",
-    emptyDescriptionStudent: "Lektier fra din underviser vil fremgå her, når de oprettes",
+    emptyDescriptionStudent: {
+      all: "Lektier fra din underviser vil fremgå her, når de oprettes",
+      pending: "Afventende lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
+      submitted: "Afleverede lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
+      accepted: "Godkendte lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
+      rejected: "Afviste lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
+    },
     emptyDescriptionTeacher:
       "Du har ikke oprettet nogen lektie endnu. Du kan se alle lektier, som du har oprettet såvel som automatiserede lektier",
   },
@@ -99,7 +108,7 @@ const danish: typeof english = {
   resetPassword: {
     title: "Gendan kode",
     codeSent: "Hvis din bruger findes i systemet vil du modtage et gendannelseslink",
-    resetPasswordSuccess: "Din adgangskode er nu blevet skiftet"
+    resetPasswordSuccess: "Din adgangskode er nu blevet skiftet",
   },
   form: {
     required: "Påkrævet felt",

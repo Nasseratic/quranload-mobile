@@ -2,7 +2,7 @@ import { CheckmarkIcon, RejectedCrossIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity } from "react-native";
-import { AssignmentStatusEnum, LessonStatusFromEnumToType } from "types/Lessons";
+import { AssignmentStatusEnum, lessonStatusFromEnumToType } from "types/Lessons";
 
 interface Props {
   status: AssignmentStatusEnum;
@@ -19,9 +19,9 @@ const AssignmentStatusCheckbox = ({ status, isDue = false }: Props) => {
           borderRadius: GeneralConstants.BorderRadius.xxs * 1.2,
           justifyContent: "center",
           alignItems: "center",
-          ...styles[LessonStatusFromEnumToType(status)],
+          ...styles[lessonStatusFromEnumToType(status)],
         },
-        isDue && LessonStatusFromEnumToType(status) === "pending"
+        isDue && lessonStatusFromEnumToType(status) === "pending"
           ? { borderColor: Colors.Error[1] }
           : {},
       ]}
@@ -40,6 +40,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.Success[1],
   },
   submitted: {
+    backgroundColor: Colors.Success[1],
+  },
+  accepted: {
     backgroundColor: Colors.Success[1],
   },
   rejected: {

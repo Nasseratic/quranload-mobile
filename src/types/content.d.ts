@@ -1,5 +1,5 @@
 declare namespace Frontend.Content {
-  export type AssignmentStatus = "submitted" | "pending" | "rejected";
+  export type AssignmentStatus = "submitted" | "pending" | "accepted" | "rejected";
 
   enum AssignmentStatusEnum {
     pending,

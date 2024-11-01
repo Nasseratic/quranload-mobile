@@ -4,12 +4,12 @@ export enum AssignmentStatusEnum {
   accepted,
   submitted,
 }
-export const LessonStatusFromEnumToType = (
+export const lessonStatusFromEnumToType = (
   status: AssignmentStatusEnum
 ): Frontend.Content.AssignmentStatus => {
   switch (status) {
     case AssignmentStatusEnum.accepted:
-      return "submitted" as Frontend.Content.AssignmentStatus;
+      return "accepted" as Frontend.Content.AssignmentStatus;
     case AssignmentStatusEnum.submitted:
       return "submitted" as Frontend.Content.AssignmentStatus;
     case AssignmentStatusEnum.pending:
