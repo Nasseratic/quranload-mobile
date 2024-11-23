@@ -57,19 +57,27 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
     },
     validationSchema: Yup.object().shape({
       firstName: Yup.string()
+        .trim()
         .matches(nameRules, { message: t("invalid") })
         .required(),
       lastName: Yup.string()
+        .trim()
         .matches(nameRules, { message: t("invalid") })
         .required(),
-      email: Yup.string().email().required(),
+      email: Yup.string().trim().email().required(),
       password: Yup.string()
         .required()
         .matches(passwordRules, { message: t("registerAccountScreen.passwordRules") }),
       confirmPassword: Yup.string().oneOf([Yup.ref("password")], "Passwords must match"),
     }),
     onSubmit: (values, { setSubmitting }) => {
-      mutate(values, {
+      const trimmedValues = {
+        ...values,
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        email: values.email.trim(),
+      };
+      mutate(trimmedValues, {
         onSettled: () => setSubmitting(false),
       });
     },
