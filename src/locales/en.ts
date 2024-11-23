@@ -38,6 +38,8 @@ const english = {
     deleteRecordingDescription: "Are you sure you want to delete this recording?",
     discardRecording: "Discard recording",
     discardRecordingDescription: "Are you sure you want to discard this recording?",
+    submitFailedTitle: "Failed to submit recording",
+    submitFailedSubTitle: "Please make sure you have a stable internet connection",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",

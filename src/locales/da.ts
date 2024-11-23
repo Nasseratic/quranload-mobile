@@ -40,6 +40,8 @@ const danish: typeof english = {
     deleteRecordingDescription: "Er du sikker på, at du vil slette denne optagelse?",
     discardRecording: "Slet optagelse",
     discardRecordingDescription: "Er du sikker på, at du vil slette denne optagelse?",
+    submitFailedTitle: "Kunne ikke indsende optagelse",
+    submitFailedSubTitle: "Sørg venligst for, at du har en stabil internetforbindelse",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",

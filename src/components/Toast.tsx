@@ -87,8 +87,8 @@ export const RootToastContainer = () => {
             mx={16}
             my={IS_ANDROID ? 16 : 4}
           >
-            <XStack jc="space-between" ai="flex-start">
-              <Stack jc="center" h="100%">
+            <XStack jc="space-between" ai="flex-start" gap={8}>
+              <Stack jc="center" h="100%" fs={1}>
                 <Typography type="BodyHeavy" style={{ color: "white" }}>
                   {currentParams.title}
                 </Typography>

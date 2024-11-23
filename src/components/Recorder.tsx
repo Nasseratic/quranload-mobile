@@ -54,7 +54,7 @@ const cleanCurrentRecording = async () => {
 
 let recordings: {
   uri: string;
-  duration: number;
+  durationInMs: number;
 }[] = [];
 
 const cleanRecordings = async ({ lessonId }: { lessonId?: string }) => {
@@ -135,7 +135,7 @@ export const Recorder = ({
     if (uri) {
       recordings.push({
         uri,
-        duration: durationMillis,
+        durationInMs: durationMillis,
       });
       if (lessonId) persistAudioRecordings({ lessonId, recordings });
     }
@@ -165,23 +165,27 @@ export const Recorder = ({
 
       const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
 
-      const duration = Math.round(
-        recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000
+      const durationInSec = Math.round(
+        recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000
       );
       await cleanRecordings({ lessonId });
-
       try {
         await Promise.all([
           onSubmit({
             uri,
-            duration,
+            duration: durationInSec,
           }),
           sleep(3000), // to make sure uploading animation is visible and not flashing
         ]);
         onFinished(uri);
         handleStatusChange("idle");
       } catch {
-        recordings = [{ uri, duration }];
+        toast.show({
+          title: "Failed to submit recording",
+          subTitle: "please make sure you have stable internet connection",
+          status: "Error",
+        });
+        recordings = [{ uri, durationInMs: durationInSec * 1000 }];
         handleStatusChange("paused");
       }
     } catch {
@@ -416,7 +420,7 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
 
 const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
   const [seconds, setSeconds] = useState(
-    Math.round(recordings.reduce((acc, { duration }) => acc + duration, 0) / 1000)
+    Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000)
   );
 
   useEffect(() => {
