@@ -181,8 +181,8 @@ export const Recorder = ({
         handleStatusChange("idle");
       } catch {
         toast.show({
-          title: "Failed to submit recording",
-          subTitle: "please make sure you have stable internet connection",
+          title: t("recordingScreen.submitFailedTitle"),
+          subTitle: t("recordingScreen.submitFailedSubTitle"),
           status: "Error",
         });
         recordings = [{ uri, durationInMs: durationInSec * 1000 }];
@@ -288,6 +288,9 @@ export const Recorder = ({
             {
               text: t("cancel"),
               style: "cancel",
+              onPress: () => {
+                recordings = [];
+              },
             },
             {
               text: t("discard"),
