@@ -1,6 +1,6 @@
 import { FunctionComponent, useState, useRef, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { View, Alert, StyleSheet, FlatList } from "react-native";
+import { View, Alert, StyleSheet, FlatList, Modal } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
 import { useAuth, useUser } from "contexts/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,7 +63,9 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const type = route.params.assignment.typeId as unknown as AssignmentTypeEnum;
   const isCustomAssignment = type === AssignmentTypeEnum.Custom;
 
-  const [isCustomHomeworkDetailsShown, setIsCustomHomeworkDetailsShown] = useState(isStudent);
+  const [isCustomHomeworkDetailsShown, setIsCustomHomeworkDetailsShown] = useState(
+    isStudent && !recordingId && !feedbackId
+  );
   const [carouselIndex, setCarouselIndex] = useState<0 | 1>(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -153,25 +155,27 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             <Stack f={1}>
               {attachments && <ImagePages imageIds={attachments} />}
               {isCustomAssignment && isCustomHomeworkDetailsShown && (
-                <Stack
-                  backgroundColor="rgba(255, 255, 255, 0.8)"
-                  p="$4"
-                  position="absolute"
-                  h="100%"
-                  w="100%"
-                  jc="space-between"
-                  ai="center"
-                >
-                  <Stack gap={4} w={"100%"}>
-                    <Typography type="TitleHeavy">{t("description")}:</Typography>
-                    <Typography type="Body">{assignment.description}</Typography>
+                <Modal visible transparent>
+                  <Stack
+                    backgroundColor="rgba(255, 255, 255, 0.9)"
+                    f={1}
+                    jc="space-between"
+                    ai="center"
+                    px={24}
+                    pt={insets.top + 32}
+                    pb={insets.bottom + 24}
+                  >
+                    <Stack gap={4} w={"100%"}>
+                      <Typography type="TitleHeavy">{t("description")}:</Typography>
+                      <Typography type="Body">{assignment.description}</Typography>
+                    </Stack>
+                    <IconButton
+                      bg="gray"
+                      icon={<CrossIcon color="white" />}
+                      onPress={() => setIsCustomHomeworkDetailsShown(false)}
+                    />
                   </Stack>
-                  <IconButton
-                    bg="gray"
-                    icon={<CrossIcon color="white" />}
-                    onPress={() => setIsCustomHomeworkDetailsShown(false)}
-                  />
-                </Stack>
+                </Modal>
               )}
             </Stack>
           </>
