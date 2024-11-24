@@ -58,7 +58,7 @@ const danish: typeof english = {
   assignmentScreen: {
     title: "Lektier",
     all: "Alle",
-    pending: "Afventende",
+    pending: "Manglende",
     submitted: "Afleverede",
     accepted: "Godkendte",
     rejected: "Afviste",
@@ -67,7 +67,7 @@ const danish: typeof english = {
     empty: "Ingen lektier endnu",
     emptyDescriptionStudent: {
       all: "Lektier fra din underviser vil fremgå her, når de oprettes",
-      pending: "Afventende lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
+      pending: "Manglende lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
       submitted: "Afleverede lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
       accepted: "Godkendte lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
       rejected: "Afviste lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
