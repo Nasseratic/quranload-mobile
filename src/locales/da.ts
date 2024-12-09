@@ -60,7 +60,7 @@ const danish: typeof english = {
     all: "Alle",
     pending: "Manglende",
     submitted: "Afleverede",
-    accepted: "Godkendte",
+    accepted: "Feedback",
     rejected: "Afviste",
     page: "Side",
     outOf: "ud af",
@@ -69,7 +69,7 @@ const danish: typeof english = {
       all: "Lektier fra din underviser vil fremgå her, når de oprettes",
       pending: "Manglende lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
       submitted: "Afleverede lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
-      accepted: "Godkendte lektier vil fremgå her. Du har ikke nogen, du må hellere gå i gang!",
+      accepted: "Feedback fra din underviser vil fremgå her.",
       rejected: "Afviste lektier vil fremgå her. Du har ikke nogle, godt arbejde!",
     },
     emptyDescriptionTeacher:

@@ -58,7 +58,7 @@ const english = {
     all: "All",
     pending: "Pending",
     submitted: "Submitted",
-    accepted: "Accepted",
+    accepted: "Feedback",
     rejected: "Rejected",
     page: "Page",
     outOf: "out of",
@@ -67,7 +67,7 @@ const english = {
       all: "Homework from your teachers will appear here when they assign them to you",
       pending: "Pending homework will appear here. You don't have any, good job!",
       submitted: "Submitted homework will appear here. You don't have any, better get to it!",
-      accepted: "Accepted homework will appear here. You don't have any, better get to it!",
+      accepted: "Feedback from your teacher will appear here.",
       rejected: "Rejected homework will appear here. You don't have any, good job!",
     },
     emptyDescriptionTeacher:
