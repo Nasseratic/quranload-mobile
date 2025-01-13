@@ -34,7 +34,16 @@
           "package": "audio"
         }
       ],
-      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "kotlinVersion": "1.8.10"
+          }
+        }
+      ],
       "sentry-expo",
       ["@stripe/stripe-react-native", {}]
     ],

@@ -26,9 +26,13 @@
     }
   },
   "submit": {
-    "production": {
+    "prod": {
       "ios": {
         "companyName": "Wemba ApS"
+      },
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
       }
     }
   }
