@@ -22,7 +22,8 @@
         "foregroundImage": "./src/assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.quranloadapp.quranload"
+      "package": "com.quranloadapp.quranload",
+      "blockedPermissions": ["android.permission.CAMERA"]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
