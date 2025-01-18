@@ -109,7 +109,7 @@ export const AudioPlayer = memo(
         h={isCompact ? 40 : undefined}
       >
         {isCompact && (
-          <Button bg="$backgroundTransparent" hitSlop={20} size={25} w={32} onPress={onTogglePlay}>
+          <Button bg="$colorTransparent" hitSlop={20} size={25} w={32} onPress={onTogglePlay}>
             {isPlaying ? (
               <RecordingPauseIcon fill={Colors.Gray[1]} size={16} />
             ) : (

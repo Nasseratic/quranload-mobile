@@ -62,7 +62,7 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
             key={item.id}
             paddingHorizontal={GeneralConstants.Spacing.md}
             paddingVertical={GeneralConstants.Spacing.sm}
-            backgroundColor="$backgroundTransparent"
+            backgroundColor="$colorTransparent"
             borderColor="$gray5"
             borderWidth={1}
             borderRadius={GeneralConstants.BorderRadius.full}

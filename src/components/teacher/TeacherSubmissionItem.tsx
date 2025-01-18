@@ -24,7 +24,7 @@ export const TeacherSubmissionItem = ({ submission, onPress }: Props) => {
     <TouchableOpacity onPress={onPress} disabled={!isSubmitted}>
       <Card
         padding="$2.5"
-        backgroundColor="$backgroundTransparent"
+        backgroundColor="$white1"
         borderColor="$gray5"
         borderWidth={1}
         gap="$2"

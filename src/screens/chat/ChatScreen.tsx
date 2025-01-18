@@ -272,7 +272,7 @@ export const ChatScreen = () => {
             renderAvatar={interlocutorId ? () => null : undefined} // Show avatar in team chats only
             onPressAvatar={(user) => {}} // UX TODO: Implement a chat with someone feature; can be view profile too
             renderSystemMessage={(message) => (
-              <Card bg="$background" p={12} my={16} mx={8} borderRadius={8}>
+              <Card bg="$white0" p={12} my={16} mx={8} borderRadius={8}>
                 <Text color="$gray11" textAlign="center">
                   {message.currentMessage?.text}
                 </Text>

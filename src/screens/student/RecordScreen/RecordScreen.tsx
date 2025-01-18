@@ -339,7 +339,7 @@ const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
           <ImageWithAuth
             resizeMode="contain"
             key={item}
-            bg="$background"
+            bg="$colorTransparent"
             source={{
               uri: item,
             }}

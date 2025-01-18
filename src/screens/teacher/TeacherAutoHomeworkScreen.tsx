@@ -110,7 +110,7 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
         </View>
         <View gap="$2">
           <Label unstyled>{i18n.t("teacherAutoHW.chooseDays")}</Label>
-          <XGroup backgroundColor="$backgroundTransparent" justifyContent="space-between">
+          <XGroup backgroundColor="$colorTransparent" justifyContent="space-between">
             {weekDays?.map((day, index) => {
               return (
                 <LetterCheckbox

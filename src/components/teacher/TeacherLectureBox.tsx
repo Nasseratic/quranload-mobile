@@ -89,7 +89,7 @@ const TeacherLectureBox = ({ team }: Props) => {
       <Card
         onPress={() => navigation.navigate("TeacherHomework", { teamId: team.id })}
         p="$3"
-        bg="white"
+        bg="$white0"
         borderWidth={1}
         borderColor="$gray5"
         pressStyle={{ opacity: 0.7 }}

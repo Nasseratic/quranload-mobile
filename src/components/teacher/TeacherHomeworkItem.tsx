@@ -41,13 +41,7 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
 
   return (
     <TouchableOpacity onPress={onPress}>
-      <Card
-        padding="$2.5"
-        backgroundColor="$backgroundTransparent"
-        borderColor="$gray5"
-        borderWidth={1}
-        gap="$2"
-      >
+      <Card padding="$2.5" bg="$white1" borderColor="$gray5" borderWidth={1} gap="$2">
         <XStack jc="space-between" alignItems="center" f={1}>
           {homework.startPage && homework.endPage ? (
             <Typography type="BodyHeavy">
