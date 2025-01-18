@@ -22,6 +22,7 @@ import { useEffect } from "react";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
 import { ConvexProvider } from "api/convex";
 import { queryClient } from "utils/reactQueryClient";
+import "api/apiClientInterceptors";
 
 require("./src/locales/config");
 
