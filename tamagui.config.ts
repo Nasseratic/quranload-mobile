@@ -9,14 +9,10 @@ export const tamaguiConfig = createTamagui({
   fonts: {
     body: createFont({
       size: {
-        // You'll want to fill these values in so you can use them
-        // for now, fontSize="$4" will be 14px.
-        // You can define different keys, but `tamagui`
-        // standardizes on 1-15.
-        4: 14,
+        true: 16,
       },
       lineHeight: {
-        4: 16,
+        true: 16,
       },
     }),
   },
