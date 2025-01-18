@@ -55,6 +55,8 @@ api.interceptors.response.use(
           })
           .catch((error) => {
             console.error("Failed to refresh token", error);
+            AsyncStorage.removeItem("accessToken");
+            AsyncStorage.removeItem("refreshToken");
             return Promise.reject({
               status: status,
               error: "We could not acknowledge your account. Please sign out and sign in again.",
@@ -88,7 +90,7 @@ const request = {
       })
       .then(responseBody),
   post: <T>(url: string, body: object) => api.post<T>(url, body).then(responseBody),
-  put: <T>(url: string, body: object) => api.put<T>(url, body).then(responseBody),
+  put: <T>(url: string, body?: object) => api.put<T>(url, body).then(responseBody),
   delete: <T>(url: string, body?: object) =>
     api
       .delete<T>(url, {

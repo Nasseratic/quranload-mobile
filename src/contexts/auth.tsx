@@ -11,7 +11,7 @@ interface AuthContextData {
   signed: boolean;
   user: User | undefined;
   accessToken: string | null;
-  signIn: (username: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   handleSignIn: () => void;
 }
@@ -56,11 +56,11 @@ export const AuthProvider = ({ children }: Props) => {
     enabled: false,
   });
 
-  const trySignIn = async (username: string, password: string) => {
-    const res = await signIn({ username, password });
-    if (res.data.accessToken) {
-      await AsyncStorage.setItem("accessToken", res.data.accessToken);
-      await AsyncStorage.setItem("refreshToken", res.data.refreshToken);
+  const trySignIn = async (email: string, password: string) => {
+    const res = await signIn({ email, password });
+    if (res.accessToken) {
+      await AsyncStorage.setItem("accessToken", res.accessToken);
+      await AsyncStorage.setItem("refreshToken", res.refreshToken);
       handleSignIn();
     }
   };
