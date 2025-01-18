@@ -20,6 +20,8 @@ import { RootToastContainer } from "components/Toast";
 import "react-native-url-polyfill/auto";
 import { useEffect } from "react";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
+import { ConvexProvider } from "api/convex";
+import { queryClient } from "utils/reactQueryClient";
 
 require("./src/locales/config");
 
@@ -27,37 +29,39 @@ Audio.setAudioModeAsync({
   playsInSilentModeIOS: true,
 });
 
-// Create a client
-const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnMount: false } } });
-
 SplashScreen.preventAutoHideAsync();
 
 function App() {
-  const [fontsLoaded] = useFonts({
+  const [loaded] = useFonts({
+    Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
+    InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
     "NotoSans-regular": NotoSans_400Regular,
     "NotoSans-semibold": NotoSans_600SemiBold,
     "NotoSans-bold": NotoSans_700Bold,
     "NotoSans-medium": NotoSans_500Medium,
   });
-
   useEffect(() => {
     AvoidSoftInput.setEnabled(true);
   }, []);
 
-  if (!fontsLoaded) return null;
+  if (!loaded) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <BottomSheetModalProvider>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <RootToastContainer />
-                <Nav />
-              </AuthProvider>
-            </QueryClientProvider>
-            <RootActionSheetContainer />
+            <ConvexProvider>
+              <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <RootToastContainer />
+                  <Nav />
+                </AuthProvider>
+              </QueryClientProvider>
+              <RootActionSheetContainer />
+            </ConvexProvider>
           </BottomSheetModalProvider>
         </TamaguiProvider>
       </SafeAreaProvider>

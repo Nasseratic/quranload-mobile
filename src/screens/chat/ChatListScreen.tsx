@@ -71,7 +71,6 @@ export const ChatListScreen = () => {
             message={message}
             onPress={() =>
               navigation.navigate("ChatScreen", {
-                teamId: team.id,
                 title: interlocutorName,
                 interlocutorId,
               })

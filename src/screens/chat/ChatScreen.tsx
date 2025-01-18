@@ -9,19 +9,10 @@ import { SendIcon } from "components/icons/SendIcon";
 import { Colors } from "constants/Colors";
 import { useUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator } from "react-native";
-import {
-  GiftedChat,
-  Bubble,
-  IMessage,
-  Send,
-  Composer,
-  SendProps,
-  MessageImage,
-} from "react-native-gifted-chat";
+import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
-import { supabase } from "utils/supabase";
 import { useSupabaseMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
@@ -31,166 +22,69 @@ import { RecordIcon } from "components/icons/RecordIcon";
 import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
 import { uploadChatMedia } from "utils/uploadChatMedia";
 import { AudioPlayer } from "components/AudioPlayer";
-import { Database } from "types/Supabase";
+import { useMutation, usePaginatedQuery } from "convex/react";
+import { cvx } from "api/convex";
+
+const QUERY_LIMIT = 20;
 
 export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title } = params;
+  const user = useUser();
 
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
-  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
-  const [isMore, setIsMore] = useState(true);
+  const userId = user?.id;
+  const { results, status, loadMore } = usePaginatedQuery(
+    cvx.messages.paginate,
+    {
+      teamId,
+      conversationParticipants:
+        interlocutorId && userId
+          ? {
+              participant1: userId,
+              participant2: interlocutorId,
+            }
+          : undefined,
+    },
+    { initialNumItems: QUERY_LIMIT }
+  );
+
+  const messages = results?.map(mapMessageToGiftedChatMessage) ?? [];
+
+  const sendMessages = useMutation(cvx.messages.send);
+
   const [imagesModalImages, setImagesModalImages] = useState<string[]>([]);
   const [imagesModalIndex, setImagesModalIndex] = useState(0);
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
   const { pickImage, images, removeImage, upload, isUploading } = useSupabaseMediaUploader();
 
-  const user = useUser();
-  const queryClient = useQueryClient();
-
-  const QUERY_LIMIT = 2;
-
-  if (!teamId) {
-    throw Error("teamId is required");
+  if (!teamId && !interlocutorId) {
+    throw Error("teamId or interlocutorId must be provided");
   }
 
-  const loadMessages = ({ isInitial }: { isInitial: boolean }) => {
-    if (!isInitial) setIsLoadingEarlier(true);
-
-    const query = supabase
-      .from("messages")
-      .select()
-      .range(messages.length, messages.length + QUERY_LIMIT - 1) // Subtracting 1 because the to value is inclusive
-      .order("createdAt", { ascending: false });
-
-    // The interlocutorId if-condition needs to come first because the teamId is passed in all chat types
-    if (interlocutorId) {
-      // Fetch messages between logged in user and interlocutor
-      query.in("senderId", [interlocutorId, user?.id]).in("receiverId", [interlocutorId, user?.id]);
-    } else if (teamId) {
-      // Fetch team messages (shouldn't have a receiverId)
-      query.eq("teamId", teamId).is("receiverId", null);
-    }
-
-    query.then(({ data }) => {
-      if (data) {
-        setMessages((oldMessages) => [
-          ...oldMessages,
-          ...data.map((message) => ({
-            _id: message.id,
-            text: message.text ?? "",
-            createdAt: new Date(message.createdAt),
-            user: {
-              _id: message.senderId,
-              name: message.senderName ?? "-",
-            },
-            ...(message.mediaType && {
-              [message.mediaType]: message.mediaUrl,
-            }),
-            system: message.isSystem,
-          })),
-        ]);
-
-        // Hide load earlier button
-        if (data.length < QUERY_LIMIT) setIsMore(false);
-      } else {
-        // if no data, hide the load earlier messages button
-        setIsMore(false);
-      }
-
-      // Hide loading indicators
-      if (isInitial) setIsLoadingInitial(false);
-      else setIsLoadingEarlier(false);
-    });
-  };
-
   useEffect(() => {
-    loadMessages({ isInitial: true });
-
     // Disable the soft input keyboard handling
     AvoidSoftInput.setEnabled(false);
-
-    // Current user subscribes to inserts (either user is receiver
-    // or sender in private chat or part of team where receiver id is null)
-    const channel = supabase
-      .channel("custom-all-channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-          filter: `teamId=eq.${teamId}`,
-        },
-        (payload) => {
-          if (payload.eventType !== "INSERT") {
-            return;
-          }
-          const message = payload.new;
-
-          const isPrivateMessageToUser =
-            interlocutorId &&
-            (message.senderId == user.id || message.receiverId == user.id) &&
-            (message.senderId == interlocutorId || message.receiverId == interlocutorId);
-          const isTeamMessageToUser =
-            !interlocutorId && message.teamId == teamId && message.receiverId == null;
-
-          if (!isPrivateMessageToUser && !isTeamMessageToUser) {
-            return;
-          }
-          setMessages((previousMessages) =>
-            GiftedChat.append(previousMessages, [
-              {
-                _id: message.id,
-                text: message.text,
-                createdAt: new Date(message.createdAt),
-                user: {
-                  _id: message.senderId,
-                  name: message.senderName,
-                },
-                ...(message.mediaType && {
-                  [message.mediaType]: message.mediaUrl,
-                }),
-                system: message.isSystem,
-              },
-            ])
-          );
-        }
-      )
-      .subscribe();
-
     return () => {
-      channel.unsubscribe();
-
       // Enable the soft input keyboard handling
       AvoidSoftInput.setEnabled(true);
     };
   }, []);
 
   const onSend = useCallback(async (messages: IMessage[] = []) => {
-    const { error } = await supabase
-      .from("messages")
-      .insert(
-        messages.map(
-          ({ text, audio, image, user }) =>
-            ({
-              text,
-              senderId: user._id as string,
-              senderName: user.name,
-              receiverId: interlocutorId ? interlocutorId : null,
-              receiverName: params.title,
-              teamId,
-              mediaUrl: image ?? audio,
-              mediaType: audio ? "audio" : image ? "image" : null,
-            } satisfies Database["public"]["Tables"]["messages"]["Insert"])
-        )
-      )
-      .select();
-
-    if (interlocutorId) queryClient.invalidateQueries(["latest-private-messages", teamId]);
-    else queryClient.invalidateQueries(["latest-team-message", teamId]);
+    await sendMessages({
+      messages: messages.map(({ text, audio, image, user }) => ({
+        text,
+        senderId: user._id as string,
+        senderName: user.name,
+        receiverId: interlocutorId ? interlocutorId : undefined,
+        receiverName: params.title,
+        teamId,
+        mediaUrl: image ?? audio,
+        mediaType: audio ? "audio" : image ? "image" : undefined,
+        isSystem: false,
+      })),
+    });
   }, []);
 
   const renderSend = ({ onSend, text, sendButtonProps, ...props }: SendProps<IMessage>) => {
@@ -341,12 +235,12 @@ export const ChatScreen = () => {
       />
       <AppBar title={title} />
       <Separator />
-      {isLoadingInitial ? (
+      {status === "LoadingFirstPage" ? (
         <Stack f={1} jc="center">
           <ActivityIndicator />
         </Stack>
       ) : (
-        <>
+        <Fragment>
           <ImageView
             // Change the images type from string[] to ImageSource[]
             images={images.map((image) => ({
@@ -409,13 +303,30 @@ export const ChatScreen = () => {
                 }}
               />
             )}
-            loadEarlier={isMore}
-            onLoadEarlier={() => loadMessages({ isInitial: false })}
-            isLoadingEarlier={isLoadingEarlier}
+            loadEarlier={status === "CanLoadMore"}
+            onLoadEarlier={() => loadMore(QUERY_LIMIT)}
+            isLoadingEarlier={status === "LoadingMore"}
             // UX TODO?: Jump to most recent message component
           />
-        </>
+        </Fragment>
       )}
     </SafeView>
   );
 };
+
+const mapMessageToGiftedChatMessage = (
+  message: (typeof cvx.messages.paginate)["_returnType"]["page"][number]
+) =>
+  ({
+    _id: message._id,
+    text: message.text ?? "",
+    createdAt: new Date(message._creationTime),
+    user: {
+      _id: message.senderId,
+      name: message.senderName,
+    },
+    ...(message.mediaType && {
+      [message.mediaType]: message.mediaUrl,
+    }),
+    system: message.isSystem,
+  } satisfies IMessage);

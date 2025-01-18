@@ -93,7 +93,6 @@ const AuthenticatedStack = () => {
 
 const Nav = () => {
   const { signed, user, handleSignIn } = useAuth();
-
   useEffect(() => {
     async function initialize() {
       const accessToken = await AsyncStorage.getItem("accessToken");

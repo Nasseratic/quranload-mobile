@@ -1,19 +1,22 @@
-import { authClient } from "api/authClient";
+import request from "api/apiClient";
 import { subYears } from "date-fns";
 
 export async function signIn(data: {
-  username: string;
+  email: string;
   password: string;
-}): Promise<ISignInResponse> {
-  return await authClient.post("Account/GetToken", data);
+}): Promise<ISignInResponse["data"]> {
+  return await request.post("Account/GetToken", {
+    username: data.email,
+    password: data.password,
+  });
 }
 
 export async function refreshToken(data: { refreshToken: string }): Promise<IRefreshTokenResponse> {
-  return await authClient.post("Account/RefreshToken", data);
+  return await request.post("Account/RefreshToken", data);
 }
 
 export const forgotPassword = async (data: { userName: string }): Promise<void> => {
-  return await authClient.post("Account/forgotPassword", data);
+  return await request.post("Account/forgotPassword", data);
 };
 
 export const resetPassword = (data: {
@@ -22,13 +25,13 @@ export const resetPassword = (data: {
   password: string;
   confirmPassword: string;
 }) =>
-  authClient.post("Account/ResetPassword", {
+  request.post("Account/ResetPassword", {
     ...data,
     code: encodeURIComponent(data.code),
   });
 
 export const confirmEmail = (data: { code: string; userId: string }) =>
-  authClient.put(
+  request.put(
     `Account/ConfirmEmail?Code=${encodeURIComponent(encodeURIComponent(data.code))}&UserId=${
       data.userId
     }`
@@ -41,7 +44,7 @@ export const signUp = async (data: {
   firstName: string;
   lastName: string;
 }): Promise<void> => {
-  return await authClient.post("Account/Register", {
+  return await request.post("Account/Register", {
     ...data,
     // TODO: check if we need username and date of birth and remove or update this if needed
     username: data.email,
@@ -50,7 +53,7 @@ export const signUp = async (data: {
 };
 
 export const resendVerificationEmail = async (data: { email: string }): Promise<void> => {
-  return await authClient.post("Account/ResendConfirmationEmail", {
+  return await request.post("Account/ResendConfirmationEmail", {
     username: data.email,
   });
 };

@@ -56,7 +56,7 @@ export type RootStackParamList = {
   };
   TeacherStudentsList: { teamId: string };
   Mushaf: undefined;
-  ChatScreen: { teamId: string; interlocutorId?: string; title: string };
+  ChatScreen: { teamId?: string; interlocutorId?: string; title: string };
   ChatListScreen: { team: Team };
   ChatNewScreen: { team: Team };
   TeamListScreen: undefined;

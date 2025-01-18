@@ -1,22 +1,7 @@
-import { shorthands } from "@tamagui/shorthands";
-import { themes, tokens } from "@tamagui/themes";
-import { createFont, createTamagui } from "tamagui";
+import { config } from "@tamagui/config/v3";
+import { createTamagui } from "tamagui";
 
-export const tamaguiConfig = createTamagui({
-  themes,
-  tokens,
-  shorthands,
-  fonts: {
-    body: createFont({
-      size: {
-        true: 16,
-      },
-      lineHeight: {
-        true: 16,
-      },
-    }),
-  },
-});
+export const tamaguiConfig = createTamagui(config);
 
 export type TamaguiConfig = typeof tamaguiConfig;
 

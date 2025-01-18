@@ -93,16 +93,19 @@ const MyTextInput: FunctionComponent<Props> = ({
           numberOfLines={textarea ? 10 : 1}
           secureTextEntry={isSecureOn}
         />
-        <Button
-          position="absolute"
-          right={8}
-          pressStyle={{ opacity: 0.5, borderWidth: 0 }}
-          variant="outlined"
-          w={25}
-          onPress={() => setIsSecureOn(!isSecureOn)}
-        >
-          {isSecure && (isSecureOn ? <EyeOffIcon /> : <EyeIcon />)}
-        </Button>
+        {isSecure && (
+          <Button
+            position="absolute"
+            right={8}
+            bw={0}
+            pressStyle={{ opacity: 0.5, borderColor: "transparent" }}
+            variant="outlined"
+            w={25}
+            onPress={() => setIsSecureOn(!isSecureOn)}
+          >
+            {isSecure && (isSecureOn ? <EyeOffIcon /> : <EyeIcon />)}
+          </Button>
+        )}
       </Stack>
       {touched && error && <Text style={{ marginVertical: 4 }}>{error}</Text>}
     </View>
