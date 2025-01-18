@@ -1,4 +1,4 @@
-import { Avatar, Card, Separator, Stack, Text, XStack, View } from "tamagui";
+import { Avatar, Card, Separator, Stack, Text, XStack, View, Square } from "tamagui";
 import { Colors } from "constants/Colors";
 import Typography from "components/Typography";
 import ChevronRight from "components/icons/ChevronRight";
@@ -26,20 +26,11 @@ export const ChatItem = ({
               <Avatar.Fallback br={8} bc={Colors.Gray[1]} delayMs={600} />
             </Avatar>
           ) : (
-            <View
-              w={42}
-              h={42}
-              bw={1}
-              bc={Colors.Gray[1]}
-              br={8}
-              boc={Colors.Gray[1]}
-              ai="center"
-              jc="center"
-            >
+            <Square w={42} h={42} br={8} bg="$gray8">
               <Text color="white" fontSize={16}>
                 {name.split(" ").map((word) => word[0])}
               </Text>
-            </View>
+            </Square>
           )}
           <Stack gap={2} flex={1} jc="center">
             <Typography type="BodyHeavy">{name}</Typography>
