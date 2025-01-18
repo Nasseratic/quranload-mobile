@@ -1,8 +1,7 @@
 import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "navigation/navigation";
-import { fetchStudentsList, useStudentsList } from "services/teamService";
-import { useQuery } from "@tanstack/react-query";
+import { useStudentsList } from "services/teamService";
 import { Card, Spinner } from "tamagui";
 import Typography from "components/Typography";
 import GeneralConstants from "constants/GeneralConstants";
