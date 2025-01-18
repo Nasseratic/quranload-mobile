@@ -19,7 +19,7 @@ export const ChatItem = ({
   return (
     <>
       <Card pressStyle={{ opacity: 0.8 }} bg="white" p={4} onPress={onPress}>
-        <XStack jc="space-between" gap={10} px={6}>
+        <XStack jc="space-between" ai="center" gap={10} px={6}>
           {avatar ? (
             <Avatar size={42}>
               <Avatar.Image br={8} source={{ uri: avatar }} />

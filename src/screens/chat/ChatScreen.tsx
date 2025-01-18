@@ -32,18 +32,25 @@ export const ChatScreen = () => {
   const { teamId, interlocutorId, title } = params;
   const user = useUser();
 
-  const userId = user?.id;
+  const userId = user.id;
+
+  if (!teamId && !interlocutorId) {
+    throw Error("teamId or interlocutorId must be provided");
+  }
+
   const { results, status, loadMore } = usePaginatedQuery(
     cvx.messages.paginate,
     {
-      teamId,
-      conversationParticipants:
-        interlocutorId && userId
-          ? {
-              participant1: userId,
-              participant2: interlocutorId,
-            }
-          : undefined,
+      conversation: teamId
+        ? {
+            type: "team",
+            teamId: teamId,
+          }
+        : {
+            type: "direct",
+            participantX: userId,
+            participantY: interlocutorId!,
+          },
     },
     { initialNumItems: QUERY_LIMIT }
   );

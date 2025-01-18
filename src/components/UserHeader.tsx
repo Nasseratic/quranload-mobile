@@ -41,8 +41,8 @@ const UserHeader = () => {
         <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
         <XStack gap={16} jc="center" ai="center">
           {/* TODO?: If there's only 1 active team, navigate to ChatListScreen OR show team status + archive option */}
-          {user && ff.chat && (
-            <TouchableOpacity onPress={() => navigation.navigate("TeamListScreen")}>
+          {user && ff?.chat && (
+            <TouchableOpacity onPress={() => navigation.navigate("ChatListScreen")}>
               <ChatIcon size={20} color={Colors.Primary[1]} />
             </TouchableOpacity>
           )}

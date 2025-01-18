@@ -27,7 +27,6 @@ import { RootStackParamList } from "./navigation";
 import { MushafScreen } from "screens/mushuf/MushafScreen";
 import { ChatScreen } from "screens/chat/ChatScreen";
 import { ChatListScreen } from "screens/chat/ChatListScreen";
-import { TeamListScreen } from "screens/chat/TeamListScreen";
 import { useDeepLinkHandler, useNotificationActionHandler } from "hooks/useDeeplinks";
 import { navigationRef } from "navigation/navRef";
 import { ForgotPasswordScreen } from "screens/auth/ForgotPasswordScreen";
@@ -84,7 +83,6 @@ const AuthenticatedStack = () => {
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
         <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
         <Stack.Screen name="ChatNewScreen" component={ChatNewScreen} />
-        <Stack.Screen name="TeamListScreen" component={TeamListScreen} />
         <Stack.Screen name="Mushaf" component={MushafScreen} />
       </Stack.Navigator>
     </>

@@ -1,7 +1,7 @@
 import { FunctionComponent, useMemo } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "navigation/navigation";
-import { fetchStudentsList } from "services/teamService";
+import { fetchStudentsList, useStudentsList } from "services/teamService";
 import { useQuery } from "@tanstack/react-query";
 import { Card, Spinner } from "tamagui";
 import Typography from "components/Typography";
@@ -18,18 +18,16 @@ type Props = NativeStackScreenProps<RootStackParamList, "TeacherStudentsList">;
 
 export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) => {
   const { teamId } = route.params;
-  const { data, isLoading } = useQuery(["students-list", teamId], () =>
-    fetchStudentsList({ teamId })
-  );
+  const { studentsList, isLoadingStudentsList } = useStudentsList(teamId);
 
   const students: User[] = useMemo(() => {
     return (
-      data?.list?.sort(
+      studentsList?.sort(
         (a, b) =>
           b.percentageOfAcceptedOrSubmittedLessons - a.percentageOfAcceptedOrSubmittedLessons
       ) ?? []
     );
-  }, [data?.list]);
+  }, [studentsList]);
 
   const percentageToColor = (percentage: number) => {
     if (percentage >= 80) return Colors.Success[1];
@@ -49,14 +47,14 @@ export const TeacherStudentsListScreen: FunctionComponent<Props> = ({ route }) =
           paddingBottom: 16,
         }}
         ListEmptyComponent={
-          isLoading ? null : (
+          isLoadingStudentsList ? null : (
             <EmptyState
               title={t("teacherStudentsListScreen.empty")}
               description={t("teacherStudentsListScreen.emptyDescription")}
             />
           )
         }
-        ListFooterComponent={isLoading ? <Spinner py="$12" size="large" /> : null}
+        ListFooterComponent={isLoadingStudentsList ? <Spinner py="$12" size="large" /> : null}
         renderItem={({ item }) => (
           <Card
             key={item.id}
