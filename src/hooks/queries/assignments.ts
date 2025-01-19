@@ -8,27 +8,25 @@ export type Assignment = Omit<Required<Lessons_Dto_LessonGetResponse>, "status">
   status: AssignmentStatusEnum;
 };
 
-export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null }) => {
+export const useAssignments = ({
+  status,
+  teamId,
+}: {
+  status: AssignmentStatusEnum | null;
+  teamId: string;
+}) => {
   const user = useUser();
 
   const { data: assignments, isLoading: isAssignmentsLoading } = useQuery(
-    ["assignments", status],
+    ["assignments", status, teamId],
     async () => {
       if (!user) return null;
-      const results = await Promise.all(
-        user?.teams.map((team) =>
-          fetchUserLessons({
-            teamId: team.id,
-            lessonState: status ?? undefined,
-          })
-        )
-      );
-
-      return Object.fromEntries(
-        user?.teams.map(
-          (team, index) => [team.id, results[index]?.list as unknown as Assignment[]] as const
-        )
-      );
+      return (
+        await fetchUserLessons({
+          teamId,
+          lessonState: status ?? undefined,
+        })
+      ).list as unknown as Assignment[];
     },
     {
       enabled: !!user,
@@ -36,4 +34,22 @@ export const useAssignments = ({ status }: { status: AssignmentStatusEnum | null
   );
 
   return { assignments, isAssignmentsLoading };
+};
+
+export const useLatestAssignmentForTeam = (teamId: string) => {
+  const { data } = useQuery(
+    ["latest-assignment", null, teamId],
+    async () =>
+      fetchUserLessons({
+        teamId,
+        lessonState: AssignmentStatusEnum.pending,
+        pageSize: 1,
+        pageNumber: 1,
+      }),
+    {
+      enabled: !!teamId,
+    }
+  );
+
+  return data?.list[0] as Assignment | undefined;
 };

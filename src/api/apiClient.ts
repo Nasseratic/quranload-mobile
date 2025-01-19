@@ -1,8 +1,9 @@
 import axios, { AxiosResponse } from "axios";
 import { isDevelopmentBuild } from "expo-dev-client";
 
+const shouldUseDev = false ?? isDevelopmentBuild();
 export const BASE_URL = `https://quranload-be-${
-  isDevelopmentBuild() ? "dev" : "prod"
+  shouldUseDev ? "dev" : "prod"
 }-app.azurewebsites.net/api/`;
 
 export const axiosClient = axios.create({

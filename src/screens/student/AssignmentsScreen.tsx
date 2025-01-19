@@ -42,9 +42,9 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
 
   const { assignments, isAssignmentsLoading } = useAssignments({
     status: selectedFilter,
+    teamId: route.params.teamId,
   });
 
-  const teamAssignments = assignments?.[route.params.teamId];
   return (
     <SafeView side="top" f={1}>
       <AppBar title={t("assignmentScreen.title")} />
@@ -54,7 +54,7 @@ const AssignmentsScreen = ({ route, navigation }: Props) => {
         onChange={(value) => setSelectedFilter(value)}
       />
       <FlatList
-        data={teamAssignments}
+        data={assignments}
         renderItem={({ item }) => (
           <AssignmentItem
             assignment={item}

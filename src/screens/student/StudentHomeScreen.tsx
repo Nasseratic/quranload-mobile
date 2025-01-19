@@ -9,7 +9,7 @@ import { BookIcon, ClockIcon } from "assets/icons";
 import { Loader } from "components/Loader";
 import { i18n, t } from "locales/config";
 import AuthContext from "contexts/auth";
-import { useAssignments } from "hooks/queries/assignments";
+import { useAssignments, useLatestAssignmentForTeam } from "hooks/queries/assignments";
 import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
@@ -20,16 +20,16 @@ import { fDateDashed, fMinutesDuration } from "utils/formatTime";
 import { RootStackParamList } from "navigation/navigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NoClasses from "components/NoClasses";
+import { Team } from "types/User";
+import { useNavigation } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "StudentHome">;
 
 export const StudentHomeScreen = ({ navigation }: Props) => {
   const { user } = useContext(AuthContext);
-  const { assignments, isAssignmentsLoading } = useAssignments({
-    status: AssignmentStatusEnum.pending,
-  });
 
-  if (isAssignmentsLoading || !user || !assignments) return <Loader />;
+  if (!user) return <Loader />;
+
   return (
     <SafeAreaView style={{ paddingHorizontal: 16, flex: 1 }}>
       <UserHeader />
@@ -42,21 +42,26 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
           paddingBottom: user.teams.length && 16,
         }}
         renderItem={({ item }) => {
-          const teamAssignments = assignments[item.id];
-          return (
-            <Stack gap="$4" key={item.id}>
-              <LectureBox
-                pendingAssignmentsCount={teamAssignments?.length ?? 0}
-                team={item}
-                latestOpenAssignment={teamAssignments?.[0]}
-                onLecturePress={() => navigation.navigate("Assignments", { teamId: item.id })}
-              />
-              <StatusSection teamId={item.id} />
-            </Stack>
-          );
+          return <StudentTeamOverview team={item} />;
         }}
       />
     </SafeAreaView>
+  );
+};
+
+const StudentTeamOverview = ({ team }: { team: Team }) => {
+  const latestTeamAssignment = useLatestAssignmentForTeam(team.id);
+  const navigation = useNavigation();
+  return (
+    <Stack gap="$4" key={team.id}>
+      <LectureBox
+        pendingAssignmentsCount={latestTeamAssignment ? 1 : 0}
+        team={team}
+        latestOpenAssignment={latestTeamAssignment}
+        onLecturePress={() => navigation.navigate("Assignments", { teamId: team.id })}
+      />
+      <StatusSection teamId={team.id} />
+    </Stack>
   );
 };
 

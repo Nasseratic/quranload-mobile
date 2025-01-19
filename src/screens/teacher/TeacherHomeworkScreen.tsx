@@ -17,10 +17,13 @@ import { EmptyState } from "components/EmptyState";
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherHomework">;
 
 export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, route }) => {
-  const { assignments, isAssignmentsLoading } = useAssignments({ status: null });
   const teamId = route.params.teamId;
 
-  const currentTeamAssignments = assignments?.[teamId];
+  const { assignments, isAssignmentsLoading } = useAssignments({
+    status: null,
+
+    teamId,
+  });
 
   return (
     <SafeView side="top" f={1}>
@@ -30,9 +33,7 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
           <XStack>
             <IconButton
               icon={<PersonsIcon color={Colors.Primary[1]} />}
-              onPress={() =>
-                navigation.navigate("TeacherStudentsList", { teamId: route.params.teamId })
-              }
+              onPress={() => navigation.navigate("TeacherStudentsList", { teamId })}
             />
             <IconButton
               icon={<PlusIcon color={Colors.Primary[1]} />}
@@ -43,7 +44,7 @@ export const TeacherHomeworkScreen: FunctionComponent<Props> = ({ navigation, ro
       />
 
       <FlatList
-        data={currentTeamAssignments}
+        data={assignments}
         renderItem={({ item }) => (
           <TeacherHomeworkItem
             homework={item}

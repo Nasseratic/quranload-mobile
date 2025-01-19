@@ -115,7 +115,9 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
       ) : (
         <FlatList
           data={submissions}
-          keyExtractor={(submission, index) => submission.id ?? index.toString()}
+          keyExtractor={(submission, index) =>
+            (submission.id ?? "") + (submission.student?.id ?? index)
+          }
           contentContainerStyle={{
             gap: 16,
             marginHorizontal: 16,
