@@ -1,13 +1,5 @@
-import { paginationOptsValidator } from "convex/server";
-import {
-  internalMutation,
-  internalQuery,
-  mutation,
-  MutationCtx,
-  query,
-  QueryCtx,
-} from "../_generated/server";
-import schema from "../schema";
+import { paginationOptsValidator, PaginationResult } from "convex/server";
+import { mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
 import { ConvexError, v } from "convex/values";
 import { messageInitializer } from "../schema";
 import { isNotNullish } from "utils/notNullish";
@@ -31,7 +23,11 @@ export const paginate = query({
     const conversationId =
       conversation.type === "team"
         ? conversation.teamId
-        : await getConversationId(ctx, conversation);
+        : (await getConversationId(ctx, conversation)) ??
+          // TODO: this will cause error in client, if you start conversation with someone new
+          // because the getConversationId will return undefined first time, but after first message it will change to return conversationId
+          // this will trigger cursor changed error
+          "_";
 
     return ctx.db
       .query("messages")
@@ -43,34 +39,41 @@ export const paginate = query({
 
 export const send = mutation({
   args: {
+    senderId: v.string(),
+    to: v.union(
+      v.object({
+        type: v.literal("team"),
+        teamId: v.string(),
+      }),
+      v.object({
+        type: v.literal("direct"),
+        receiverId: v.string(),
+      })
+    ),
     messages: v.array(
-      v.union(
-        v.object({
-          ...messageInitializer,
-          teamId: v.string(),
-        }),
-        v.object({
-          ...messageInitializer,
-          receiverId: v.string(),
-          teamId: v.optional(v.string()),
-        })
-      )
+      v.object({
+        ...messageInitializer,
+      })
     ),
   },
-  handler: async (ctx, args) => {
-    const senderId = args.messages[0]?.senderId;
+  handler: async (ctx, { senderId, messages, to }) => {
     if (!senderId) return new ConvexError("Sender ID is required");
 
+    const conversationId =
+      to.type === "team"
+        ? to.teamId
+        : await getOrCreateDirectConversation(ctx, {
+            senderId,
+            receiverId: to.receiverId,
+          });
+
     return Promise.all(
-      args.messages.map(async ({ teamId, ...message }) =>
+      messages.map(async (message) =>
         ctx.db.insert("messages", {
           ...message,
-          conversationId:
-            teamId ||
-            (await getOrCreateDirectConversation(ctx, {
-              senderId,
-              receiverId: message.receiverId!,
-            })),
+          senderId,
+          receiverId: to.type === "direct" ? to.receiverId : undefined,
+          conversationId,
         })
       )
     );

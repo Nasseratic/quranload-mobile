@@ -79,14 +79,14 @@ export const ChatScreen = () => {
   }, []);
 
   const onSend = useCallback(async (messages: IMessage[] = []) => {
+    if (messages.length === 0) return;
     await sendMessages({
+      senderId: userId,
+      to: teamId ? { type: "team", teamId } : { type: "direct", receiverId: interlocutorId! },
       messages: messages.map(({ text, audio, image, user }) => ({
         text,
-        senderId: user._id as string,
         senderName: user.name,
-        receiverId: interlocutorId ? interlocutorId : undefined,
         receiverName: params.title,
-        teamId,
         mediaUrl: image ?? audio,
         mediaType: audio ? "audio" : image ? "image" : undefined,
         isSystem: false,
@@ -106,7 +106,7 @@ export const ChatScreen = () => {
             if (!isTextOrImages) {
               return setIsRecorderVisible(true);
             }
-            if (images) {
+            if (images.length > 0) {
               const uploadedImages = await upload();
               const lastImage = uploadedImages[uploadedImages.length - 1];
               const restImages = uploadedImages.slice(0, uploadedImages.length - 1);
@@ -120,6 +120,7 @@ export const ChatScreen = () => {
                 ],
                 true
               );
+              onSend?.([], true);
             } else {
               onSend?.({ text: text?.trim() }, true);
             }

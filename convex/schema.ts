@@ -7,9 +7,7 @@ export const messageInitializer = {
     v.union(v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file"))
   ),
   mediaUrl: v.optional(v.string()),
-  receiverId: v.optional(v.string()),
   receiverName: v.optional(v.string()),
-  senderId: v.string(),
   senderName: v.optional(v.string()),
   text: v.optional(v.string()),
 } as const;
@@ -21,6 +19,8 @@ export default defineSchema({
   }),
   messages: defineTable({
     ...messageInitializer,
+    senderId: v.string(),
+    receiverId: v.optional(v.string()),
     conversationId: v.string(),
   }).index("conversation", ["conversationId"]),
   directConversations: defineTable({
