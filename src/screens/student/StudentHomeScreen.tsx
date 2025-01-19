@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import StatsBox from "components/StatsBox";
@@ -14,7 +14,7 @@ import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentStatistics } from "services/profileService";
-import { Card, Stack, XStack, YStack } from "tamagui";
+import { Button, Card, Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
 import { fDateDashed, fMinutesDuration } from "utils/formatTime";
 import { RootStackParamList } from "navigation/navigation";
@@ -27,14 +27,17 @@ type Props = NativeStackScreenProps<RootStackParamList, "StudentHome">;
 
 export const StudentHomeScreen = ({ navigation }: Props) => {
   const { user } = useContext(AuthContext);
+  const [isShowingInactive, setIsShowingInactive] = useState(false);
 
   if (!user) return <Loader />;
+
+  const teams = user.teams.filter((team) => isShowingInactive || team.isActive);
 
   return (
     <SafeAreaView style={{ paddingHorizontal: 16, flex: 1 }}>
       <UserHeader />
       <FlatList
-        data={user.teams}
+        data={teams}
         ListEmptyComponent={<NoClasses role="student" />}
         contentContainerStyle={{
           gap: 16,
@@ -44,6 +47,17 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
         renderItem={({ item }) => {
           return <StudentTeamOverview team={item} />;
         }}
+        ListFooterComponent={
+          <Button
+            alignSelf="center"
+            size="$3"
+            onPress={() => setIsShowingInactive(!isShowingInactive)}
+          >
+            <Typography type="SmallHeavy">
+              {isShowingInactive ? t("homeScreen.hideInactive") : t("homeScreen.showInactive")}
+            </Typography>
+          </Button>
+        }
       />
     </SafeAreaView>
   );

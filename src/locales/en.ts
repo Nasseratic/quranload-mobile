@@ -43,6 +43,8 @@ const english = {
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",
+    showInactive: "Show inactive",
+    hideInactive: "Hide inactive",
   },
   profileScreen: {
     title: "Profile",
