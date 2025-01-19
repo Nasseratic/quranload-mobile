@@ -22,10 +22,10 @@ const patterns = {
   message: {
     type: "message",
     message: {
-      teamId: P.string,
+      teamId: P.string.optional(),
       senderId: P.string,
       senderName: P.string,
-      receiverId: P.string.optional().or(P.nullish),
+      receiverId: P.string.optional(),
     },
   },
 };
@@ -41,7 +41,7 @@ const useHandleDeepLink = () => {
       .with(patterns.message, ({ message }) => {
         if (navigationRef.current?.getCurrentRoute()?.name === "ChatScreen") goBack();
         navigate("ChatScreen", {
-          teamId: message.teamId,
+          teamId: message.teamId ?? undefined,
           interlocutorId: message.receiverId ? message.senderId : undefined,
           title: message.receiverId
             ? message.senderName

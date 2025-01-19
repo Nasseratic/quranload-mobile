@@ -5,6 +5,7 @@
     "baseUrl": ".",
     "checkJs": true,
     "noUncheckedIndexedAccess": true,
+    "moduleResolution": "bundler",
     "paths": {
       "*": ["src/*"],
       "@assets/*": ["src/assets/*"],

@@ -30,6 +30,8 @@ const english = {
   notHandedIn: "Not handed in",
   enable: "Enable",
   discard: "Discard",
+  copy: "Copy",
+  unsend: "Unsend",
   enableNotifications: "Enable Notifications",
   enableNotificationsDescription:
     "Get notified when you have new assignments or when your teacher sends you a feedback",

@@ -12,8 +12,6 @@ import { PermissionStatus } from "expo-modules-core";
 import { openAppDeviceSettings } from "utils/deviceSettings";
 import * as Device from "expo-device";
 import notificationBell from "../assets/lottie/notification-bell.json";
-import { useMutation } from "@tanstack/react-query";
-import apiClient from "api/apiClient";
 import { match } from "ts-pattern";
 import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,6 +19,8 @@ import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
 import { isDevelopmentBuild } from "expo-dev-client";
 import { supabase } from "utils/supabase";
+import { useMutation } from "convex/react";
+import { cvx } from "api/convex";
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
 export const NotificationsBottomSheet = () => {
@@ -28,18 +28,7 @@ export const NotificationsBottomSheet = () => {
   const [status, requestPermission] = Notifications.usePermissions();
   const insets = useSafeAreaInsets();
   const { teams, id } = useUser();
-  const { mutate } = useMutation({
-    mutationKey: ["PushNotificationsKey"],
-    mutationFn: async ({ token }: { token: string }) => {
-      await supabase
-        .from("pushTokens")
-        .upsert(teams.map(({ id: teamId }) => ({ expoPushToken: token, teamId, userId: id })));
-      await apiClient.post("Devices", {
-        token,
-        name: deviceName,
-      });
-    },
-  });
+  const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
@@ -65,8 +54,8 @@ export const NotificationsBottomSheet = () => {
         projectId: Constants.easConfig?.projectId,
       })
     ).data;
-    mutate({ token });
-  }, [mutate]);
+    registerToken({ pushToken: token, userId: id });
+  }, [registerToken]);
 
   const handleEnableNotifications = async () => {
     await match(status)

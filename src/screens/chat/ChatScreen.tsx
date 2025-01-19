@@ -25,6 +25,7 @@ import { AudioPlayer } from "components/AudioPlayer";
 import { useMutation, usePaginatedQuery } from "convex/react";
 import { cvx, Id } from "api/convex";
 import { match } from "ts-pattern";
+import { t } from "locales/config";
 
 const QUERY_LIMIT = 20;
 
@@ -32,7 +33,7 @@ export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title } = params;
   const user = useUser();
-  const deleteMessage = useMutation(cvx.messages.del);
+  const unsend = useMutation(cvx.messages.unsend);
   const userId = user.id;
 
   if (!teamId && !interlocutorId) {
@@ -304,9 +305,9 @@ export const ChatScreen = () => {
             )}
             onLongPress={(context, message) => {
               const options = [
-                ...(message.user._id === userId ? ["Delete message"] : []),
-                "Copy text",
-                "Cancel",
+                ...(message.user._id === userId ? [t("unsend")] : []),
+                t("copy"),
+                t("cancel"),
               ];
 
               const cancelButtonIndex = options.length - 1;
@@ -317,9 +318,7 @@ export const ChatScreen = () => {
                 },
                 (buttonIndex: number) => {
                   match(buttonIndex)
-                    .with(0, async () =>
-                      deleteMessage({ messageId: message._id as Id<"messages"> })
-                    )
+                    .with(0, async () => unsend({ messageId: message._id as Id<"messages"> }))
                     .with(1, () => Clipboard.setString(message.text))
                     .otherwise(() => {});
                 }

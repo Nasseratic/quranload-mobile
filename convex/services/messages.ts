@@ -3,6 +3,7 @@ import { mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
 import { ConvexError, v } from "convex/values";
 import { messageInitializer } from "../schema";
 import { isNotNullish } from "utils/notNullish";
+import { pushNotifications } from "./pushNotifications";
 
 export const paginate = query({
   args: {
@@ -37,6 +38,18 @@ export const paginate = query({
   },
 });
 
+export const unsend = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, { messageId }) => {
+    return ctx.db.delete(messageId);
+  },
+});
+
+const isDirectConversation = (conversation: any): conversation is { type: "direct" } =>
+  conversation.type === "direct";
+
 export const send = mutation({
   args: {
     senderId: v.string(),
@@ -67,16 +80,40 @@ export const send = mutation({
             receiverId: to.receiverId,
           });
 
-    return Promise.all(
+    await Promise.all(
       messages.map(async (message) =>
         ctx.db.insert("messages", {
           ...message,
           senderId,
-          receiverId: to.type === "direct" ? to.receiverId : undefined,
+          receiverId: isDirectConversation(to) ? to.receiverId : undefined,
           conversationId,
         })
       )
     );
+    const mediaBody =
+      messages?.[0]?.mediaUrl && messages?.[0]?.mediaType
+        ? messages[0].mediaType === "image"
+          ? `📷 Image`
+          : `🎙️ Audio`
+        : undefined;
+
+    if (isDirectConversation(to)) {
+      pushNotifications.sendPushNotification(ctx, {
+        userId: to.receiverId,
+        notification: {
+          title: `New message from ${messages[0]?.senderName || "Someone"}`,
+          body: messages[0]?.text || mediaBody,
+          data: {
+            type: "message",
+            message: {
+              ...messages[0],
+              ...to,
+              senderId,
+            },
+          },
+        },
+      });
+    }
   },
 });
 
@@ -154,14 +191,5 @@ export const allMyConversations = query({
     return [...teamsLatestMessages, ...directConversationsLatestMessages]
       .filter(isNotNullish)
       .sort((a, b) => b._creationTime - a._creationTime);
-  },
-});
-
-export const del = mutation({
-  args: {
-    messageId: v.id("messages"),
-  },
-  handler: async (ctx, { messageId }) => {
-    return ctx.db.delete(messageId);
   },
 });
