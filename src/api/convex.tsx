@@ -4,6 +4,8 @@ export const client = new ConvexReactClient("https://courteous-goat-120.convex.c
 
 export type { FunctionReturnType } from "convex/server";
 
+export type { Id, Doc } from "../../convex/_generated/dataModel";
+
 export const cvx = api.services;
 
 export const ConvexProvider = ({ children }: { children: React.ReactNode }) => {

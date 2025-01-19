@@ -10,7 +10,7 @@ import { Colors } from "constants/Colors";
 import { useUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, Clipboard } from "react-native";
 import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
 import { useSupabaseMediaUploader } from "hooks/useMediaPicker";
@@ -23,7 +23,8 @@ import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
 import { uploadChatMedia } from "utils/uploadChatMedia";
 import { AudioPlayer } from "components/AudioPlayer";
 import { useMutation, usePaginatedQuery } from "convex/react";
-import { cvx } from "api/convex";
+import { cvx, Id } from "api/convex";
+import { match } from "ts-pattern";
 
 const QUERY_LIMIT = 20;
 
@@ -31,7 +32,7 @@ export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title } = params;
   const user = useUser();
-
+  const deleteMessage = useMutation(cvx.messages.del);
   const userId = user.id;
 
   if (!teamId && !interlocutorId) {
@@ -301,6 +302,27 @@ export const ChatScreen = () => {
                 source={{ uri: props.currentMessage?.image }}
               />
             )}
+            onLongPress={(context, message) => {
+              const options = ["Delete message", "Copy text", "Cancel"];
+
+              const cancelButtonIndex = options.length - 1;
+              (context as any).actionSheet().showActionSheetWithOptions(
+                {
+                  options,
+                  cancelButtonIndex,
+                },
+                (buttonIndex: number) => {
+                  match(buttonIndex)
+                    .with(0, async () => {
+                      await deleteMessage({ messageId: message._id as Id<"messages"> });
+                    })
+                    .with(1, () => {
+                      Clipboard.setString(message.text);
+                    })
+                    .otherwise(() => {});
+                }
+              );
+            }}
             renderBubble={(props) => (
               <Bubble
                 {...props}

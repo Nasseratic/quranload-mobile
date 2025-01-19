@@ -156,3 +156,12 @@ export const allMyConversations = query({
       .sort((a, b) => b._creationTime - a._creationTime);
   },
 });
+
+export const del = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, { messageId }) => {
+    return ctx.db.delete(messageId);
+  },
+});
