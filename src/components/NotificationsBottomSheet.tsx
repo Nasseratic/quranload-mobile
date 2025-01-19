@@ -18,18 +18,28 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
 import { isDevelopmentBuild } from "expo-dev-client";
-import { supabase } from "utils/supabase";
 import { useMutation } from "convex/react";
+import { useMutation as useRQMutation } from "@tanstack/react-query";
 import { cvx } from "api/convex";
+import request from "api/apiClient";
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
 export const NotificationsBottomSheet = () => {
   const { signed } = useAuth();
   const [status, requestPermission] = Notifications.usePermissions();
   const insets = useSafeAreaInsets();
-  const { teams, id } = useUser();
+  const { id } = useUser();
   const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const { mutate: registerTokenToBackend } = useRQMutation({
+    mutationKey: ["register-push-token"],
+    mutationFn: ({ token }: { token: string }) =>
+      request.post("Devices", {
+        token,
+        name: deviceName,
+      }),
+  });
 
   useEffect(() => {
     if (signed && status) {
@@ -55,6 +65,7 @@ export const NotificationsBottomSheet = () => {
       })
     ).data;
     registerToken({ pushToken: token, userId: id });
+    registerTokenToBackend({ token });
   }, [registerToken]);
 
   const handleEnableNotifications = async () => {
@@ -72,7 +83,13 @@ export const NotificationsBottomSheet = () => {
   };
 
   useAppStatusEffect({
-    onForeground: storeToken,
+    onForeground: async () => {
+      const status = (await Notifications.getPermissionsAsync()).status;
+      if (status === PermissionStatus.GRANTED) {
+        storeToken();
+        bottomSheetRef.current?.dismiss();
+      }
+    },
   });
 
   return (

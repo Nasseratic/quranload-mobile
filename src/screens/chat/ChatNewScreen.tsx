@@ -1,17 +1,9 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeView } from "components/SafeView";
-import { supabase } from "utils/supabase";
 import { AppBar } from "components/AppBar";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "navigation/navigation";
 import { ChatItem } from "./components/ChatItem";
-import { t } from "locales/config";
 import { useUser } from "contexts/auth";
-import { IconButton } from "components/buttons/IconButton";
-import { Colors } from "constants/Colors";
-import PersonsIcon from "components/icons/PersonsIcon";
-import PlusIcon from "components/icons/PlusIcon";
-import { useStudentsList, useStudentsListInAllTeams } from "services/teamService";
+import { useStudentsListInAllTeams } from "services/teamService";
 import { ActivityIndicator } from "react-native";
 import { cvx } from "api/convex";
 import { useQuery } from "convex/react";
