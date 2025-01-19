@@ -48,15 +48,17 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
           return <StudentTeamOverview team={item} />;
         }}
         ListFooterComponent={
-          <Button
-            alignSelf="center"
-            size="$3"
-            onPress={() => setIsShowingInactive(!isShowingInactive)}
-          >
-            <Typography type="SmallHeavy">
-              {isShowingInactive ? t("homeScreen.hideInactive") : t("homeScreen.showInactive")}
-            </Typography>
-          </Button>
+          user.teams.length != teams.length || isShowingInactive ? (
+            <Button
+              alignSelf="center"
+              size="$3"
+              onPress={() => setIsShowingInactive(!isShowingInactive)}
+            >
+              <Typography type="SmallHeavy">
+                {isShowingInactive ? t("homeScreen.hideInactive") : t("homeScreen.showInactive")}
+              </Typography>
+            </Button>
+          ) : undefined
         }
       />
     </SafeAreaView>
