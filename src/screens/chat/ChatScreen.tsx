@@ -303,7 +303,11 @@ export const ChatScreen = () => {
               />
             )}
             onLongPress={(context, message) => {
-              const options = ["Delete message", "Copy text", "Cancel"];
+              const options = [
+                ...(message.user._id === userId ? ["Delete message"] : []),
+                "Copy text",
+                "Cancel",
+              ];
 
               const cancelButtonIndex = options.length - 1;
               (context as any).actionSheet().showActionSheetWithOptions(
@@ -313,12 +317,10 @@ export const ChatScreen = () => {
                 },
                 (buttonIndex: number) => {
                   match(buttonIndex)
-                    .with(0, async () => {
-                      await deleteMessage({ messageId: message._id as Id<"messages"> });
-                    })
-                    .with(1, () => {
-                      Clipboard.setString(message.text);
-                    })
+                    .with(0, async () =>
+                      deleteMessage({ messageId: message._id as Id<"messages"> })
+                    )
+                    .with(1, () => Clipboard.setString(message.text))
                     .otherwise(() => {});
                 }
               );
