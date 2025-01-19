@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "constants/Colors";
 import { AudioPlayer } from "components/AudioPlayer";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import {
   deleteSubmission,
   getFeedbackUrl,
@@ -34,10 +35,10 @@ import { ChevronLeftIcon } from "assets/icons";
 import Typography from "components/Typography";
 import { getMediaUri } from "services/mediaService";
 import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScreen";
-import { supabase } from "utils/supabase";
 import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
+import { cvx, useCvxMutation } from "api/convex";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -46,7 +47,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const queryClient = useQueryClient();
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
-
+  const celebrateSubmission = useCvxMutation(cvx.messages.celebrateSubmission);
   const { role, isTeacher, isStudent } = useAuth();
   const user = useUser();
 
@@ -223,23 +224,21 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                             lessonId,
                             duration,
                           });
-                          await supabase
-                            .from("messages")
-                            .insert([
-                              {
-                                text: `✨ MashaAllah 🤩, ${
-                                  user?.fullName
-                                } has submitted the recording for ${
-                                  assignment.description
-                                    ? `assignment : "${assignment.description}"`
-                                    : `page ${assignment.startPage} to page ${assignment.endPage}`
-                                }!`,
-                                senderId: user.id,
-                                teamId: "1",
-                                isSystem: true,
-                              },
-                            ])
-                            .select();
+                          const celebrateWithTeamId = user.teams.find(
+                            ({ isActive }) => isActive
+                          )?.id;
+
+                          if (celebrateWithTeamId) {
+                            await celebrateSubmission({
+                              senderId: user.id,
+                              senderName: user.fullName,
+                              teamId: celebrateWithTeamId,
+                              submission:
+                                assignment.startPage && assignment.endPage
+                                  ? assignment
+                                  : assignment.description ?? "",
+                            });
+                          }
                         })
                         .exhaustive()
                     }

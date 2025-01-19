@@ -117,38 +117,39 @@ export const send = mutation({
   },
 });
 
-const getConversationId = async (
-  ctx: QueryCtx,
-  {
-    participantX,
-    participantY,
-  }: {
-    participantX: string;
-    participantY: string;
-  }
-) => {
-  const dc1 = await ctx.db
-    .query("directConversations")
-    .withIndex("by_participants", (q) =>
-      q.eq("participant1", participantX).eq("participant2", participantY)
-    )
-    .first();
-  const dc2 = await ctx.db
-    .query("directConversations")
-    .withIndex("by_participants", (q) =>
-      q.eq("participant1", participantY).eq("participant2", participantX)
-    )
-    .first();
+const template = `✨ MashaAllah 🤩, {{user}} has submitted the recording for {{text}}`;
+export const celebrateSubmission = mutation({
+  args: {
+    teamId: v.string(),
+    senderId: v.string(),
+    senderName: v.string(),
+    submission: v.union(
+      v.string(),
+      v.object({
+        startPage: v.number(),
+        endPage: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, { teamId, senderId, senderName, submission }) => {
+    if (!senderId) return new ConvexError("Sender ID is required");
 
-  return (dc1 || dc2)?._id;
-};
+    const text =
+      typeof submission === "string"
+        ? template.replace("{{user}}", senderName).replace("{{text}}", submission)
+        : template
+            .replace("{{user}}", senderId)
+            .replace("{{text}}", `${submission.startPage}-${submission.endPage}`);
 
-const getOrCreateDirectConversation = async (
-  ctx: MutationCtx,
-  { senderId, receiverId }: { senderId: string; receiverId: string }
-) =>
-  (await getConversationId(ctx, { participantX: senderId, participantY: receiverId })) ||
-  ctx.db.insert("directConversations", { participant1: senderId, participant2: receiverId });
+    await ctx.db.insert("messages", {
+      text,
+      conversationId: teamId,
+      senderName,
+      isSystem: true,
+      senderId,
+    });
+  },
+});
 
 export const allMyConversations = query({
   args: {
@@ -193,3 +194,36 @@ export const allMyConversations = query({
       .sort((a, b) => b._creationTime - a._creationTime);
   },
 });
+
+const getConversationId = async (
+  ctx: QueryCtx,
+  {
+    participantX,
+    participantY,
+  }: {
+    participantX: string;
+    participantY: string;
+  }
+) => {
+  const dc1 = await ctx.db
+    .query("directConversations")
+    .withIndex("by_participants", (q) =>
+      q.eq("participant1", participantX).eq("participant2", participantY)
+    )
+    .first();
+  const dc2 = await ctx.db
+    .query("directConversations")
+    .withIndex("by_participants", (q) =>
+      q.eq("participant1", participantY).eq("participant2", participantX)
+    )
+    .first();
+
+  return (dc1 || dc2)?._id;
+};
+
+const getOrCreateDirectConversation = async (
+  ctx: MutationCtx,
+  { senderId, receiverId }: { senderId: string; receiverId: string }
+) =>
+  (await getConversationId(ctx, { participantX: senderId, participantY: receiverId })) ||
+  ctx.db.insert("directConversations", { participant1: senderId, participant2: receiverId });
