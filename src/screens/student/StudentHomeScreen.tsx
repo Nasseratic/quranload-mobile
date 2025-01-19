@@ -71,7 +71,7 @@ const StudentTeamOverview = ({ team }: { team: Team }) => {
   return (
     <Stack gap="$4" key={team.id}>
       <LectureBox
-        pendingAssignmentsCount={latestTeamAssignment ? 1 : 0}
+        pendingAssignments={!!latestTeamAssignment}
         team={team}
         latestOpenAssignment={latestTeamAssignment}
         onLecturePress={() => navigation.navigate("Assignments", { teamId: team.id })}

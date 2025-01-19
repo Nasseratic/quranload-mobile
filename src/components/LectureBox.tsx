@@ -15,15 +15,10 @@ interface Props {
   team: Team;
   latestOpenAssignment?: Assignment;
   onLecturePress: () => void;
-  pendingAssignmentsCount: number;
+  pendingAssignments: boolean;
 }
 
-const LectureBox = ({
-  team,
-  latestOpenAssignment,
-  onLecturePress,
-  pendingAssignmentsCount,
-}: Props) => {
+const LectureBox = ({ team, latestOpenAssignment, onLecturePress, pendingAssignments }: Props) => {
   const navigation = useNavigation();
 
   return (
@@ -44,13 +39,7 @@ const LectureBox = ({
             {team.organizationName}
           </Typography>
         </View>
-        {pendingAssignmentsCount > 0 && (
-          <View style={styles.lectureMissingAssignments}>
-            <Typography type="SmallHeavy" style={{ color: Colors.White[1] }}>
-              {pendingAssignmentsCount}
-            </Typography>
-          </View>
-        )}
+        {pendingAssignments && <View style={styles.lectureMissingAssignments} />}
       </TouchableOpacity>
       {latestOpenAssignment && (
         <TouchableOpacity
@@ -75,8 +64,9 @@ const LectureBox = ({
           >
             {latestOpenAssignment.startPage && latestOpenAssignment.endPage
               ? t("readFromTo", {
-                from: latestOpenAssignment.startPage, to: latestOpenAssignment.endPage
-              })
+                  from: latestOpenAssignment.startPage,
+                  to: latestOpenAssignment.endPage,
+                })
               : latestOpenAssignment.description}
           </Typography>
           <ChevronRightIcon
