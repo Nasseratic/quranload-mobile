@@ -1,4 +1,4 @@
-import { FunctionComponent, useState, useRef, useMemo } from "react";
+import { FunctionComponent, useState, useRef, useMemo, Fragment } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { View, Alert, StyleSheet, FlatList, Modal } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
@@ -132,7 +132,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     <View style={{ flex: 1 }}>
       {match(type)
         .with(AssignmentTypeEnum.Custom, () => (
-          <>
+          <Fragment>
             <XStack mt={insets.top} gap="$2" ai="center">
               <Square p="$3" px="$4" onPress={() => navigation.goBack()}>
                 <ChevronLeftIcon color={Colors.Black[1]} />
@@ -179,7 +179,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                 </Modal>
               )}
             </Stack>
-          </>
+          </Fragment>
         ))
         .with(AssignmentTypeEnum.Auto, () => (
           <MushafPages
