@@ -98,21 +98,25 @@ export const send = mutation({
         : undefined;
 
     if (isDirectConversation(to)) {
-      pushNotifications.sendPushNotification(ctx, {
-        userId: to.receiverId,
-        notification: {
-          title: `New message from ${messages[0]?.senderName || "Someone"}`,
-          body: messages[0]?.text || mediaBody,
-          data: {
-            type: "message",
-            message: {
-              ...messages[0],
-              ...to,
-              senderId,
+      try {
+        await pushNotifications.sendPushNotification(ctx, {
+          userId: to.receiverId,
+          notification: {
+            title: `New message from ${messages[0]?.senderName || "Someone"}`,
+            body: messages[0]?.text || mediaBody,
+            data: {
+              type: "message",
+              message: {
+                ...messages[0],
+                ...to,
+                senderId,
+              },
             },
           },
-        },
-      });
+        });
+      } catch {
+        // ignore as most likely the user doesn't have push token
+      }
     }
   },
 });
