@@ -18,6 +18,8 @@ const danish: typeof english = {
   endDate: "Slutdato",
   create: "Opret",
   update: "Opdatér",
+  copy: "Kopiér",
+  unsend: "Annuller",
   signIn: "Log ind",
   signOut: "Log ud",
   username: "Brugernavn",
@@ -45,6 +47,8 @@ const danish: typeof english = {
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
+    hideInactive: "Skjul inaktive hold",
+    showInactive: "Vis inaktive hold",
   },
   profileScreen: {
     title: "Profil",

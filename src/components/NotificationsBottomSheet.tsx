@@ -22,11 +22,11 @@ import { useMutation } from "convex/react";
 import { useMutation as useRQMutation } from "@tanstack/react-query";
 import { cvx } from "api/convex";
 import request from "api/apiClient";
+
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
 export const NotificationsBottomSheet = () => {
   const { signed } = useAuth();
-  const [status, requestPermission] = Notifications.usePermissions();
   const insets = useSafeAreaInsets();
   const { id } = useUser();
   const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
@@ -42,23 +42,26 @@ export const NotificationsBottomSheet = () => {
   });
 
   useEffect(() => {
-    if (signed && status) {
-      if (status.granted) {
-        storeToken();
-      } else {
-        getLastShownNotificationBottomSheet().then((lastShownAt) => {
-          if (!lastShownAt || differenceInDays(new Date(), lastShownAt) >= 7) {
-            bottomSheetRef.current?.present();
-          }
-        });
+    (async () => {
+      const status = await Notifications.getPermissionsAsync();
+      if (signed && status) {
+        if (status.granted) {
+          storeToken();
+        } else {
+          getLastShownNotificationBottomSheet().then((lastShownAt) => {
+            if (!lastShownAt || differenceInDays(new Date(), lastShownAt) >= 7) {
+              bottomSheetRef.current?.present();
+            }
+          });
+        }
       }
-    }
-  }, [signed, status]);
+    })();
+  }, [signed]);
 
   const storeToken = useCallback(async () => {
-    // if (isDevelopmentBuild()) {
-    //   return console.log("skipping push notification registration in development build");
-    // }
+    if (!Device.isDevice) {
+      return console.log("skipping push notification registration in development build");
+    }
     const token = (
       await Notifications.getExpoPushTokenAsync({
         projectId: Constants.easConfig?.projectId,
@@ -69,9 +72,10 @@ export const NotificationsBottomSheet = () => {
   }, [registerToken]);
 
   const handleEnableNotifications = async () => {
+    const status = await Notifications.getPermissionsAsync();
     await match(status)
       .with({ status: PermissionStatus.UNDETERMINED }, async () => {
-        const { granted } = await requestPermission();
+        const { granted } = await Notifications.getPermissionsAsync();
         if (granted) {
           await storeToken();
         }

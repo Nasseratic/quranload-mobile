@@ -79,7 +79,7 @@ export const Recorder = ({
 }: {
   lessonId?: string;
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
-  onFinished: (uri: string) => void;
+  onFinished?: (uri: string) => void;
   onStatusChange?: (status: RecordingState) => void;
 }) => {
   const [permissionStatus, requestPermission] = Audio.usePermissions({ request: false });
@@ -177,7 +177,7 @@ export const Recorder = ({
           }),
           sleep(3000), // to make sure uploading animation is visible and not flashing
         ]);
-        onFinished(uri);
+        onFinished?.(uri);
         handleStatusChange("idle");
       } catch {
         toast.show({

@@ -100,7 +100,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     });
     setAudioUrl(null);
   };
-
+  console.log(insets.bottom);
   const feedbackUrl = feedbackId && getFeedbackUrl({ lessonId, feedbackId, studentId });
   const submissionUrl = recordingId && getRecordingUrl({ lessonId, recordingId, studentId });
 
@@ -194,11 +194,13 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             styles.shadow,
             {
               backgroundColor: "#fff",
-              paddingBottom: insets.bottom,
             },
           ]}
+          bottom={0}
+          pb={insets.bottom}
+          position="absolute"
         >
-          <Stack pt="$3" px="$4" jc="flex-end" ai="center">
+          <Stack pt="$3" jc="flex-end" ai="center">
             <Carousel
               data={carouselItems}
               width={SCREEN_WIDTH}
@@ -258,7 +260,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
               ai="flex-end"
               w="100%"
               position="absolute"
-              bottom={IS_IOS ? -4 : 10}
+              bottom={IS_IOS ? -8 : 10}
+              px="$4"
             >
               {(isTeacher ? recordingId : feedbackId) && (
                 <IconSwitch

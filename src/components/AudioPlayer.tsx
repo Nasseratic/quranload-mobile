@@ -120,7 +120,6 @@ export const AudioPlayer = memo(
         <YStack key={uri} pointerEvents="box-none" jc="center" alignItems="center" gap="$2">
           {isVisible && (
             <YStack w={width - 32} gap={isCompact ? "$1" : "$1.5"}>
-              {/* @ts-expect-error */}
               <Slider
                 step={1}
                 max={100}

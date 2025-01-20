@@ -11,7 +11,7 @@ import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCustomAssignment, updateCustomAssignment } from "services/assigmentService";
 import { t } from "locales/config";
-import { useMediaPicker, useMediaUploader } from "hooks/useMediaPicker";
+import { useMediaUploader } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";

@@ -6,7 +6,7 @@ export const getPersistentAudioRecordings = async ({ lessonId }: { lessonId: str
     if (audioRecordings) {
       return JSON.parse(audioRecordings) as {
         uri: string;
-        duration: number;
+        durationInMs: number;
       }[];
     }
     return [];
@@ -21,7 +21,7 @@ export const persistAudioRecordings = async ({
   recordings,
 }: {
   lessonId: string;
-  recordings: { uri: string; duration: number }[];
+  recordings: { uri: string; durationInMs: number }[];
 }) => {
   try {
     await AsyncStorage.setItem(getStorageKey(lessonId), JSON.stringify(recordings));

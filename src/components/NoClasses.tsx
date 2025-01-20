@@ -20,7 +20,7 @@ const NoClasses = ({ role }: { role: "teacher" | "student" }) => {
   );
   return (
     <View style={styles.container}>
-      {ff.inAppEnrolment ? (
+      {ff?.inAppEnrolment ? (
         <Schools />
       ) : (
         <Stack gap={GeneralConstants.Spacing.xl}>
