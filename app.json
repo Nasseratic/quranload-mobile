@@ -15,10 +15,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.quranload.app",
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "Allow to access to microphone to be able to record your recitation, submit feedback or send a voice note in the chat"
-      }
+      "bundleIdentifier": "com.quranload.app"
     },
     "android": {
       "adaptiveIcon": {
