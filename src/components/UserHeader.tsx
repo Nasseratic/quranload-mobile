@@ -18,8 +18,8 @@ const UserHeader = () => {
   return (
     <View
       style={{
-        paddingTop: 16,
-        paddingBottom: 4,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
       }}
     >
       <Pressable
@@ -40,13 +40,12 @@ const UserHeader = () => {
       >
         <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
         <XStack gap={16} jc="center" ai="center">
-          {/* TODO?: If there's only 1 active team, navigate to ChatListScreen OR show team status + archive option */}
           {user && ff?.chat && (
-            <TouchableOpacity onPress={() => navigation.navigate("ChatListScreen")}>
+            <TouchableOpacity hitSlop={10} onPress={() => navigation.navigate("ChatListScreen")}>
               <ChatIcon size={20} color={Colors.Primary[1]} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <TouchableOpacity hitSlop={10} onPress={() => navigation.navigate("Profile")}>
             <CogIcon width={20} height={18} color={Colors.Primary[1]} />
           </TouchableOpacity>
         </XStack>

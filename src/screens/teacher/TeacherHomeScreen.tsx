@@ -20,7 +20,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "TeacherHome">;
 export const TeacherHomeScreen: FunctionComponent<Props> = () => {
   const { user } = useAuth();
   return (
-    <SafeAreaView style={{ paddingHorizontal: 16, flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <UserHeader />
       <FlatList
         data={user?.teams}
@@ -30,6 +30,7 @@ export const TeacherHomeScreen: FunctionComponent<Props> = () => {
           gap: 16,
           paddingTop: user?.teams?.length && 12,
           paddingBottom: user?.teams?.length && 16,
+          paddingHorizontal: 16,
         }}
         renderItem={({ item }) => (
           <Stack gap="$4">

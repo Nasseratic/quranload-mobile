@@ -12,6 +12,7 @@ import PlusIcon from "components/icons/PlusIcon";
 import { useStudentsListInAllTeams } from "services/teamService";
 import { useQuery } from "convex/react";
 import { cvx } from "api/convex";
+import { EmptyState } from "components/EmptyState";
 
 export const ChatListScreen = () => {
   const navigation = useNavigation();
@@ -52,6 +53,9 @@ export const ChatListScreen = () => {
           )
         }
       />
+      {activeTeamsWithNoChat.length === 0 && studentsUserHaveNoChatWith.length === 0 && (
+        <EmptyState title={t("chatList.noChats")} description={t("chatList.noChatsDescription")} />
+      )}
 
       {activeTeamsWithNoChat.map((team) => (
         <ChatItem

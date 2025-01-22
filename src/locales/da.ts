@@ -189,5 +189,9 @@ const danish: typeof english = {
     emailVerified: "Din konto er blevet verificeret",
   },
   readFromTo: "Læs fra side {{from}} til og med {{to}}",
+  chatList: {
+    noChats: "Ingen samtaler endnu",
+    noChatsDescription: "Dine samtaler vil blive vist her",
+  },
 };
 export default danish;

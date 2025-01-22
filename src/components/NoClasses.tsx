@@ -18,7 +18,9 @@ const NoClasses = ({ role }: { role: "teacher" | "student" }) => {
       role === "teacher" ? t("teacherHomeScreen.noClasses") : t("studentDashboard.notEnrolled"),
     [role]
   );
-  return (
+  return ff?.inAppEnrolment && role === "student" ? (
+    <Schools />
+  ) : (
     <View style={styles.container}>
       {ff?.inAppEnrolment ? (
         <Schools />
@@ -74,21 +76,35 @@ export default NoClasses;
 const Schools = () => {
   const { organizations } = useOrganizations();
 
-  return organizations?.map((org) => (
-    <Card bg="$gray1" shadowColor="#000" elevation={15} key={org.id} w="100%" ai="center" p={24}>
-      <Avatar br={100}>
-        {org.logo && <Avatar.Image source={{ uri: org.logo }} />}
-        <Avatar.Fallback jc="center" ai="center" bg="lightgrey">
-          <Text textTransform="uppercase">{org.fullName?.slice(0, 2)}</Text>
-        </Avatar.Fallback>
-      </Avatar>
-      <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
-        {org.fullName}
-      </Typography>
-      <Separator />
-      <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
-        Phone: {org.phoneNumber}
-      </Typography>
-    </Card>
-  ));
+  return (
+    <Stack gap={16} f={1}>
+      {organizations
+        ?.filter((org) => org.isActive)
+        ?.map((org) => (
+          <Card
+            bg="$gray1"
+            shadowColor="#000"
+            elevation={15}
+            key={org.id}
+            w="100%"
+            ai="center"
+            p={24}
+          >
+            <Avatar br={100}>
+              {org.logo && <Avatar.Image source={{ uri: org.logo }} />}
+              <Avatar.Fallback jc="center" ai="center" bg="lightgrey">
+                <Text textTransform="uppercase">{org.fullName?.slice(0, 2)}</Text>
+              </Avatar.Fallback>
+            </Avatar>
+            <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
+              {org.fullName}
+            </Typography>
+            <Separator />
+            <Typography type="BodyLight" style={{ color: Colors.Black[2] }}>
+              Phone: {org.phoneNumber}
+            </Typography>
+          </Card>
+        ))}
+    </Stack>
+  );
 };

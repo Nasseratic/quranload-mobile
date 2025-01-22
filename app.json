@@ -45,7 +45,16 @@
           }
         }
       ],
-      "sentry-expo",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "qlmo",
+          "project": "react-native",
+          "authToken": false,
+          "setCommits": true
+        }
+      ],
       ["@stripe/stripe-react-native", {}],
       "expo-font",
       "expo-localization",

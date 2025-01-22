@@ -188,5 +188,9 @@ const english = {
   audioRecordingPaused: "Audio recording paused",
   invalid: "Invalid",
   readFromTo: "Read from page {{from}} to {{to}}, inclusive",
+  chatList: {
+    noChats: "No chats yet",
+    noChatsDescription: "Your conversations will appear here",
+  },
 };
 export default english;

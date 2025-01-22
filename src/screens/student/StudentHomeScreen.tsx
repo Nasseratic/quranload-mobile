@@ -34,15 +34,17 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
   const teams = user.teams.filter((team) => isShowingInactive || team.isActive);
 
   return (
-    <SafeAreaView style={{ paddingHorizontal: 16, flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <UserHeader />
+
       <FlatList
         data={teams}
         ListEmptyComponent={<NoClasses role="student" />}
         contentContainerStyle={{
           gap: 16,
-          paddingTop: user.teams.length && 12,
-          paddingBottom: user.teams.length && 16,
+          paddingTop: 12,
+          paddingBottom: 16,
+          paddingHorizontal: 16,
         }}
         renderItem={({ item }) => {
           return <StudentTeamOverview team={item} />;

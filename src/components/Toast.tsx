@@ -14,7 +14,7 @@ import { XStack } from "tamagui";
 import { CrossIcon } from "./icons/CrossIcon";
 import { TouchableOpacity } from "react-native";
 import { t } from "locales/config";
-import { captureException } from "utils/sentry";
+import { Sentry } from "utils/sentry";
 
 type StatusNotificationParams = {
   title: string;
@@ -25,12 +25,13 @@ type StatusNotificationParams = {
 
 export const toast = {
   show: () => {},
-  reportError: (err) =>
+  reportError: (err) => {
     toast.show({
       status: "Error",
-      subTitle: `id: ${captureException(err)}`,
+      subTitle: `id: ${Sentry.captureException(err)}`,
       title: t("defaultError"),
-    }),
+    });
+  },
 } as {
   show: (params: StatusNotificationParams) => void;
   reportError: (error: unknown) => void;
