@@ -59,9 +59,9 @@ export const NotificationsBottomSheet = () => {
   }, [signed]);
 
   const storeToken = useCallback(async () => {
-    // if (!Device.isDevice) {
-    //   return console.log("skipping push notification registration in development build");
-    // }
+    if (!Device.isDevice) {
+      return console.log("skipping push notification registration in development build");
+    }
     const token = (
       await Notifications.getExpoPushTokenAsync({
         projectId: Constants.easConfig?.projectId,
@@ -89,10 +89,10 @@ export const NotificationsBottomSheet = () => {
   useAppStatusEffect({
     onForeground: async () => {
       const status = (await Notifications.getPermissionsAsync()).status;
-      // if (status === PermissionStatus.GRANTED) {
-      storeToken();
-      // bottomSheetRef.current?.dismiss();
-      // }
+      if (status === PermissionStatus.GRANTED) {
+        storeToken();
+        bottomSheetRef.current?.dismiss();
+      }
     },
   });
 
