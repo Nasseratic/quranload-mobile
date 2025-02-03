@@ -29,12 +29,18 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
     },
     onSubmit: (values, { setErrors }) => {
       setErrors({});
-      signIn(values.username.trim(), values.password).catch((err: ISignInErrorResponse) => {
-        if (err.response?.data?.message) {
-          setErrors({ error: err.response.data.message });
+      signIn(values.username.trim(), values.password).catch(
+        (err: ISignInErrorResponse & { error?: string }) => {
+          console.log(err);
+          if (err?.response?.data?.message) {
+            setErrors({ error: err.response.data.message });
+          }
+          if (err?.error) {
+            setErrors({ error: err.error });
+          }
+          formik.setSubmitting(false);
         }
-        formik.setSubmitting(false);
-      });
+      );
     },
   });
 
@@ -46,9 +52,9 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
     formik.setValues({
       username,
       password,
-      error: ''
+      error: "",
     });
-  }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

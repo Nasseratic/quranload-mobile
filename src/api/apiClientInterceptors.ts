@@ -63,7 +63,9 @@ axiosClient.interceptors.response.use(
       }
       return Promise.reject({
         status,
-        error: "We could not acknowledge your account. Please sign out and sign in again.",
+        error:
+          data.message ||
+          "We could not acknowledge your account. Please sign out and sign in again.",
       });
     } else if (status === 404) {
       return Promise.reject({ status: status, error: "an expected error occurred" });

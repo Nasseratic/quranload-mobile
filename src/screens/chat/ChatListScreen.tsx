@@ -60,7 +60,7 @@ export const ChatListScreen = () => {
       {activeTeamsWithNoChat.map((team) => (
         <ChatItem
           key={team.id}
-          name={team.organizationName}
+          name={team.name}
           avatar={team.organizationLogo}
           onPress={() =>
             navigation.navigate("ChatScreen", {

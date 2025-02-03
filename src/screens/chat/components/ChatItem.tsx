@@ -21,9 +21,9 @@ export const ChatItem = ({
       <Card pressStyle={{ opacity: 0.8 }} bg="white" p={4} onPress={onPress}>
         <XStack jc="space-between" ai="center" gap={10} px={6}>
           {avatar ? (
-            <Avatar size={42}>
+            <Avatar bg="$gray8" br={8} size={42}>
               <Avatar.Image br={8} source={{ uri: avatar }} />
-              <Avatar.Fallback br={8} bc={Colors.Gray[1]} delayMs={600} />
+              <Avatar.Fallback br={8} bg="$gray8" delayMs={600} />
             </Avatar>
           ) : (
             <Square w={42} h={42} br={8} bg="$gray8">
