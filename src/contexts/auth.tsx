@@ -64,6 +64,9 @@ export const AuthProvider = ({ children }: Props) => {
         email: user.emailAddress,
         username: user.username,
       });
+      Sentry.setTag("role", user.roles[0]);
+      Sentry.setTag("userId", user.id);
+      Sentry.setTag("fullName", user.fullName);
     }
   }, [user]);
 
