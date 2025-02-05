@@ -1,10 +1,11 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "types/User";
 import { fetchUserProfile } from "services/profileService";
 import * as SplashScreen from "expo-splash-screen";
 import { signIn } from "services/authService";
 import { useQuery } from "@tanstack/react-query";
+import { Sentry } from "utils/sentry";
 
 interface AuthContextData {
   initialized: boolean;
@@ -55,6 +56,16 @@ export const AuthProvider = ({ children }: Props) => {
   const { refetch, data: user } = useQuery([profileQueryKey], fetchUserProfile, {
     enabled: false,
   });
+
+  useEffect(() => {
+    if (signedIn && user) {
+      Sentry.setUser({
+        id: user.id,
+        email: user.emailAddress,
+        username: user.username,
+      });
+    }
+  }, [user]);
 
   const trySignIn = async (email: string, password: string) => {
     const res = await signIn({ email, password });
