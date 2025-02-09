@@ -24,7 +24,13 @@ export const GenderSelect = ({ error, selected, touched, onChange }: GenderSelec
             value={index.toString()}
             flex={1}
             borderWidth={2}
-            borderColor={index === selected ? Colors.Primary[1] : Colors.Black[4]}
+            borderColor={
+              error && touched
+                ? Colors.Error[1]
+                : index === selected
+                ? Colors.Primary[1]
+                : Colors.Black[4]
+            }
             backgroundColor={index === selected ? Colors.Primary[1] : Colors.White[1]}
           >
             <Text color={index === selected ? Colors.White[1] : Colors.Black[2]}>{option}</Text>
