@@ -142,6 +142,11 @@ const english = {
     emailResent: "Email resent",
     backToLogin: "Back to login",
     alreadyRegistered: "Already have an account?",
+    gender: {
+      label: "Gender",
+      male: "Male",
+      female: "Female",
+    },
   },
   confirmEmailScreen: {
     confirming: "Confirming your email",

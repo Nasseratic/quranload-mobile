@@ -143,6 +143,11 @@ const danish: typeof english = {
     emailResent: "E-mail er gensendt",
     backToLogin: "Tilbage til log ind",
     alreadyRegistered: "Har du allerede en bruger?",
+    gender: {
+      label: "Køn",
+      male: "Mand",
+      female: "Kvinde",
+    },
   },
   teacherHomeScreen: {
     submitted: "Afleveret",
