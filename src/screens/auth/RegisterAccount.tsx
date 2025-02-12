@@ -23,6 +23,16 @@ import { AppBar } from "components/AppBar";
 import { ScrollView } from "tamagui";
 import Logo from "@assets/logo.png";
 import { toast } from "components/Toast";
+import { GenderSelect } from "components/forms/GenderSelect";
+
+interface Form {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  gender: number | null;
+}
 
 // min 8 characters, 1 upper case letter, 1 lower case letter, 1 special character and 1 number
 export const passwordRules =
@@ -47,13 +57,14 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
   });
 
   const insets = useSafeAreaInsets();
-  const formik = useFormik({
+  const formik = useFormik<Form>({
     initialValues: {
       firstName: "",
       lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
+      gender: null,
     },
     validationSchema: Yup.object().shape({
       firstName: Yup.string()
@@ -69,6 +80,7 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
         .required()
         .matches(passwordRules, { message: t("registerAccountScreen.passwordRules") }),
       confirmPassword: Yup.string().oneOf([Yup.ref("password")], "Passwords must match"),
+      gender: Yup.number().required(t("form.required")),
     }),
     onSubmit: (values, { setSubmitting }) => {
       const trimmedValues = {
@@ -155,6 +167,13 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
               label={t("registerAccountScreen.lastName")}
               onChangeText={formik.handleChange("lastName")}
               onBlur={formik.handleBlur("lastName")}
+            />
+
+            <GenderSelect
+              selected={formik.values.gender}
+              onChange={(newValue) => formik.setFieldValue("gender", Number(newValue))}
+              touched={formik.touched.gender}
+              error={formik.errors.gender}
             />
 
             <InputField
