@@ -23,7 +23,11 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.quranloadapp.quranload",
-      "blockedPermissions": ["android.permission.CAMERA"]
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
@@ -33,16 +37,6 @@
         "@config-plugins/ffmpeg-kit-react-native",
         {
           "package": "audio"
-        }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "kotlinVersion": "1.8.10"
-          }
         }
       ],
       [

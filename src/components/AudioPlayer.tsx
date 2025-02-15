@@ -228,12 +228,7 @@ const downloadAudio = async (uri: string): Promise<string> => {
   const token = (await AsyncStorage.getItem("accessToken")) ?? "";
   const file = await FileSystem.downloadAsync(
     uri,
-    recordingDir + Math.random().toString(36).substring(7) + ".mp3",
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    recordingDir + Math.random().toString(36).substring(7) + ".mp3"
   );
 
   downloadedAudioFiles[uri] = file.uri;

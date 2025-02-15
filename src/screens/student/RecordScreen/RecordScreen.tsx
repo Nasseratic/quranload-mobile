@@ -6,12 +6,12 @@ import { useAuth, useUser } from "contexts/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "constants/Colors";
 import { AudioPlayer } from "components/AudioPlayer";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   deleteSubmission,
-  getFeedbackUrl,
-  getRecordingUrl,
+  fetchFeedbackUrl,
+  fetchRecordingUrl,
   submitLessonRecording,
 } from "services/lessonsService";
 import { IconButton } from "components/buttons/IconButton";
@@ -57,6 +57,22 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const lessonId = assignment.id;
   const recordingId = assignment.recordingUrl ?? undefined;
   const feedbackId = assignment.feedbackUrl ?? undefined;
+
+  const { data: submissionUrl } = useQuery(
+    ["recordingUrl", recordingId],
+    () => recordingId && fetchRecordingUrl({ lessonId, recordingId, studentId }),
+    { enabled: !!recordingId }
+  );
+
+  const { data: feedbackUrl } = useQuery(
+    ["feedbackUrl", feedbackId],
+    () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
+    { enabled: !!feedbackId }
+  );
+
+  console.log("recordingUrl", submissionUrl);
+  console.log("feedbackUrl", feedbackUrl);
+
   const attachments = useMemo(
     () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
     [assignment.attachments]
@@ -100,9 +116,6 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     });
     setAudioUrl(null);
   };
-  console.log(insets.bottom);
-  const feedbackUrl = feedbackId && getFeedbackUrl({ lessonId, feedbackId, studentId });
-  const submissionUrl = recordingId && getRecordingUrl({ lessonId, recordingId, studentId });
 
   const carouselItems = useMemo(
     () =>

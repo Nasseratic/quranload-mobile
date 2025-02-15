@@ -46,7 +46,7 @@ export const submitLessonRecording = async ({
 export const deleteSubmission = async (body: { lessonId: string; studentId: string }) =>
   apiClient.delete("LessonSubmission/recording", body);
 
-export const getRecordingUrl = ({
+export const fetchRecordingUrl = async ({
   lessonId,
   recordingId,
   studentId,
@@ -54,10 +54,15 @@ export const getRecordingUrl = ({
   lessonId: string;
   recordingId: string;
   studentId: string;
-}) =>
-  `${BASE_URL}LessonSubmission/recording/file?LessonId=${lessonId}&FileName=${recordingId}&StudentId=${studentId}`;
+}) => {
+  return (
+    (await apiClient.get(
+      `${BASE_URL}LessonSubmission/recording/file/url?LessonId=${lessonId}&FileName=${recordingId}&StudentId=${studentId}`
+    )) as { url: string }
+  ).url;
+};
 
-export const getFeedbackUrl = ({
+export const fetchFeedbackUrl = async ({
   lessonId,
   feedbackId,
   studentId,
@@ -66,5 +71,11 @@ export const getFeedbackUrl = ({
   feedbackId: string;
   studentId: string;
 }) => {
-  return `${BASE_URL}LessonSubmission/feedback/file?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`;
+  return (
+    (await apiClient.get(
+      `${BASE_URL}LessonSubmission/feedback/url?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`
+    )) as {
+      url: string;
+    }
+  ).url;
 };

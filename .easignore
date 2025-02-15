@@ -2,3 +2,5 @@ dev-client/*
 node_modules/*
 dist/*
 src/assets/fonts
+android
+ios
