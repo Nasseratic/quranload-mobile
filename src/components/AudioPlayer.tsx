@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Audio } from "expo-av";
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, useEffect, memo, useId } from "react";
 import { ActivityIndicator } from "react-native";
 import { XStack, YStack, Text, Slider, Button } from "tamagui";
 import { PlayIcon } from "./icons/PlayIcon";
@@ -14,6 +14,11 @@ import { ForwardIcon } from "components/icons/ForwerdIcon";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useAudioManager } from "hooks/useAudioManager";
 
+let onProgressFiles: {
+  componentId: string;
+  instance: FileSystem.DownloadResumable;
+}[] = [];
+
 export const AudioPlayer = memo(
   ({
     uri,
@@ -26,6 +31,8 @@ export const AudioPlayer = memo(
     width?: number;
     isCompact?: boolean;
   }) => {
+    const componentId = useId();
+    const [downloadProgress, setDownloadProgress] = useState<number>();
     const { playSound, pauseSound, sound, setSound } = useAudioManager();
     const [durationSec, setDurationSec] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -44,12 +51,26 @@ export const AudioPlayer = memo(
     }, [isVisible]);
 
     useEffect(() => {
+      return () => {
+        sound?.unloadAsync();
+        const toCancel = onProgressFiles.filter((file) => file.componentId === componentId);
+        toCancel.forEach((file) => file.instance.cancelAsync());
+        onProgressFiles = onProgressFiles.filter((file) => file.componentId !== componentId);
+      };
+    }, []);
+
+    useEffect(() => {
       (async () => {
         if (!uri) return;
 
         const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
-        const playableUri = isRemoteFile ? await downloadAudio(uri) : uri;
-
+        const playableUri = isRemoteFile
+          ? await downloadAudio(uri, componentId, (progress) => {
+              setDownloadProgress(
+                Math.floor((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100)
+              );
+            })
+          : uri;
         const { sound, status } = await Audio.Sound.createAsync(
           {
             uri: playableUri,
@@ -78,13 +99,15 @@ export const AudioPlayer = memo(
     // sound did load yet
     if (durationSec === 0)
       return isCompact ? (
-        <XStack w={width} h={40} bg="white" m="$2" borderRadius="$4" jc="center" ai="center">
+        <YStack w={width} h={40} bg="white" m="$2" borderRadius="$4" jc="center" ai="center">
           <ActivityIndicator />
-        </XStack>
+          {downloadProgress != null && downloadProgress > 0 && <Text>{downloadProgress}%</Text>}
+        </YStack>
       ) : (
-        <XStack jc="center" ai="center" p="$4">
+        <YStack jc="center" ai="center" p="$4">
           <ActivityIndicator />
-        </XStack>
+          {downloadProgress != null && downloadProgress > 0 && <Text>{downloadProgress}%</Text>}
+        </YStack>
       );
 
     const updateValue = (value: number) => {
@@ -220,17 +243,27 @@ const cleanAndCreateRecordingsDir = () =>
 // clean when app starts
 cleanAndCreateRecordingsDir();
 
-const downloadedAudioFiles: { [key: string]: string } = {};
+const downloadAudio = async (
+  uri: string,
+  componentId: string,
+  callback?: (data: FileSystem.DownloadProgressData) => void
+): Promise<string> => {
+  const filename = uri.split("/").pop()?.split("?")[0];
 
-const downloadAudio = async (uri: string): Promise<string> => {
-  if (downloadedAudioFiles[uri]) return downloadedAudioFiles[uri]!;
+  const localFileUri = recordingDir + filename + ".mp3";
+  const fileInfo = await FileSystem.getInfoAsync(localFileUri);
 
-  const token = (await AsyncStorage.getItem("accessToken")) ?? "";
-  const file = await FileSystem.downloadAsync(
-    uri,
-    recordingDir + Math.random().toString(36).substring(7) + ".mp3"
-  );
+  if (fileInfo.exists) {
+    return fileInfo.uri;
+  }
 
-  downloadedAudioFiles[uri] = file.uri;
+  const downloadResumable = FileSystem.createDownloadResumable(uri, localFileUri, {}, callback);
+
+  onProgressFiles.push({ componentId, instance: downloadResumable });
+
+  const file = await downloadResumable.downloadAsync();
+
+  if (!file) return "";
+
   return file.uri;
 };

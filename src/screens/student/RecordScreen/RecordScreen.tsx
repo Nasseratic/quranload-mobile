@@ -1,6 +1,6 @@
 import { FunctionComponent, useState, useRef, useMemo, Fragment } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { View, Alert, StyleSheet, FlatList, Modal } from "react-native";
+import { View, Alert, StyleSheet, FlatList, Modal, ActivityIndicator } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
 import { useAuth, useUser } from "contexts/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -58,20 +58,17 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const recordingId = assignment.recordingUrl ?? undefined;
   const feedbackId = assignment.feedbackUrl ?? undefined;
 
-  const { data: submissionUrl } = useQuery(
+  const { data: submissionUrl, isLoading: isLoadingSubmissionUrl } = useQuery(
     ["recordingUrl", recordingId],
     () => recordingId && fetchRecordingUrl({ lessonId, recordingId, studentId }),
     { enabled: !!recordingId }
   );
 
-  const { data: feedbackUrl } = useQuery(
+  const { data: feedbackUrl, isLoading: isLoadingFeedbackUrl } = useQuery(
     ["feedbackUrl", feedbackId],
     () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
     { enabled: !!feedbackId }
   );
-
-  console.log("recordingUrl", submissionUrl);
-  console.log("feedbackUrl", feedbackUrl);
 
   const attachments = useMemo(
     () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
@@ -140,6 +137,20 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       () => carouselIndex === carouselItems.length - 1 && (!!recordingId || !!audioUrl)
     )
     .exhaustive();
+  if ((!!recordingId && isLoadingSubmissionUrl) || (!!feedbackId && isLoadingFeedbackUrl)) {
+    return (
+      <Stack f={1}>
+        <XStack mt={insets.top} gap="$2" ai="center">
+          <Square p="$3" px="$4" onPress={() => navigation.goBack()}>
+            <ChevronLeftIcon color={Colors.Black[1]} />
+          </Square>
+        </XStack>
+        <Square f={1}>
+          <ActivityIndicator size="large" />
+        </Square>
+      </Stack>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
