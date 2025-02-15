@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect } from "react";
-import { Square } from "tamagui";
+import { Square, XStack, YStack } from "tamagui";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { Colors } from "constants/Colors";
@@ -37,6 +37,8 @@ import { ChatNewScreen } from "screens/chat/ChatNewScreen";
 import { ActivityIndicator } from "react-native";
 import Typography from "components/Typography";
 import { t } from "locales/config";
+import { AppVersion } from "components/Version";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -95,7 +97,7 @@ const AuthenticatedStack = () => {
 
 const Nav = () => {
   const { signed, user, handleSignIn, isLoadingUserData } = useAuth();
-
+  const insets = useSafeAreaInsets();
   useLayoutEffect(() => {
     async function initialize() {
       const accessToken = await AsyncStorage.getItem("accessToken");
@@ -118,6 +120,9 @@ const Nav = () => {
         <Square f={1} gap={16}>
           <ActivityIndicator size="large" />
           <Typography>{t("loginScreen.loadingUserDetails")}</Typography>
+          <XStack position="absolute" bottom={insets.bottom + 4}>
+            <AppVersion />
+          </XStack>
         </Square>
       ) : (
         <Stack.Navigator
