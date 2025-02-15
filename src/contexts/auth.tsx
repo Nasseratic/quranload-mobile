@@ -10,7 +10,7 @@ import { Sentry } from "utils/sentry";
 interface AuthContextData {
   initialized: boolean;
   signed: boolean;
-  isLoading: boolean;
+  isLoadingUserData: boolean;
   user: User | undefined;
   accessToken: string | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: Props) => {
   const {
     refetch,
     data: user,
-    isLoading,
+    isFetching,
   } = useQuery([profileQueryKey], fetchUserProfile, {
     enabled: false,
   });
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: Props) => {
         // a delay to not show login screen for already logged in users
         setTimeout(() => {
           SplashScreen.hideAsync();
-        }, 300);
+        }, 400);
       });
   };
 
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }: Props) => {
         signed: signedIn,
         signIn: trySignIn,
         user,
-        isLoading,
+        isLoadingUserData: isFetching,
         handleSignIn,
         signOut,
         accessToken,

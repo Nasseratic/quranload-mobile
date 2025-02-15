@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { Square } from "tamagui";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
@@ -94,8 +94,9 @@ const AuthenticatedStack = () => {
 };
 
 const Nav = () => {
-  const { signed, user, handleSignIn, isLoading } = useAuth();
-  useEffect(() => {
+  const { signed, user, handleSignIn, isLoadingUserData } = useAuth();
+
+  useLayoutEffect(() => {
     async function initialize() {
       const accessToken = await AsyncStorage.getItem("accessToken");
       if (accessToken) {
@@ -113,7 +114,7 @@ const Nav = () => {
       <DeepLinks />
       {signed && user ? (
         <AuthenticatedStack />
-      ) : isLoading ? (
+      ) : isLoadingUserData ? (
         <Square f={1} gap={16}>
           <ActivityIndicator size="large" />
           <Typography>{t("loginScreen.loadingUserDetails")}</Typography>
