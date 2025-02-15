@@ -16,6 +16,7 @@ import { View } from "tamagui";
 import { toast } from "components/Toast";
 import { isDevelopmentBuild } from "expo-dev-client";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
+import { format } from "date-fns";
 type Props = NativeStackScreenProps<RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
@@ -73,7 +74,9 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
         />
 
         <Typography style={{ alignSelf: "flex-end", fontSize: 10, color: Colors.Black[2] }}>
-          Version: {(Updates.updateId ?? "").slice(0, 7)}
+          Version:{" "}
+          {(Updates.createdAt ? format(Updates.createdAt, "yyyy-MM-dd") : "N/A") +
+            (isDevelopmentBuild() ? " (DEV)" : "")}
         </Typography>
       </View>
     </SafeAreaView>
