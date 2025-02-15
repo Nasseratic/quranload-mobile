@@ -1,6 +1,13 @@
 import { FunctionComponent, useContext } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Image, StyleSheet, View, TouchableOpacity, ImageSourcePropType } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ImageSourcePropType,
+  Pressable,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FormikProvider, useFormik } from "formik";
 import MyTextInput from "components/forms/MyTextInput";
@@ -16,6 +23,8 @@ import { ScrollView } from "tamagui";
 import * as Updates from "expo-updates";
 import { isDevelopmentBuild } from "expo-dev-client";
 import DevelopmentUserSelection, { DevelopmentUser } from "components/DevelopmentUserSelection";
+import { format } from "date-fns";
+import { toast } from "components/Toast";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -110,16 +119,32 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
           </View>
         </FormikProvider>
       </ScrollView>
-      <Typography
-        style={{
-          alignSelf: "flex-end",
-          fontSize: 8,
-          color: Colors.Black[2],
-          paddingRight: 10,
+      <Pressable
+        hitSlop={20}
+        onPress={async () => {
+          try {
+            const { isNew } = await Updates.fetchUpdateAsync();
+            if (isNew) await Updates.reloadAsync();
+            else toast.show({ status: "Success", title: t("you_are_on_latest_version") });
+          } catch (e) {
+            if (!isDevelopmentBuild()) toast.reportError(e);
+            else toast.show({ status: "Error", title: "Updates are not available in dev mode" });
+          }
         }}
       >
-        Version: {(Updates.updateId ?? "").slice(0, 7) || "dev"}
-      </Typography>
+        <Typography
+          style={{
+            alignSelf: "center",
+            fontSize: 10,
+            color: Colors.Black[2],
+            paddingRight: 10,
+          }}
+        >
+          Version:{" "}
+          {(Updates.createdAt ? format(Updates.createdAt, "yyyy-MM-dd") : "N/A") +
+            (isDevelopmentBuild() ? " (DEV)" : "")}
+        </Typography>
+      </Pressable>
     </SafeAreaView>
   );
 };

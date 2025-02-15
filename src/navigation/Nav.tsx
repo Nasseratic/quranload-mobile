@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Square } from "tamagui";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { Colors } from "constants/Colors";
@@ -33,6 +34,7 @@ import { ForgotPasswordScreen } from "screens/auth/ForgotPasswordScreen";
 import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import { ConfirmEmailScreen } from "screens/auth/ConfirmEmailScreen";
 import { ChatNewScreen } from "screens/chat/ChatNewScreen";
+import { ActivityIndicator } from "react-native";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -90,7 +92,7 @@ const AuthenticatedStack = () => {
 };
 
 const Nav = () => {
-  const { signed, user, handleSignIn } = useAuth();
+  const { signed, user, handleSignIn, isLoading } = useAuth();
   useEffect(() => {
     async function initialize() {
       const accessToken = await AsyncStorage.getItem("accessToken");
@@ -109,6 +111,10 @@ const Nav = () => {
       <DeepLinks />
       {signed && user ? (
         <AuthenticatedStack />
+      ) : isLoading ? (
+        <Square f={1}>
+          <ActivityIndicator size="large" />
+        </Square>
       ) : (
         <Stack.Navigator
           initialRouteName={"Login"}

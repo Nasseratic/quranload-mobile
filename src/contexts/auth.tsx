@@ -10,6 +10,7 @@ import { Sentry } from "utils/sentry";
 interface AuthContextData {
   initialized: boolean;
   signed: boolean;
+  isLoading: boolean;
   user: User | undefined;
   accessToken: string | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -53,7 +54,11 @@ export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const { refetch, data: user } = useQuery([profileQueryKey], fetchUserProfile, {
+  const {
+    refetch,
+    data: user,
+    isLoading,
+  } = useQuery([profileQueryKey], fetchUserProfile, {
     enabled: false,
   });
 
@@ -110,6 +115,7 @@ export const AuthProvider = ({ children }: Props) => {
         signed: signedIn,
         signIn: trySignIn,
         user,
+        isLoading,
         handleSignIn,
         signOut,
         accessToken,
