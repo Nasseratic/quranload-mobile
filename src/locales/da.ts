@@ -126,6 +126,7 @@ const danish: typeof english = {
     signIn: "Log ind",
     forgotPassword: "Glemt kode?",
     notRegistered: "Har du ikke en bruger?",
+    loadingUserDetails: "Henter brugeroplysninger...",
   },
   registerAccountScreen: {
     createAccount: "Opret bruger",

@@ -35,6 +35,8 @@ import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import { ConfirmEmailScreen } from "screens/auth/ConfirmEmailScreen";
 import { ChatNewScreen } from "screens/chat/ChatNewScreen";
 import { ActivityIndicator } from "react-native";
+import Typography from "components/Typography";
+import { t } from "locales/config";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -112,8 +114,9 @@ const Nav = () => {
       {signed && user ? (
         <AuthenticatedStack />
       ) : isLoading ? (
-        <Square f={1}>
+        <Square f={1} gap={16}>
           <ActivityIndicator size="large" />
+          <Typography>{t("loginScreen.loadingUserDetails")}</Typography>
         </Square>
       ) : (
         <Stack.Navigator

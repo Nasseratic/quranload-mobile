@@ -125,6 +125,7 @@ const english = {
     signIn: "Sign In",
     forgotPassword: "Forgot password?",
     notRegistered: "Don't have an account?",
+    loadingUserDetails: "Loading user details...",
   },
   registerAccountScreen: {
     createAccount: "Create Account",
