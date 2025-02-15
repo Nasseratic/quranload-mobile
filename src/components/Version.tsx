@@ -6,10 +6,11 @@ import * as Updates from "expo-updates";
 import { isDevelopmentBuild } from "expo-dev-client";
 import { format } from "date-fns";
 import { toast } from "components/Toast";
+import { Stack } from "tamagui";
 
 export const AppVersion = () => {
   return (
-    <Pressable
+    <Stack
       hitSlop={20}
       onPress={async () => {
         try {
@@ -21,6 +22,7 @@ export const AppVersion = () => {
           else toast.show({ status: "Error", title: "Updates are not available in dev mode" });
         }
       }}
+      pressStyle={{ opacity: 0.5 }}
     >
       <Typography
         style={{
@@ -34,6 +36,6 @@ export const AppVersion = () => {
         {(Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
           (isDevelopmentBuild() ? " ( DEV )" : "")}
       </Typography>
-    </Pressable>
+    </Stack>
   );
 };
