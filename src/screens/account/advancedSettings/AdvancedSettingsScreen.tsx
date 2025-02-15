@@ -75,7 +75,7 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
 
         <Typography style={{ alignSelf: "flex-end", fontSize: 10, color: Colors.Black[2] }}>
           Version:{" "}
-          {(Updates.createdAt ? format(Updates.createdAt, "yyyy-MM-dd") : "N/A") +
+          {(Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
             (isDevelopmentBuild() ? " (DEV)" : "")}
         </Typography>
       </View>

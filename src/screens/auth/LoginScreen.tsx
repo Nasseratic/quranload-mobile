@@ -141,8 +141,8 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
           }}
         >
           Version:{" "}
-          {(Updates.createdAt ? format(Updates.createdAt, "yyyy-MM-dd") : "N/A") +
-            (isDevelopmentBuild() ? " (DEV)" : "")}
+          {(Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
+            (isDevelopmentBuild() ? " ( DEV )" : "")}
         </Typography>
       </Pressable>
     </SafeAreaView>
