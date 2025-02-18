@@ -36,7 +36,6 @@ export const ChatListScreen = () => {
     ({ id, isActive }) =>
       isActive && !conversations?.some(({ conversationId }) => conversationId === id)
   );
-
   const shouldShowNewChatButton = studentsUserHaveNoChatWith.length > 0;
 
   return (
@@ -53,7 +52,7 @@ export const ChatListScreen = () => {
           )
         }
       />
-      {activeTeamsWithNoChat.length === 0 && studentsUserHaveNoChatWith.length === 0 && (
+      {activeTeamsWithNoChat.length === 0 && (!conversations || conversations.length === 0) && (
         <EmptyState title={t("chatList.noChats")} description={t("chatList.noChatsDescription")} />
       )}
 
@@ -87,7 +86,7 @@ export const ChatListScreen = () => {
         return (
           <ChatItem
             key={conversation.conversationId}
-            name={interlocutorName}
+            name={team ? team.name : interlocutorName}
             message={message}
             avatar={team?.organizationLogo}
             onPress={() =>

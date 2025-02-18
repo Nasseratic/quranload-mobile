@@ -198,5 +198,6 @@ const english = {
     noChats: "No chats yet",
     noChatsDescription: "Your conversations will appear here",
   },
+  noActiveTeams: "No active teams",
 };
 export default english;

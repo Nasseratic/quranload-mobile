@@ -199,5 +199,6 @@ const danish: typeof english = {
     noChats: "Ingen samtaler endnu",
     noChatsDescription: "Dine samtaler vil blive vist her",
   },
+  noActiveTeams: "Ingen aktive hold endnu",
 };
 export default danish;

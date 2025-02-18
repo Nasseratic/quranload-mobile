@@ -1,9 +1,9 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useAuth } from "contexts/auth";
+import { useAuth, useUser } from "contexts/auth";
 import UserHeader from "components/UserHeader";
 import TeacherLectureBox from "components/teacher/TeacherLectureBox";
-import { Stack, XStack } from "tamagui";
+import { Stack, XStack, Button, Separator, Square } from "tamagui";
 import StatsBox from "components/StatsBox";
 import { BookIcon, ClockIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
@@ -14,16 +14,21 @@ import { ActivityIndicator, FlatList } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NoClasses from "components/NoClasses";
+import Typography from "components/Typography";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherHome">;
 
 export const TeacherHomeScreen: FunctionComponent<Props> = () => {
-  const { user } = useAuth();
+  const user = useUser();
+
+  const [isShowingInactive, setIsShowingInactive] = useState(false);
+  const teams = user.teams.filter((team) => isShowingInactive || team.isActive);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <UserHeader />
       <FlatList
-        data={user?.teams}
+        data={teams}
         keyExtractor={(team) => team.id}
         ListEmptyComponent={() => <NoClasses role="teacher" />}
         contentContainerStyle={{
@@ -38,6 +43,28 @@ export const TeacherHomeScreen: FunctionComponent<Props> = () => {
             <StatusSection teamId={item.id} />
           </Stack>
         )}
+        ListHeaderComponent={
+          teams.length === 0 && user.teams.length !== 0 ? (
+            <Square gap="$4" borderRadius={8}>
+              {/* TODO: Add enroll? */}
+              <Typography type="BodyLight">{t("noActiveTeams")}</Typography>
+              <Separator w="100%" bg="$accentBackground" />
+            </Square>
+          ) : undefined
+        }
+        ListFooterComponent={
+          user.teams.length != teams.length || isShowingInactive ? (
+            <Button
+              alignSelf="center"
+              size="$3"
+              onPress={() => setIsShowingInactive(!isShowingInactive)}
+            >
+              <Typography type="SmallHeavy">
+                {isShowingInactive ? t("homeScreen.hideInactive") : t("homeScreen.showInactive")}
+              </Typography>
+            </Button>
+          ) : undefined
+        }
       />
     </SafeAreaView>
   );

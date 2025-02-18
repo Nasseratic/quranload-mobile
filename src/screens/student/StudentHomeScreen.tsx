@@ -14,7 +14,7 @@ import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentStatistics } from "services/profileService";
-import { Button, Card, Stack, XStack, YStack } from "tamagui";
+import { Button, Card, Separator, Square, Stack, XStack, YStack } from "tamagui";
 import LineChartWithTooltips from "components/LineChartWithTooltips";
 import { fDateDashed, fMinutesDuration } from "utils/formatTime";
 import { RootStackParamList } from "navigation/navigation";
@@ -49,6 +49,15 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
         renderItem={({ item }) => {
           return <StudentTeamOverview team={item} />;
         }}
+        ListHeaderComponent={
+          teams.length === 0 && user.teams.length !== 0 ? (
+            <Square gap="$4" borderRadius={8}>
+              {/* TODO: Add enroll? */}
+              <Typography type="BodyLight">{t("noActiveTeams")}</Typography>
+              <Separator w="100%" bg="$accentBackground" />
+            </Square>
+          ) : undefined
+        }
         ListFooterComponent={
           user.teams.length != teams.length || isShowingInactive ? (
             <Button
