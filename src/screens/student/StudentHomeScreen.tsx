@@ -39,7 +39,7 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
 
       <FlatList
         data={teams}
-        ListEmptyComponent={<NoClasses role="student" />}
+        ListEmptyComponent={user.teams.length === 0 ? <NoClasses role="student" /> : undefined}
         contentContainerStyle={{
           gap: 16,
           paddingTop: 12,

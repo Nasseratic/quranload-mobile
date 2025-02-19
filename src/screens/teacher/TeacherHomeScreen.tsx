@@ -30,7 +30,7 @@ export const TeacherHomeScreen: FunctionComponent<Props> = () => {
       <FlatList
         data={teams}
         keyExtractor={(team) => team.id}
-        ListEmptyComponent={() => <NoClasses role="teacher" />}
+        ListEmptyComponent={user.teams.length === 0 ? <NoClasses role="teacher" /> : undefined}
         contentContainerStyle={{
           gap: 16,
           paddingTop: user?.teams?.length && 12,
