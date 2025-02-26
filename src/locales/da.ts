@@ -200,5 +200,10 @@ const danish: typeof english = {
     noChatsDescription: "Dine samtaler vil blive vist her",
   },
   noActiveTeams: "Ingen aktive hold endnu",
+  relativeDays: {
+    today: "I dag",
+    tomorrow: "I morgen",
+    yesterday: "I går",
+  },
 };
 export default danish;

@@ -21,11 +21,11 @@ const TeacherHomeworkItem = ({ homework, onPress }: Props) => {
 
     switch (diff) {
       case 1:
-        return "Tomorrow";
+        return t("relativeDays.tomorrow");
       case 0:
-        return "Today";
+        return t("relativeDays.today");
       case -1:
-        return "Yesterday";
+        return t("relativeDays.yesterday");
       default:
         return format(end, "dd-MM-yyyy");
     }

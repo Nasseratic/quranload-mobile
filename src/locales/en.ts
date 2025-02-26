@@ -199,5 +199,10 @@ const english = {
     noChatsDescription: "Your conversations will appear here",
   },
   noActiveTeams: "No active teams",
+  relativeDays: {
+    today: "Today",
+    tomorrow: "Tomorrow",
+    yesterday: "Yesterday",
+  },
 };
 export default english;
