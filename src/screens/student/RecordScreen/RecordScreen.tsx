@@ -250,20 +250,24 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                             lessonId,
                             duration,
                           });
-                          const celebrateWithTeamId = user.teams.find(
-                            ({ isActive }) => isActive
-                          )?.id;
 
-                          if (celebrateWithTeamId) {
-                            await celebrateSubmission({
-                              senderId: user.id,
-                              senderName: user.fullName,
-                              teamId: celebrateWithTeamId,
-                              submission:
-                                assignment.startPage && assignment.endPage
-                                  ? assignment
-                                  : assignment.description ?? "",
-                            });
+                          try {
+                            const celebrateWithTeamId = user.teams.find(
+                              ({ isActive }) => isActive
+                            )?.id;
+                            if (celebrateWithTeamId) {
+                              await celebrateSubmission({
+                                senderId: user.id,
+                                senderName: user.fullName,
+                                teamId: celebrateWithTeamId,
+                                submission:
+                                  assignment.startPage && assignment.endPage
+                                    ? assignment
+                                    : assignment.description ?? "",
+                              });
+                            }
+                          } catch {
+                            // ignore for now
                           }
                         })
                         .exhaustive()
