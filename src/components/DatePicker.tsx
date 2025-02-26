@@ -8,6 +8,7 @@ import CommunityDatePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { t, i18n } from "locales/config";
 import { intlFormat } from "utils/formatTime";
+import { startOfDay } from "date-fns";
 
 export const DatePickerInput = ({
   value,
@@ -25,7 +26,7 @@ export const DatePickerInput = ({
         value={value ?? new Date()}
         onChange={(v) => {
           setShow(false);
-          onChange(v);
+          onChange(startOfDay(v));
         }}
         isOpen={show}
         minDate={minDate}

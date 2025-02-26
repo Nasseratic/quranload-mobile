@@ -19,8 +19,9 @@ import ImageView from "react-native-image-viewing";
 import { isNotNullish } from "utils/notNullish";
 import { useAuth } from "contexts/auth";
 import { ImageWithAuth } from "components/Image";
+import { startOfDay } from "date-fns";
 
-const today = new Date();
+const today = startOfDay(new Date());
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
 
