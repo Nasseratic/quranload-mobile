@@ -19,9 +19,6 @@ import ImageView from "react-native-image-viewing";
 import { isNotNullish } from "utils/notNullish";
 import { useAuth } from "contexts/auth";
 import { ImageWithAuth } from "components/Image";
-import { startOfDay } from "date-fns";
-
-const today = startOfDay(new Date());
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
 
@@ -123,11 +120,11 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
             {t("startDate")}
           </Label>
           <DatePickerInput
-            minDate={today}
+            minDate={new Date()}
             placeholder={t("chooseStartDate")}
             value={startDate}
             onChange={(date) => {
-              if (endDate && date > endDate) setEndDate(date);
+              if (!endDate || date > endDate) setEndDate(date);
               setStartDate(date);
             }}
           />
