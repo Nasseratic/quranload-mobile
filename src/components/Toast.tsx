@@ -25,16 +25,17 @@ type StatusNotificationParams = {
 
 export const toast = {
   show: () => {},
-  reportError: (err) => {
+  reportError: (err, message) => {
+    console.error(message, err);
     toast.show({
       status: "Error",
-      subTitle: `id: ${Sentry.captureException(err)}`,
-      title: t("defaultError"),
+      subTitle: `id: ${Sentry.captureException(err, { data: { message } })}`,
+      title: message ?? t("defaultError"),
     });
   },
 } as {
   show: (params: StatusNotificationParams) => void;
-  reportError: (error: unknown) => void;
+  reportError: (error: unknown, customMessage?: string) => void;
 };
 
 let currentTimeout: NodeJS.Timeout | null = null;

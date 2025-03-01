@@ -42,6 +42,8 @@ const english = {
     discardRecordingDescription: "Are you sure you want to discard this recording?",
     submitFailedTitle: "Failed to submit recording",
     submitFailedSubTitle: "Please make sure you have a stable internet connection",
+    failedToStartRecording: "Failed to start recording",
+    failedToSubmitRecording: "Failed to submit recording",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",

@@ -39,6 +39,7 @@ import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
 import { cvx, useCvxMutation } from "api/convex";
+import { toast } from "components/Toast";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -234,44 +235,51 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                   <Recorder
                     lessonId={lessonId}
                     onFinished={(uri) => setAudioUrl(uri)}
-                    onSubmit={({ uri, duration }) =>
-                      match(role)
-                        .with("Teacher", () =>
-                          teacherFeedback.mutateAsync({
-                            uri,
-                            lessonId,
-                            studentId,
-                            lessonState: AssignmentStatusEnum.accepted,
-                          })
-                        )
-                        .with("Student", async () => {
-                          await studentSubmission.mutateAsync({
-                            uri,
-                            lessonId,
-                            duration,
-                          });
+                    onSubmit={async ({ uri, duration }) => {
+                      try {
+                        if (duration === 0) {
+                          throw new Error("Duration is 0");
+                        }
+                        return await match(role)
+                          .with("Teacher", () =>
+                            teacherFeedback.mutateAsync({
+                              uri,
+                              lessonId,
+                              studentId,
+                              lessonState: AssignmentStatusEnum.accepted,
+                            })
+                          )
+                          .with("Student", async () => {
+                            await studentSubmission.mutateAsync({
+                              uri,
+                              lessonId,
+                              duration,
+                            });
 
-                          try {
-                            const celebrateWithTeamId = user.teams.find(
-                              ({ isActive }) => isActive
-                            )?.id;
-                            if (celebrateWithTeamId) {
-                              await celebrateSubmission({
-                                senderId: user.id,
-                                senderName: user.fullName,
-                                teamId: celebrateWithTeamId,
-                                submission:
-                                  assignment.startPage && assignment.endPage
-                                    ? assignment
-                                    : assignment.description ?? "",
-                              });
+                            try {
+                              const celebrateWithTeamId = user.teams.find(
+                                ({ isActive }) => isActive
+                              )?.id;
+                              if (celebrateWithTeamId) {
+                                await celebrateSubmission({
+                                  senderId: user.id,
+                                  senderName: user.fullName,
+                                  teamId: celebrateWithTeamId,
+                                  submission:
+                                    assignment.startPage && assignment.endPage
+                                      ? assignment
+                                      : assignment.description ?? "",
+                                });
+                              }
+                            } catch {
+                              // ignore for now
                             }
-                          } catch {
-                            // ignore for now
-                          }
-                        })
-                        .exhaustive()
-                    }
+                          })
+                          .exhaustive();
+                      } catch (e) {
+                        toast.reportError(e, t("recordingScreen.failedToSubmitRecording"));
+                      }
+                    }}
                   />
                 ) : (
                   <AudioPlayer uri={item} isVisible={index === carouselIndex} />

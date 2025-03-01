@@ -121,8 +121,7 @@ export const Recorder = ({
 
       await startRecordingWithAutoFragmenting();
     } catch (err) {
-      //Implement error handling
-      err;
+      toast.reportError(err, t("recordingScreen.failedToStartRecording"));
       handleStatusChange("idle");
     }
   }
@@ -199,61 +198,64 @@ export const Recorder = ({
   };
 
   async function startRecordingWithAutoFragmenting() {
-    try {
-      if (IS_IOS)
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-        });
-      if (currentRecording) {
-        await cleanCurrentRecording();
-        toast.show({ title: "want to record while having current recording", status: "Warning" });
-      }
-      const { recording } = await Audio.Recording.createAsync({
-        web: {},
-        ios: {
-          extension: ".m4a",
-          outputFormat: IOSOutputFormat.MPEG4AAC,
-          audioQuality: IOSAudioQuality.MAX,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
-        },
-        android: {
-          extension: ".mp4",
-          outputFormat: AndroidOutputFormat.MPEG_4, //mp4 (m4a)
-          audioEncoder: AndroidAudioEncoder.AMR_WB,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 108000,
-        },
+    if (IS_IOS)
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
       });
-      currentRecording = recording;
 
-      await sleep(RECORDING_INTERVAL);
+    if (currentRecording) {
+      await cleanCurrentRecording();
+      toast.show({ title: "want to record while having current recording", status: "Warning" });
+    }
+    const { recording } = await Audio.Recording.createAsync({
+      web: {},
+      ios: {
+        extension: ".m4a",
+        outputFormat: IOSOutputFormat.MPEG4AAC,
+        audioQuality: IOSAudioQuality.MAX,
+        sampleRate: 44100,
+        numberOfChannels: 2,
+        bitRate: 128000,
+        linearPCMBitDepth: 16,
+        linearPCMIsBigEndian: false,
+        linearPCMIsFloat: false,
+      },
+      android: {
+        extension: ".mp4",
+        outputFormat: AndroidOutputFormat.MPEG_4, //mp4 (m4a)
+        audioEncoder: AndroidAudioEncoder.AMR_WB,
+        sampleRate: 44100,
+        numberOfChannels: 2,
+        bitRate: 108000,
+      },
+      isMeteringEnabled: true,
+    });
+    currentRecording = recording;
 
-      await Promise.race([
-        sleep(RECORDING_INTERVAL_TOLERANCE),
-        (async () => {
-          for (;;) {
-            const status = await recording.getStatusAsync();
-            if (!status.isRecording) break;
-            if (status.metering && status.metering < -40) {
-              console.log("Metering is too low, stopping recording");
-              break;
-            } else console.log("Metering is", status.metering);
-            await sleep(METERING_CHECK_INTERVAL);
-          }
-        })(),
-      ]);
+    await sleep(RECORDING_INTERVAL);
+
+    await Promise.race([
+      sleep(RECORDING_INTERVAL_TOLERANCE),
+      (async () => {
+        for (;;) {
+          const status = await recording.getStatusAsync();
+          if (!status.isRecording) break;
+          if (status.metering && status.metering < -40) {
+            console.log("Metering is too low, stopping recording");
+            break;
+          } else console.log("Metering is", status.metering);
+          await sleep(METERING_CHECK_INTERVAL);
+        }
+      })(),
+    ]);
+
+    try {
       if (currentRecording) {
         await cutRecording();
-        startRecordingWithAutoFragmenting();
+        await startRecordingWithAutoFragmenting();
       }
     } catch (err) {
-      console.error("Failed to start recording", err);
+      toast.reportError(err, "Error while creating extra recording fragment");
     }
   }
 
