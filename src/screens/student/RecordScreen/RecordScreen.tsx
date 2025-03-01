@@ -363,6 +363,7 @@ const styles = StyleSheet.create({
 
 const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
   const images = imageIds.map((id) => getMediaUri(id));
+  const insets = useSafeAreaInsets();
 
   return (
     <FlatList
@@ -374,16 +375,18 @@ const ImagePages = ({ imageIds }: { imageIds: string[] }) => {
       inverted
       renderItem={({ item }) =>
         item ? (
-          <ImageWithAuth
-            resizeMode="contain"
-            key={item}
-            bg="$colorTransparent"
-            source={{
-              uri: item,
-            }}
-            w={SCREEN_WIDTH}
-            h="100%"
-          />
+          <Square pb={(IS_IOS ? 40 : 90) + insets.bottom}>
+            <ImageWithAuth
+              objectFit="contain"
+              key={item}
+              bg="$colorTransparent"
+              source={{
+                uri: item,
+              }}
+              w={SCREEN_WIDTH}
+              h="100%"
+            />
+          </Square>
         ) : null
       }
     />
