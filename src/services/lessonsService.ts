@@ -79,3 +79,7 @@ export const fetchFeedbackUrl = async ({
     }
   ).url;
 };
+
+export const deleteLesson = async (lessonId: string) => {
+  return apiClient.delete(`Lessons/${lessonId}`);
+};

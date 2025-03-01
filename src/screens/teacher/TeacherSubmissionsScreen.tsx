@@ -3,7 +3,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { TeacherSubmissionItem } from "components/teacher/TeacherSubmissionItem";
 import { RootStackParamList } from "navigation/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchLessonDetails } from "services/lessonsService";
+import { deleteLesson, fetchLessonDetails } from "services/lessonsService";
 import { t } from "locales/config";
 import { Spinner, XStack } from "tamagui";
 import { AppBar } from "components/AppBar";
@@ -28,7 +28,8 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
     fetchLessonDetails({ lessonId: homework.id })
   );
 
-  const { mutateAsync } = useMutation(deleteAssignment);
+  const { mutateAsync: deleteAssignmentAsync } = useMutation(deleteAssignment);
+  const { mutateAsync: deleteHomeworkAsync } = useMutation(deleteLesson);
 
   const queryClient = useQueryClient();
 
@@ -74,7 +75,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                         });
                       },
                     }),
-                    {
+                    ...addIf(homework.typeId === Enum_AssignmentType._2, {
                       title: t("delete"),
                       destructive: true,
                       onPress: () => {
@@ -91,7 +92,11 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                               style: "destructive",
                               onPress: async () => {
                                 try {
-                                  await mutateAsync(homework.assignmentId);
+                                  if (homework.typeId === Enum_AssignmentType._1) {
+                                    await deleteHomeworkAsync(homework.id);
+                                  } else {
+                                    await deleteAssignmentAsync(homework.assignmentId);
+                                  }
                                   queryClient.refetchQueries(["assignments"]);
                                   navigation.goBack();
                                 } catch (e) {
@@ -102,7 +107,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                           ]
                         );
                       },
-                    },
+                    }),
                   ],
                 });
               }}
