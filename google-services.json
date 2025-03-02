@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "297960901607",
+    "project_id": "quranload-app",
+    "storage_bucket": "quranload-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:297960901607:android:fc6d4270be71419677cb42",
+        "android_client_info": {
+          "package_name": "com.quranloadapp.quranload"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrg1RXJ06NCfuBDEnA5IaEiJ5L-KvSZes"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
