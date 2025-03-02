@@ -2,7 +2,7 @@
   "expo": {
     "name": "quranload",
     "slug": "quranload",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "runtimeVersion": "1.4.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
