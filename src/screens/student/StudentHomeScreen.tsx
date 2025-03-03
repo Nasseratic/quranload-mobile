@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList } from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, Linking } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import StatsBox from "components/StatsBox";
 import { Colors } from "constants/Colors";
@@ -22,6 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import NoClasses from "components/NoClasses";
 import { Team } from "types/User";
 import { useNavigation } from "@react-navigation/native";
+import FeedbackCard from "components/FeedbackCard";
 
 type Props = NativeStackScreenProps<RootStackParamList, "StudentHome">;
 
@@ -36,6 +37,7 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <UserHeader />
+      <FeedbackCard />
 
       <FlatList
         data={teams}

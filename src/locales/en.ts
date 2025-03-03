@@ -206,5 +206,11 @@ const english = {
     tomorrow: "Tomorrow",
     yesterday: "Yesterday",
   },
+  feedbackCard: {
+    newAppVersion: "New App Version!",
+    shareFeedback:
+      "Share your feedback to help us improve. Contact us with any suggestions or issues.",
+    contactUs: "Contact Us",
+  },
 };
 export default english;

@@ -205,5 +205,11 @@ const danish: typeof english = {
     tomorrow: "I morgen",
     yesterday: "I går",
   },
+  feedbackCard: {
+    newAppVersion: "Ny appversion!",
+    shareFeedback:
+      "Del din feedback for at hjælpe os med at forbedre. Kontakt os med eventuelle forslag eller problemer.",
+    contactUs: "Kontakt os",
+  },
 };
 export default danish;

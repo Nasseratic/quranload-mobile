@@ -15,6 +15,7 @@ import { RootStackParamList } from "navigation/navigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NoClasses from "components/NoClasses";
 import Typography from "components/Typography";
+import FeedbackCard from "components/FeedbackCard";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherHome">;
 
@@ -27,6 +28,8 @@ export const TeacherHomeScreen: FunctionComponent<Props> = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <UserHeader />
+      <FeedbackCard />
+
       <FlatList
         data={teams}
         keyExtractor={(team) => team.id}
