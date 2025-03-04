@@ -73,7 +73,7 @@ export const fetchFeedbackUrl = async ({
 }) => {
   return (
     (await apiClient.get(
-      `${BASE_URL}LessonSubmission/feedback/url?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`
+      `${BASE_URL}LessonSubmission/feedback/file/url?LessonId=${lessonId}&FileName=${feedbackId}&StudentId=${studentId}`
     )) as {
       url: string;
     }
