@@ -127,6 +127,7 @@ const danish: typeof english = {
     forgotPassword: "Glemt kode?",
     notRegistered: "Har du ikke en bruger?",
     loadingUserDetails: "Henter brugeroplysninger...",
+    failedToLoadUserDetails: "Kunne ikke indlæse brugeroplysninger",
   },
   registerAccountScreen: {
     createAccount: "Opret bruger",
@@ -211,5 +212,6 @@ const danish: typeof english = {
       "Del din feedback for at hjælpe os med at forbedre. Kontakt os med eventuelle forslag eller problemer.",
     contactUs: "Kontakt os",
   },
+  reportedToIT: "Dette problem er blevet rapporteret til vores IT-team",
 };
 export default danish;

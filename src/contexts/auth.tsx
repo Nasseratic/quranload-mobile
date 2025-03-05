@@ -6,6 +6,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { signIn } from "services/authService";
 import { useQuery } from "@tanstack/react-query";
 import { Sentry } from "utils/sentry";
+import { toast } from "components/Toast";
+import { t } from "locales/config";
 
 interface AuthContextData {
   initialized: boolean;
@@ -86,12 +88,19 @@ export const AuthProvider = ({ children }: Props) => {
 
   const handleSignIn = () => {
     AsyncStorage.getItem("accessToken").then(setAccessToken);
-    refetch()
+    refetch({ throwOnError: true })
       .then(() => {
         setSignedIn(true);
       })
-      .catch(() => {
+      .catch((err) => {
         setSignedIn(false);
+        Sentry.captureException(err, { tags: { module: "AuthProvider.handleSignIn" } });
+        toast.show({
+          status: "Error",
+          title: t("loginScreen.failedToLoadUserDetails"),
+          subTitle: t("reportedToIT"),
+          duration: 10 * 1000,
+        });
       })
       .finally(() => {
         setInitialized(true);

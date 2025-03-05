@@ -128,6 +128,7 @@ const english = {
     forgotPassword: "Forgot password?",
     notRegistered: "Don't have an account?",
     loadingUserDetails: "Loading user details...",
+    failedToLoadUserDetails: "Failed to load user details",
   },
   registerAccountScreen: {
     createAccount: "Create Account",
@@ -212,5 +213,6 @@ const english = {
       "Share your feedback to help us improve. Contact us with any suggestions or issues.",
     contactUs: "Contact Us",
   },
+  reportedToIT: "This issue has been reported to our IT team",
 };
 export default english;
