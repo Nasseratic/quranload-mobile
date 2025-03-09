@@ -33,7 +33,7 @@ const danish: typeof english = {
   handedIn: "Afleveret",
   notHandedIn: "Ikke afleveret",
   enable: "Slå til",
-  discard: "Slet",
+  discard: "Kassér",
   enableNotifications: "Slå notifikationer til",
   enableNotificationsDescription:
     "Få en notifikation, når du har en ny lektie eller når din underviser sender dig feedback",
@@ -44,6 +44,11 @@ const danish: typeof english = {
     discardRecordingDescription: "Er du sikker på, at du vil slette denne optagelse?",
     submitFailedTitle: "Kunne ikke indsende optagelse",
     submitFailedSubTitle: "Sørg venligst for, at du har en stabil internetforbindelse",
+    errorModalTitle: "Your recording is safe!",
+    errorModalMessage:
+      "Vi stødte på et problem med at uploade din optagelse. Din fremgang er gemt. Del venligst din optagelse med din underviser.",
+    shareToWhatsApp: "Del til WhatsApp",
+    shareMessage: "Her er optagelsen:",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",

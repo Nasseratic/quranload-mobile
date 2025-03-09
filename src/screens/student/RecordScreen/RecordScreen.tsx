@@ -1,6 +1,6 @@
 import { FunctionComponent, useState, useRef, useMemo, Fragment } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { View, Alert, StyleSheet, FlatList, Modal, ActivityIndicator } from "react-native";
+import { View, Alert, StyleSheet, FlatList, Modal, ActivityIndicator, Share } from "react-native";
 import { RootStackParamList } from "navigation/navigation";
 import { useAuth, useUser } from "contexts/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,6 +40,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
 import { cvx, useCvxMutation } from "api/convex";
 import { toast } from "components/Toast";
+import { ShareIcon } from "components/icons/ShareIcon";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -83,6 +84,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   );
   const [carouselIndex, setCarouselIndex] = useState<0 | 1>(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
 
   const studentSubmission = useMutation(submitLessonRecording, {
     onSuccess: () => {
@@ -113,6 +115,67 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       },
     });
     setAudioUrl(null);
+  };
+
+  const handleRecordingSubmit = async ({ uri, duration }) => {
+    try {
+      throw new Error("Not implemented");
+      if (duration === 0) {
+        throw new Error("Duration is 0");
+      }
+      return await match(role)
+        .with("Teacher", () =>
+          teacherFeedback.mutateAsync({
+            uri,
+            lessonId,
+            studentId,
+            lessonState: AssignmentStatusEnum.accepted,
+          })
+        )
+        .with("Student", async () => {
+          await studentSubmission.mutateAsync({
+            uri,
+            lessonId,
+            duration,
+          });
+
+          try {
+            const celebrateWithTeamId = user.teams.find(({ isActive }) => isActive)?.id;
+            if (celebrateWithTeamId) {
+              await celebrateSubmission({
+                senderId: user.id,
+                senderName: user.fullName,
+                teamId: celebrateWithTeamId,
+                submission:
+                  assignment.startPage && assignment.endPage
+                    ? assignment
+                    : assignment.description ?? "",
+              });
+            }
+          } catch {
+            // ignore for now
+          }
+        })
+        .exhaustive();
+    } catch (e) {
+      toast.reportError(e, t("recordingScreen.failedToSubmitRecording"));
+      Alert.alert(t("recordingScreen.errorModalTitle"), t("recordingScreen.errorModalMessage"), [
+        {
+          text: t("recordingScreen.shareToWhatsApp"),
+          onPress: () => onShare(uri),
+        },
+        {
+          text: t("cancel"),
+        },
+      ]);
+    }
+  };
+
+  const onShare = (uri: string) => {
+    Share.share({
+      message: t("recordingScreen.shareMessage"),
+      url: uri,
+    });
   };
 
   const carouselItems = useMemo(
@@ -235,51 +298,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                   <Recorder
                     lessonId={lessonId}
                     onFinished={(uri) => setAudioUrl(uri)}
-                    onSubmit={async ({ uri, duration }) => {
-                      try {
-                        if (duration === 0) {
-                          throw new Error("Duration is 0");
-                        }
-                        return await match(role)
-                          .with("Teacher", () =>
-                            teacherFeedback.mutateAsync({
-                              uri,
-                              lessonId,
-                              studentId,
-                              lessonState: AssignmentStatusEnum.accepted,
-                            })
-                          )
-                          .with("Student", async () => {
-                            await studentSubmission.mutateAsync({
-                              uri,
-                              lessonId,
-                              duration,
-                            });
-
-                            try {
-                              const celebrateWithTeamId = user.teams.find(
-                                ({ isActive }) => isActive
-                              )?.id;
-                              if (celebrateWithTeamId) {
-                                await celebrateSubmission({
-                                  senderId: user.id,
-                                  senderName: user.fullName,
-                                  teamId: celebrateWithTeamId,
-                                  submission:
-                                    assignment.startPage && assignment.endPage
-                                      ? assignment
-                                      : assignment.description ?? "",
-                                });
-                              }
-                            } catch {
-                              // ignore for now
-                            }
-                          })
-                          .exhaustive();
-                      } catch (e) {
-                        toast.reportError(e, t("recordingScreen.failedToSubmitRecording"));
-                      }
-                    }}
+                    onSubmit={handleRecordingSubmit}
                   />
                 ) : (
                   <AudioPlayer uri={item} isVisible={index === carouselIndex} />
@@ -316,27 +335,35 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                 />
               )}
               {shouldAllowDeleteForIndex && (
-                <IconButton
-                  onPress={() =>
-                    Alert.alert(
-                      t("recordingScreen.deleteRecording"),
-                      t("recordingScreen.deleteRecordingDescription"),
-                      [
-                        {
-                          text: t("cancel"),
-                          style: "cancel",
-                        },
-                        {
-                          text: t("delete"),
-                          style: "destructive",
-                          onPress: onDelete,
-                        },
-                      ]
-                    )
-                  }
-                  icon={<BinIcon size={20} color={Colors.Black[2]} />}
-                  size="sm"
-                />
+                <XStack ai="center" gap="$2">
+                  <IconButton
+                    onPress={() =>
+                      Alert.alert(
+                        t("recordingScreen.deleteRecording"),
+                        t("recordingScreen.deleteRecordingDescription"),
+                        [
+                          {
+                            text: t("cancel"),
+                            style: "cancel",
+                          },
+
+                          {
+                            text: t("delete"),
+                            style: "destructive",
+                            onPress: onDelete,
+                          },
+                        ]
+                      )
+                    }
+                    icon={<BinIcon size={20} color={Colors.Black[2]} />}
+                    size="sm"
+                  />
+                  <IconButton
+                    onPress={() => onShare(audioUrl || (isTeacher ? feedbackUrl : submissionUrl))}
+                    icon={<ShareIcon size={20} color={Colors.Black[2]} />}
+                    size="sm"
+                  />
+                </XStack>
               )}
             </XStack>
           </Stack>

@@ -44,6 +44,12 @@ const english = {
     submitFailedSubTitle: "Please make sure you have a stable internet connection",
     failedToStartRecording: "Failed to start recording",
     failedToSubmitRecording: "Failed to submit recording",
+    errorModalTitle: "Your recording is safe!",
+    errorModalMessage:
+      "We encountered an issue uploading your recording. Your progress is saved. Please share your recording with your teacher.",
+    shareToWhatsApp: "Share to WhatsApp",
+    shareMessage: "Here is the recording:",
+    discard: "Discard",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",

@@ -185,11 +185,11 @@ export const Recorder = ({
           status: "Error",
         });
         recordings = [{ uri, durationInMs: durationInSec * 1000 }];
-        handleStatusChange("paused");
       }
     } catch {
-      handleStatusChange("paused");
+      // add log to sentry
     } finally {
+      handleStatusChange("paused");
       if (IS_IOS)
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
