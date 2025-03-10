@@ -79,7 +79,7 @@ export const Recorder = ({
 }: {
   lessonId?: string;
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
-  onFinished?: (uri: string) => void;
+  onFinished?: (params: { uri: string; duration: number }) => void;
   onStatusChange?: (status: RecordingState) => void;
 }) => {
   const [permissionStatus, requestPermission] = Audio.usePermissions({ request: false });
@@ -164,27 +164,31 @@ export const Recorder = ({
 
       const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
 
-      const durationInSec = Math.round(
-        recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000
-      );
-      await cleanRecordings({ lessonId });
+      const durationInSec =
+        Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
       try {
-        await Promise.all([
-          onSubmit({
-            uri,
-            duration: durationInSec,
-          }),
-          sleep(3000), // to make sure uploading animation is visible and not flashing
-        ]);
-        onFinished?.(uri);
+        await cleanRecordings({ lessonId });
+
+        await onSubmit({
+          uri,
+          duration: durationInSec,
+        });
+
         handleStatusChange("idle");
       } catch {
-        toast.show({
-          title: t("recordingScreen.submitFailedTitle"),
-          subTitle: t("recordingScreen.submitFailedSubTitle"),
-          status: "Error",
-        });
-        recordings = [{ uri, durationInMs: durationInSec * 1000 }];
+        if (lessonId) {
+          persistAudioRecordings({
+            lessonId,
+            recordings: [
+              {
+                uri,
+                durationInMs: durationInSec * 1000,
+              },
+            ],
+          });
+        }
+      } finally {
+        onFinished?.({ uri, duration: durationInSec });
       }
     } catch {
       // add log to sentry
@@ -329,24 +333,6 @@ export const Recorder = ({
     return (
       <Stack>
         <ActivityIndicator />
-        <Modal visible transparent>
-          <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
-            <LottieView
-              source={UploadingLottie}
-              autoPlay
-              loop={true}
-              style={{ width: 180, height: 180 }}
-            />
-            <Stack gap={8} ai="center">
-              <Text color="whitesmoke" fontSize={20}>
-                Uploading...
-              </Text>
-              <Text fontSize={16} color="$gray8Light">
-                Please do not close the app
-              </Text>
-            </Stack>
-          </Stack>
-        </Modal>
       </Stack>
     );
 

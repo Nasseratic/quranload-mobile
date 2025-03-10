@@ -16,7 +16,7 @@ import {
 } from "services/lessonsService";
 import { IconButton } from "components/buttons/IconButton";
 import { BinIcon } from "components/icons/BinIcon";
-import { Button, Square, Stack, XStack } from "tamagui";
+import { Button, Square, Stack, XStack, Text } from "tamagui";
 import { t } from "locales/config";
 import { IconSwitch } from "components/IconSwitch";
 import Carousel from "react-native-reanimated-carousel";
@@ -39,8 +39,9 @@ import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
 import { cvx, useCvxMutation } from "api/convex";
-import { toast } from "components/Toast";
-import { ShareIcon } from "components/icons/ShareIcon";
+import LottieView from "lottie-react-native";
+import UploadingLottie from "assets/lottie/uploading.json";
+import { Sentry } from "utils/sentry";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -83,9 +84,10 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     isStudent && !recordingId && !feedbackId
   );
   const [carouselIndex, setCarouselIndex] = useState<0 | 1>(0);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [errorModalVisible, setErrorModalVisible] = useState(false);
-
+  const [audio, setAudio] = useState<{
+    uri: string;
+    duration: number;
+  } | null>(null);
   const studentSubmission = useMutation(submitLessonRecording, {
     onSuccess: () => {
       queryClient.invalidateQueries(["assignments"]);
@@ -114,12 +116,37 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
         [isTeacher ? "feedbackUrl" : "recordingUrl"]: null,
       },
     });
-    setAudioUrl(null);
+    setAudio(null);
+    teacherFeedback.reset();
+    studentSubmission.reset();
   };
 
-  const handleRecordingSubmit = async ({ uri, duration }) => {
+  const showErrorAlert = (audio: { uri: string; duration: number }) => {
+    if (!audio) {
+      return;
+    }
+    Alert.alert(t("recordingScreen.errorModalTitle"), t("recordingScreen.errorModalMessage"), [
+      {
+        text: t("recordingScreen.shareToWhatsApp"),
+        onPress: () => onShare(audio.uri),
+      },
+      {
+        text: t("recordingScreen.retryUpload"),
+        onPress: async () => {
+          try {
+            await handleRecordingSubmit(audio);
+          } finally {
+          }
+        },
+      },
+      {
+        text: t("cancel"),
+      },
+    ]);
+  };
+
+  const handleRecordingSubmit = async ({ uri, duration }: { uri: string; duration: number }) => {
     try {
-      throw new Error("Not implemented");
       if (duration === 0) {
         throw new Error("Duration is 0");
       }
@@ -158,16 +185,17 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
         })
         .exhaustive();
     } catch (e) {
-      toast.reportError(e, t("recordingScreen.failedToSubmitRecording"));
-      Alert.alert(t("recordingScreen.errorModalTitle"), t("recordingScreen.errorModalMessage"), [
-        {
-          text: t("recordingScreen.shareToWhatsApp"),
-          onPress: () => onShare(uri),
+      Sentry.captureException(e, {
+        tags: {
+          module: "RecordScreen.handleRecordingSubmit",
         },
-        {
-          text: t("cancel"),
+        extra: {
+          uri,
+          duration,
         },
-      ]);
+      });
+      showErrorAlert({ uri, duration });
+      throw e;
     }
   };
 
@@ -187,19 +215,16 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           .with("Student", () => feedbackUrl)
           .exhaustive(),
         match(role)
-          .with("Teacher", () => feedbackUrl ?? audioUrl ?? "RECORDER")
-          .with("Student", () => submissionUrl ?? audioUrl ?? "RECORDER")
+          .with("Teacher", () => feedbackUrl ?? audio?.uri ?? "RECORDER")
+          .with("Student", () => submissionUrl ?? audio?.uri ?? "RECORDER")
           .exhaustive(),
       ].filter(isNotNullish),
-    [audioUrl, submissionUrl, feedbackUrl, role]
+    [audio, submissionUrl, feedbackUrl, role]
   );
 
   const shouldAllowDeleteForIndex = match(role)
-    .with("Teacher", () => carouselIndex === 1 && (!!feedbackId || !!audioUrl))
-    .with(
-      "Student",
-      () => carouselIndex === carouselItems.length - 1 && (!!recordingId || !!audioUrl)
-    )
+    .with("Teacher", () => carouselIndex === 1 && (!!feedbackId || !!audio))
+    .with("Student", () => carouselIndex === carouselItems.length - 1 && (!!recordingId || !!audio))
     .exhaustive();
   if ((!!recordingId && isLoadingSubmissionUrl) || (!!feedbackId && isLoadingFeedbackUrl)) {
     return (
@@ -288,6 +313,36 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           pb={insets.bottom}
           position="absolute"
         >
+          {(teacherFeedback.isError || studentSubmission.isError) && (
+            <XStack
+              bg="$red10"
+              p={12}
+              onPress={() => {
+                if (audio) {
+                  showErrorAlert(audio);
+                }
+              }}
+              jc="space-between"
+              pressStyle={{ opacity: 0.8 }}
+            >
+              <Typography
+                type="Body"
+                style={{
+                  color: "white",
+                }}
+              >
+                {t("recordingScreen.uploadFailed")}
+              </Typography>
+              <Typography
+                style={{
+                  color: "white",
+                }}
+                type="Body"
+              >
+                {t("retry")}
+              </Typography>
+            </XStack>
+          )}
           <Stack pt="$3" jc="flex-end" ai="center">
             <Carousel
               data={carouselItems}
@@ -297,7 +352,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                 item === "RECORDER" ? (
                   <Recorder
                     lessonId={lessonId}
-                    onFinished={(uri) => setAudioUrl(uri)}
+                    onFinished={(audio) => setAudio(audio)}
                     onSubmit={handleRecordingSubmit}
                   />
                 ) : (
@@ -335,7 +390,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                 />
               )}
               {shouldAllowDeleteForIndex && (
-                <XStack ai="center" gap="$2">
+                <XStack ai="center" jc="flex-end" gap="$2" px={4} pointerEvents="box-none">
                   <IconButton
                     onPress={() =>
                       Alert.alert(
@@ -358,16 +413,31 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                     icon={<BinIcon size={20} color={Colors.Black[2]} />}
                     size="sm"
                   />
-                  <IconButton
-                    onPress={() => onShare(audioUrl || (isTeacher ? feedbackUrl : submissionUrl))}
-                    icon={<ShareIcon size={20} color={Colors.Black[2]} />}
-                    size="sm"
-                  />
                 </XStack>
               )}
             </XStack>
           </Stack>
         </Stack>
+      )}
+      {(studentSubmission.isLoading || teacherFeedback.isLoading) && (
+        <Modal visible transparent>
+          <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
+            <LottieView
+              source={UploadingLottie}
+              autoPlay
+              loop={true}
+              style={{ width: 180, height: 180 }}
+            />
+            <Stack gap={8} ai="center">
+              <Text color="whitesmoke" fontSize={20}>
+                Uploading...
+              </Text>
+              <Text fontSize={16} color="$gray8Light">
+                Please do not close the app
+              </Text>
+            </Stack>
+          </Stack>
+        </Modal>
       )}
     </View>
   );

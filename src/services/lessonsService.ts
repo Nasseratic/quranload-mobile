@@ -7,6 +7,7 @@ import {
   Lessons_Dto_LessonDetailResponse,
   Lessons_Dto_LessonGetResponse,
 } from "__generated/apiTypes";
+import { sleep } from "utils/sleep";
 
 export const fetchUserLessons = async (data: {
   teamId: string;
@@ -40,7 +41,9 @@ export const submitLessonRecording = async ({
   });
   form.append("LessonId", lessonId);
   form.append("RecordingDuration", `${duration}`);
-  return apiClient.postForm("LessonSubmission/recording", form);
+  return (
+    await Promise.all([apiClient.postForm("LessonSubmission/recording", form), sleep(2000)])
+  )[0];
 };
 
 export const deleteSubmission = async (body: { lessonId: string; studentId: string }) =>

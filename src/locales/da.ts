@@ -49,6 +49,11 @@ const danish: typeof english = {
       "Vi stødte på et problem med at uploade din optagelse. Din fremgang er gemt. Del venligst din optagelse med din underviser.",
     shareToWhatsApp: "Del til WhatsApp",
     shareMessage: "Her er optagelsen:",
+    uploadFailed: "Upload mislykkedes",
+    failedToStartRecording: "Kunne ikke starte optagelse",
+    failedToSubmitRecording: "Kunne ikke indsende optagelse",
+    discard: "Kassér",
+    retryUpload: "Prøv igen",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",

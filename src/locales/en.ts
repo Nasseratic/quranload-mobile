@@ -50,6 +50,8 @@ const english = {
     shareToWhatsApp: "Share to WhatsApp",
     shareMessage: "Here is the recording:",
     discard: "Discard",
+    uploadFailed: "Upload failed",
+    retryUpload: "Retry upload",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",
