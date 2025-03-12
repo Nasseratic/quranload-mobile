@@ -11,15 +11,10 @@ axiosClient.interceptors.request.use(async (conf) => {
   return conf;
 });
 
-interface RetryConfig extends AxiosRequestConfig {
-  _retry?: boolean;
-}
-
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<Frontend.Content.ApiError>) => {
     const { data, status } = error.response!;
-    const originalRequest = error.config as RetryConfig;
     if (status === 400) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newError: any = {};
@@ -43,24 +38,6 @@ axiosClient.interceptors.response.use(
     } else if (status === 500) {
       return Promise.reject({ status: status, error: "an expected error occurred" });
     } else if (status === 401) {
-      const refreshTokenCode = await AsyncStorage.getItem("refreshToken");
-      if (refreshTokenCode != null && !originalRequest._retry) {
-        return refreshToken({ refreshToken: refreshTokenCode })
-          .then(async (res) => {
-            await AsyncStorage.setItem("refreshToken", res.data.refreshToken);
-            await AsyncStorage.setItem("accessToken", res.data.accessToken);
-            return axiosClient(originalRequest);
-          })
-          .catch((error) => {
-            console.error("Failed to refresh token", error);
-            AsyncStorage.removeItem("accessToken");
-            AsyncStorage.removeItem("refreshToken");
-            return Promise.reject({
-              status: status,
-              error: "We could not acknowledge your account. Please sign out and sign in again.",
-            });
-          });
-      }
       return Promise.reject({
         status,
         error:

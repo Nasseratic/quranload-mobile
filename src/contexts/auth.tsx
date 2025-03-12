@@ -3,11 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "types/User";
 import { fetchUserProfile } from "services/profileService";
 import * as SplashScreen from "expo-splash-screen";
-import { signIn } from "services/authService";
+import { signIn, refreshToken } from "services/authService";
 import { useQuery } from "@tanstack/react-query";
 import { Sentry } from "utils/sentry";
 import { toast } from "components/Toast";
 import { t } from "locales/config";
+import { captureException } from "@sentry/react-native";
 
 interface AuthContextData {
   initialized: boolean;
@@ -89,8 +90,22 @@ export const AuthProvider = ({ children }: Props) => {
   const handleSignIn = () => {
     AsyncStorage.getItem("accessToken").then(setAccessToken);
     refetch({ throwOnError: true })
-      .then(() => {
+      .then(async () => {
         setSignedIn(true);
+        const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+        if (storedRefreshToken) {
+          try {
+            const data = await refreshToken({ refreshToken: storedRefreshToken });
+            await AsyncStorage.setItem("refreshToken", data.refreshToken);
+            await AsyncStorage.setItem("accessToken", data.accessToken);
+            console.log("Token refreshed successfully 🔐");
+          } catch (error) {
+            console.error(error);
+            captureException("Failed to refresh token", {
+              tags: { module: "AuthProvider.handleSignIn" },
+            });
+          }
+        }
       })
       .catch((err) => {
         setSignedIn(false);

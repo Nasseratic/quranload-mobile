@@ -3,7 +3,9 @@ interface ISignInResponse {
 }
 
 interface IRefreshTokenResponse {
-  data: { accessToken: string; refreshToken: string; role: "Student" | "Teacher" };
+  accessToken: string;
+  refreshToken: string;
+  role: "Student" | "Teacher";
 }
 
 type ISignInErrorResponse = {
