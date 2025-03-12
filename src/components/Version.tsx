@@ -8,7 +8,7 @@ import { toast } from "components/Toast";
 import { Stack } from "tamagui";
 
 export const OTA_VERSION =
-  (Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
+  (Updates.createdAt ? format(Updates.createdAt, "yy.MM.dd.HH") : "N/A") +
   (isDevelopmentBuild() ? " ( DEV )" : "");
 
 export const AppVersion = () => {
