@@ -37,7 +37,6 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <UserHeader />
-      <FeedbackCard />
 
       <FlatList
         data={teams}
@@ -52,13 +51,16 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
           return <StudentTeamOverview team={item} />;
         }}
         ListHeaderComponent={
-          teams.length === 0 && user.teams.length !== 0 ? (
-            <Square gap="$4" borderRadius={8}>
-              {/* TODO: Add enroll? */}
-              <Typography type="BodyLight">{t("noActiveTeams")}</Typography>
-              <Separator w="100%" bg="$accentBackground" />
-            </Square>
-          ) : undefined
+          <>
+            <FeedbackCard />
+            {teams.length === 0 && user.teams.length !== 0 ? (
+              <Square gap="$4" borderRadius={8}>
+                {/* TODO: Add enroll? */}
+                <Typography type="BodyLight">{t("noActiveTeams")}</Typography>
+                <Separator w="100%" bg="$accentBackground" />
+              </Square>
+            ) : undefined}
+          </>
         }
         ListFooterComponent={
           user.teams.length != teams.length || isShowingInactive ? (

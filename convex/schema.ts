@@ -12,6 +12,13 @@ export const messageInitializer = {
   text: v.optional(v.string()),
 } as const;
 
+export const contactSupportInfo = {
+  email: v.string(),
+  name: v.optional(v.string()),
+  phone: v.optional(v.string()),
+  otaVersion: v.string(),
+};
+
 export default defineSchema({
   featureFlags: defineTable({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment")),
@@ -29,4 +36,5 @@ export default defineSchema({
   })
     .index("by_participants", ["participant1", "participant2"])
     .index("by_participant2", ["participant2"]),
+  contactSupportInfo: defineTable(contactSupportInfo),
 });

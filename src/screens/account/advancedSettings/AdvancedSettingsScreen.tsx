@@ -17,6 +17,7 @@ import { toast } from "components/Toast";
 import { isDevelopmentBuild } from "expo-dev-client";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
 import { format } from "date-fns";
+import { OTA_VERSION } from "components/Version";
 type Props = NativeStackScreenProps<RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
@@ -74,9 +75,7 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
         />
 
         <Typography style={{ alignSelf: "flex-end", fontSize: 10, color: Colors.Black[2] }}>
-          Version:{" "}
-          {(Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
-            (isDevelopmentBuild() ? " (DEV)" : "")}
+          Version: {OTA_VERSION}
         </Typography>
       </View>
     </SafeAreaView>

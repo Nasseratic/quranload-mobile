@@ -1,4 +1,3 @@
-import { Pressable } from "react-native";
 import { t } from "locales/config";
 import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
@@ -7,6 +6,10 @@ import { isDevelopmentBuild } from "expo-dev-client";
 import { format } from "date-fns";
 import { toast } from "components/Toast";
 import { Stack } from "tamagui";
+
+export const OTA_VERSION =
+  (Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
+  (isDevelopmentBuild() ? " ( DEV )" : "");
 
 export const AppVersion = () => {
   return (
@@ -32,9 +35,7 @@ export const AppVersion = () => {
           paddingRight: 10,
         }}
       >
-        Version:{" "}
-        {(Updates.createdAt ? format(Updates.createdAt, "yy-MM-dd (HH)") : "N/A") +
-          (isDevelopmentBuild() ? " ( DEV )" : "")}
+        Version: {OTA_VERSION}
       </Typography>
     </Stack>
   );
