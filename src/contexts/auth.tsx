@@ -97,15 +97,7 @@ export const AuthProvider = ({ children }: Props) => {
     refetch({ throwOnError: true })
       .then(async ({ data: user }) => {
         setSignedIn(true);
-        if (user) {
-          updateUserInfo({
-            userId: user.id!,
-            currentOtaVersion: OTA_VERSION,
-            currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
-            platform: Platform.OS,
-            lastSeen: Date.now(),
-          });
-        }
+
         const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
         if (storedRefreshToken) {
           try {
@@ -120,6 +112,15 @@ export const AuthProvider = ({ children }: Props) => {
               tags: { module: "AuthProvider.handleSignIn" },
             });
           }
+        }
+        if (user) {
+          await updateUserInfo({
+            userId: user.id!,
+            currentOtaVersion: OTA_VERSION,
+            currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
+            platform: Platform.OS,
+            lastSeen: Date.now(),
+          });
         }
       })
       .catch((err) => {
