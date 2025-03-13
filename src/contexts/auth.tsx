@@ -9,6 +9,10 @@ import { Sentry } from "utils/sentry";
 import { toast } from "components/Toast";
 import { t } from "locales/config";
 import { captureException } from "@sentry/react-native";
+import { cvx, useCvxMutation } from "api/convex";
+import { OTA_VERSION } from "components/Version";
+import * as Application from "expo-application";
+import { Platform } from "react-native";
 
 interface AuthContextData {
   initialized: boolean;
@@ -57,6 +61,7 @@ export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const updateUserInfo = useCvxMutation(cvx.user.updateUserInfo);
   const {
     refetch,
     data: user,
@@ -90,8 +95,17 @@ export const AuthProvider = ({ children }: Props) => {
   const handleSignIn = () => {
     AsyncStorage.getItem("accessToken").then(setAccessToken);
     refetch({ throwOnError: true })
-      .then(async () => {
+      .then(async ({ data: user }) => {
         setSignedIn(true);
+        if (user) {
+          updateUserInfo({
+            userId: user.id!,
+            currentOtaVersion: OTA_VERSION,
+            currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
+            platform: Platform.OS,
+            lastSeen: Date.now(),
+          });
+        }
         const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
         if (storedRefreshToken) {
           try {
@@ -100,6 +114,7 @@ export const AuthProvider = ({ children }: Props) => {
             await AsyncStorage.setItem("accessToken", data.accessToken);
             console.log("Token refreshed successfully 🔐");
           } catch (error) {
+            console.log("Failed to refresh token");
             console.error(error);
             captureException("Failed to refresh token", {
               tags: { module: "AuthProvider.handleSignIn" },

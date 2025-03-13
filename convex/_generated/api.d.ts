@@ -12,6 +12,7 @@ import type * as services_featureFlags from "../services/featureFlags.js";
 import type * as services_messages from "../services/messages.js";
 import type * as services_pushNotifications from "../services/pushNotifications.js";
 import type * as services_support from "../services/support.js";
+import type * as services_user from "../services/user.js";
 
 import type {
   ApiFromModules,
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   "services/messages": typeof services_messages;
   "services/pushNotifications": typeof services_pushNotifications;
   "services/support": typeof services_support;
+  "services/user": typeof services_user;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

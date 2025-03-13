@@ -19,6 +19,14 @@ export const contactSupportInfo = {
   otaVersion: v.string(),
 };
 
+export const userInfo = {
+  userId: v.string(),
+  currentOtaVersion: v.string(),
+  currentAppVersion: v.string(),
+  platform: v.string(),
+  lastSeen: v.number(),
+};
+
 export default defineSchema({
   featureFlags: defineTable({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment")),
@@ -37,4 +45,5 @@ export default defineSchema({
     .index("by_participants", ["participant1", "participant2"])
     .index("by_participant2", ["participant2"]),
   contactSupportInfo: defineTable(contactSupportInfo),
+  userInfo: defineTable(userInfo),
 });
