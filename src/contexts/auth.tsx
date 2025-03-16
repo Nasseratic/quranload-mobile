@@ -13,6 +13,7 @@ import { cvx, useCvxMutation } from "api/convex";
 import { OTA_VERSION } from "components/Version";
 import * as Application from "expo-application";
 import { Platform } from "react-native";
+import { posthog } from "utils/tracking";
 
 interface AuthContextData {
   initialized: boolean;
@@ -97,7 +98,6 @@ export const AuthProvider = ({ children }: Props) => {
     refetch({ throwOnError: true })
       .then(async ({ data: user }) => {
         setSignedIn(true);
-
         const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
         if (storedRefreshToken) {
           try {
@@ -114,6 +114,7 @@ export const AuthProvider = ({ children }: Props) => {
           }
         }
         if (user) {
+          posthog.identify(user.id);
           await updateUserInfo({
             userId: user.id!,
             currentOtaVersion: OTA_VERSION,
@@ -146,6 +147,7 @@ export const AuthProvider = ({ children }: Props) => {
     await AsyncStorage.removeItem("accessToken");
     await AsyncStorage.removeItem("refreshToken");
     setSignedIn(false);
+    posthog.reset();
   };
 
   return (

@@ -42,6 +42,7 @@ import { cvx, useCvxMutation } from "api/convex";
 import LottieView from "lottie-react-native";
 import UploadingLottie from "assets/lottie/uploading.json";
 import { Sentry } from "utils/sentry";
+import { track } from "utils/tracking";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -128,12 +129,16 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     Alert.alert(t("recordingScreen.errorModalTitle"), t("recordingScreen.errorModalMessage"), [
       {
         text: t("recordingScreen.shareToWhatsApp"),
-        onPress: () => onShare(audio.uri),
+        onPress: () => {
+          track("PressedShareRecodingToWhatsApp");
+          onShare(audio.uri);
+        },
       },
       {
         text: t("recordingScreen.retryUpload"),
         onPress: async () => {
           try {
+            track("RetriedUploadRecording");
             await handleRecordingSubmit(audio);
           } finally {
           }
@@ -141,6 +146,9 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       },
       {
         text: t("cancel"),
+        onPress: () => {
+          track("DiscardedRecordingUploadErrorAlert");
+        },
       },
     ]);
   };

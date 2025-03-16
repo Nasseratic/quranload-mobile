@@ -39,6 +39,8 @@ import Typography from "components/Typography";
 import { t } from "locales/config";
 import { AppVersion } from "components/Version";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PostHogProvider } from "posthog-react-native";
+import { posthog } from "utils/tracking";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -113,35 +115,37 @@ const Nav = () => {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <DeepLinks />
-      {signed && user ? (
-        <AuthenticatedStack />
-      ) : isLoadingUserData ? (
-        <Square f={1} gap={16}>
-          <ActivityIndicator size="large" />
-          <Typography>{t("loginScreen.loadingUserDetails")}</Typography>
-          <XStack position="absolute" bottom={insets.bottom + 4}>
-            <AppVersion />
-          </XStack>
-        </Square>
-      ) : (
-        <Stack.Navigator
-          initialRouteName={"Login"}
-          screenOptions={{
-            headerShown: false,
-            contentStyle: {
-              backgroundColor: Colors.White[1],
-            },
-          }}
-        >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-          <Stack.Screen name="ConfirmEmailScreen" component={ConfirmEmailScreen} />
-          <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
-          <Stack.Screen name="Mushaf" component={MushafScreen} />
-        </Stack.Navigator>
-      )}
+      <PostHogProvider client={posthog}>
+        <DeepLinks />
+        {signed && user ? (
+          <AuthenticatedStack />
+        ) : isLoadingUserData ? (
+          <Square f={1} gap={16}>
+            <ActivityIndicator size="large" />
+            <Typography>{t("loginScreen.loadingUserDetails")}</Typography>
+            <XStack position="absolute" bottom={insets.bottom + 4}>
+              <AppVersion />
+            </XStack>
+          </Square>
+        ) : (
+          <Stack.Navigator
+            initialRouteName={"Login"}
+            screenOptions={{
+              headerShown: false,
+              contentStyle: {
+                backgroundColor: Colors.White[1],
+              },
+            }}
+          >
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+            <Stack.Screen name="ConfirmEmailScreen" component={ConfirmEmailScreen} />
+            <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
+            <Stack.Screen name="Mushaf" component={MushafScreen} />
+          </Stack.Navigator>
+        )}
+      </PostHogProvider>
     </NavigationContainer>
   );
 };
