@@ -51,11 +51,11 @@ const cleanCurrentRecording = async () => {
     await stopAndUnloadPromise;
   }
 };
-
-let recordings: {
+type Recording = {
   uri: string;
   durationInMs: number;
-}[] = [];
+};
+let recordings: Recording[] = [];
 
 const cleanRecordings = async ({ lessonId }: { lessonId?: string }) => {
   recordings = [];
@@ -80,7 +80,7 @@ export const Recorder = ({
   lessonId?: string;
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
   onFinished?: (params: { uri: string; duration: number }) => void;
-  onStatusChange?: (status: RecordingState) => void;
+  onStatusChange?: (status: RecordingState, recordings: Recording[]) => void;
 }) => {
   const [permissionStatus, requestPermission] = Audio.usePermissions({ request: false });
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
@@ -88,7 +88,7 @@ export const Recorder = ({
   const handleStatusChange = useCallback(
     (status: RecordingState) => {
       setRecordingState(status);
-      onStatusChange?.(status);
+      onStatusChange?.(status, recordings);
     },
     [onStatusChange]
   );

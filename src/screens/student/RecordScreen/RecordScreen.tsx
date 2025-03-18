@@ -158,7 +158,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       if (duration === 0) {
         throw new Error("Duration is 0");
       }
-      return await match(role)
+      await match(role)
         .with("Teacher", () =>
           teacherFeedback.mutateAsync({
             uri,
@@ -192,6 +192,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           }
         })
         .exhaustive();
+      track("RecordingUploaded", { duration });
     } catch (e) {
       Sentry.captureException(e, {
         tags: {
@@ -203,6 +204,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
         },
       });
       showErrorAlert({ uri, duration });
+      track("RecordingUploadFailed", { duration });
       throw e;
     }
   };
@@ -362,6 +364,19 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                     lessonId={lessonId}
                     onFinished={(audio) => setAudio(audio)}
                     onSubmit={handleRecordingSubmit}
+                    onStatusChange={(status, recordings) => {
+                      match(status)
+                        .with("paused", () => {
+                          track("RecordingPaused");
+                        })
+                        .with("recording", () => {
+                          track(recordings.length > 0 ? "RecordingResumed" : "RecodingStarted");
+                        })
+                        .with("submitting", () => {
+                          track("RecordingSubmitPressed", { screen: "RecordScreen" });
+                        })
+                        .otherwise(() => {});
+                    }}
                   />
                 ) : (
                   <AudioPlayer uri={item} isVisible={index === carouselIndex} />

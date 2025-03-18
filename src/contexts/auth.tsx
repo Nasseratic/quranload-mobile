@@ -114,7 +114,12 @@ export const AuthProvider = ({ children }: Props) => {
           }
         }
         if (user) {
-          posthog.identify(user.id);
+          posthog.identify(user.id, {
+            email: user.emailAddress,
+            username: user.username,
+            role: user.roles[0],
+            gender: user.gender,
+          });
           await updateUserInfo({
             userId: user.id!,
             currentOtaVersion: OTA_VERSION,

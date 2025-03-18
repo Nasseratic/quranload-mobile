@@ -1,3 +1,4 @@
+import { t } from "locales/config";
 import PostHog from "posthog-react-native";
 
 export const posthog = new PostHog("phc_NyrqpdlwWyfpNiwGzvU8yyVQ0ipyfNuH1NybvWeKmHC", {
@@ -7,8 +8,21 @@ export const posthog = new PostHog("phc_NyrqpdlwWyfpNiwGzvU8yyVQ0ipyfNuH1NybvWeK
 type Events =
   | "RetriedUploadRecording"
   | "DiscardedRecordingUploadErrorAlert"
-  | "PressedShareRecodingToWhatsApp";
+  | "PressedShareRecodingToWhatsApp"
+  | "RecodingStarted"
+  | "RecordingPaused"
+  | "RecordingResumed"
+  | "RecordingDiscarded"
+  | "RecordingSubmitPressed"
+  | "RecordingUploaded"
+  | "RecordingUploadFailed";
 
-export const track = (event: Events, properties?: Record<string, any>) => {
+type Properties = {
+  [key: string]: any;
+  screen?: string;
+  duration?: number;
+};
+
+export const track = (event: Events, properties?: Properties) => {
   posthog.capture(event, properties);
 };
