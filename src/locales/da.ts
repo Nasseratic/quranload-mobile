@@ -44,7 +44,7 @@ const danish: typeof english = {
     discardRecordingDescription: "Er du sikker på, at du vil slette denne optagelse?",
     submitFailedTitle: "Kunne ikke indsende optagelse",
     submitFailedSubTitle: "Sørg venligst for, at du har en stabil internetforbindelse",
-    errorModalTitle: "Your recording is safe!",
+    errorModalTitle: "Din optagelse er sikker!",
     errorModalMessage:
       "Vi stødte på et problem med at uploade din optagelse. Din fremgang er gemt. Del venligst din optagelse med din underviser.",
     shareToWhatsApp: "Del til WhatsApp",

@@ -119,6 +119,10 @@ export const AuthProvider = ({ children }: Props) => {
             username: user.username,
             role: user.roles[0],
             gender: user.gender,
+            phoneNumber: user.phoneNumber,
+            activeTeams: user.teams
+              .filter((team) => team.isActive)
+              .map((team) => `${team.organizationName} (${team.name})`),
           });
           await updateUserInfo({
             userId: user.id!,
