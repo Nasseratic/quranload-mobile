@@ -12,7 +12,7 @@ const FeedbackCard = () => {
   const saveContactSupportInfo = useCvxMutation(cvx.support.saveContactSupportInfo);
 
   return (
-    <Card padding={16} borderRadius={8} backgroundColor="#FF8C00">
+    <Card padding={16} borderRadius={8} backgroundColor="#008080">
       <XStack justifyContent="space-between" alignItems="center" gap="$1">
         <YStack flex={1} gap={"$1"}>
           <Typography type="BodyHeavy" style={{ color: "white" }}>

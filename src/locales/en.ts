@@ -216,9 +216,9 @@ const english = {
     yesterday: "Yesterday",
   },
   feedbackCard: {
-    newAppVersion: "New App Version!",
+    newAppVersion: "✨ Keep the feedback coming!",
     shareFeedback:
-      "Share your feedback to help us improve. Contact us with any suggestions or issues.",
+      "Thanks to your valuable feedback, we've made meaningful improvements. We appreciate your input—keep it coming! Wishing you a joyful Eid Mubarak! 🌙",
     contactUs: "Contact Us",
   },
   reportedToIT: "This issue has been reported to our IT team",

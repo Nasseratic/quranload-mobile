@@ -19,7 +19,7 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
     <TouchableOpacity style={styles.assignmentItem} onPress={onPress} activeOpacity={0.65}>
       <AssignmentStatusCheckbox
         status={assignment.status}
-        isDue={assignment.endDate != null && isPast(endOfDay(new Date(assignment.endDate)))}
+        isDue={isPast(endOfDay(new Date(assignment.endDate ?? assignment.startDate!)))}
       />
       {assignment.startPage && assignment.endPage ? (
         <Typography style={styles.assignmentText} type="Body">
@@ -41,11 +41,11 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
           {t("feedback")}
         </Typography>
       )}
-      {assignment.endDate && (
-        <Typography style={styles.deadline} type="CaptionLight">
-          Due: {intlFormat(new Date(assignment.endDate), "date-short")}
-        </Typography>
-      )}
+
+      <Typography style={styles.deadline} type="CaptionLight">
+        Due: {intlFormat(new Date(assignment.endDate ?? assignment.startDate!), "date-short")}
+      </Typography>
+
       <ChevronRightIcon color={Colors.Primary[1]} />
     </TouchableOpacity>
   );
