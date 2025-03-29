@@ -218,7 +218,7 @@ const english = {
   feedbackCard: {
     newAppVersion: "✨ Keep the feedback coming!",
     shareFeedback:
-      "Thanks to your valuable feedback, we've made meaningful improvements. We appreciate your input—keep it coming! Wishing you a joyful Eid Mubarak! 🌙",
+      "Thanks to your feedback, we're improving. We appreciate your input—keep it coming! Wishing you a joyful Eid Mubarak! 🌙",
     contactUs: "Contact Us",
   },
   reportedToIT: "This issue has been reported to our IT team",

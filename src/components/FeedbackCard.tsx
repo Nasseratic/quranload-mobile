@@ -23,6 +23,8 @@ const FeedbackCard = () => {
           </Typography>
         </YStack>
         <Button
+          padding={8}
+          height={38}
           backgroundColor="white"
           onPress={async () => {
             try {
