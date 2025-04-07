@@ -108,9 +108,6 @@ export const AuthProvider = ({ children }: Props) => {
           } catch (error) {
             console.log("Failed to refresh token");
             console.error(error);
-            captureException("Failed to refresh token", {
-              tags: { module: "AuthProvider.handleSignIn" },
-            });
           }
         }
         if (user) {
