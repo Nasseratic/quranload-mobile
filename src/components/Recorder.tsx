@@ -37,17 +37,16 @@ import {
 import { toast } from "./Toast";
 import { PermissionStatus } from "../../node_modules/expo-modules-core/src/PermissionsInterface";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
-import LottieView from "lottie-react-native";
-import UploadingLottie from "assets/lottie/uploading.json";
-import Typography from "./Typography";
-import { fi } from "date-fns/locale";
+import { Sentry } from "utils/sentry";
 
+let currentRecordingDurationMillis = 0;
 let currentRecording: Audio.Recording | null = null;
 
 const cleanCurrentRecording = async () => {
   if (currentRecording) {
     const stopAndUnloadPromise = currentRecording.stopAndUnloadAsync();
     currentRecording = null;
+    currentRecordingDurationMillis = 0;
     await stopAndUnloadPromise;
   }
 };
@@ -129,12 +128,19 @@ export const Recorder = ({
   const cutRecording = async () => {
     if (!currentRecording) return;
     const { durationMillis } = await currentRecording.getStatusAsync();
+    const durationInMs = Math.max(durationMillis, currentRecordingDurationMillis);
+    if (durationMillis < currentRecordingDurationMillis) {
+      Sentry.captureEvent({
+        message: "Recording duration missmatch, currentRecordingDurationMillis is greater",
+        extra: { durationMillis, currentRecordingDurationMillis },
+      });
+    }
     const uri = currentRecording.getURI();
     await cleanCurrentRecording();
     if (uri) {
       recordings.push({
         uri,
-        durationInMs: durationMillis,
+        durationInMs,
       });
       if (lessonId) persistAudioRecordings({ lessonId, recordings });
     }
@@ -211,29 +217,35 @@ export const Recorder = ({
       await cleanCurrentRecording();
       toast.show({ title: "want to record while having current recording", status: "Warning" });
     }
-    const { recording } = await Audio.Recording.createAsync({
-      web: {},
-      ios: {
-        extension: ".m4a",
-        outputFormat: IOSOutputFormat.MPEG4AAC,
-        audioQuality: IOSAudioQuality.MAX,
-        sampleRate: 44100,
-        numberOfChannels: 2,
-        bitRate: 128000,
-        linearPCMBitDepth: 16,
-        linearPCMIsBigEndian: false,
-        linearPCMIsFloat: false,
+    const { recording } = await Audio.Recording.createAsync(
+      {
+        web: {},
+        ios: {
+          extension: ".m4a",
+          outputFormat: IOSOutputFormat.MPEG4AAC,
+          audioQuality: IOSAudioQuality.MAX,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        android: {
+          extension: ".mp4",
+          outputFormat: AndroidOutputFormat.MPEG_4, //mp4 (m4a)
+          audioEncoder: AndroidAudioEncoder.AMR_WB,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 108000,
+        },
+        isMeteringEnabled: true,
       },
-      android: {
-        extension: ".mp4",
-        outputFormat: AndroidOutputFormat.MPEG_4, //mp4 (m4a)
-        audioEncoder: AndroidAudioEncoder.AMR_WB,
-        sampleRate: 44100,
-        numberOfChannels: 2,
-        bitRate: 108000,
+      ({ durationMillis }) => {
+        currentRecordingDurationMillis = durationMillis;
       },
-      isMeteringEnabled: true,
-    });
+      100
+    );
     currentRecording = recording;
 
     await sleep(RECORDING_INTERVAL);
@@ -417,7 +429,13 @@ const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
   useEffect(() => {
     if (isRunning) {
       const interval = setInterval(() => {
-        setSeconds((s) => s + 1);
+        setSeconds(
+          Math.round(
+            (recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) +
+              +currentRecordingDurationMillis) /
+              1000
+          )
+        );
       }, 1000);
       return () => clearInterval(interval);
     }
