@@ -242,6 +242,13 @@ export const Recorder = ({
         isMeteringEnabled: true,
       },
       ({ durationMillis }) => {
+        if (durationMillis === 0) {
+          Sentry.captureEvent({
+            message: "onRecordingStatusUpdate received 0 duration",
+            extra: { durationMillis },
+          });
+        }
+
         currentRecordingDurationMillis = durationMillis;
       },
       100
