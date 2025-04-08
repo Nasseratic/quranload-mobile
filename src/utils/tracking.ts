@@ -1,8 +1,13 @@
+import { OTA_VERSION } from "components/Version";
 import { t } from "locales/config";
 import PostHog from "posthog-react-native";
 
 export const posthog = new PostHog("phc_NyrqpdlwWyfpNiwGzvU8yyVQ0ipyfNuH1NybvWeKmHC", {
   host: "https://eu.i.posthog.com",
+});
+
+posthog.register({
+  otaVersion: OTA_VERSION,
 });
 
 type Events =
