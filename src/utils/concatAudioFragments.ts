@@ -15,14 +15,33 @@ export const concatAudioFragments = async (audioFiles: string[]) => {
 
   const outputFile = `${outputDir}/output_${Math.random().toString(36).substring(2, 15)}.mp3`;
 
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<{
+    uri: string;
+    totalDuration: number | null;
+  }>((resolve, reject) => {
     FFmpegKit.execute(
       `${audioInputFilesString} ${concatFilesCommand} -codec:a libmp3lame -q:a ${MP3_QUALITY} ${outputFile}`
     ).then(async (session) => {
       const returnCode = await session.getReturnCode();
       if (ReturnCode.isSuccess(returnCode)) {
+        let totalDuration: null | number = null;
+        try {
+          const output = await session.getOutput();
+          // extract total duration from output
+          const durationRegex = /time=(\d+:\d+:\d+\.\d+)/g;
+          const durationMatch = output.match(durationRegex)?.[0];
+          if (durationMatch) {
+            const timeParts = durationMatch.split("=") as [string, string];
+            const time = timeParts[1].split(":") as [string, string, string];
+            totalDuration = Math.round(
+              parseInt(time[0]) * 3600 + parseInt(time[1]) * 60 + parseFloat(time[2])
+            );
+          }
+        } catch (error) {
+          console.error("Error extracting duration:", error);
+        }
         // SUCCESS
-        resolve(outputFile);
+        resolve({ uri: outputFile, totalDuration });
       } else if (ReturnCode.isCancel(returnCode)) {
         // CANCEL
       } else {

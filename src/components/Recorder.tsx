@@ -168,16 +168,24 @@ export const Recorder = ({
       handleStatusChange("submitting");
       await cutRecording();
 
-      const uri = await concatAudioFragments(recordings.map(({ uri }) => uri));
+      const { uri, totalDuration } = await concatAudioFragments(recordings.map(({ uri }) => uri));
 
       const durationInSec =
         Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
+
+      if (totalDuration && totalDuration > durationInSec) {
+        Sentry.captureEvent({
+          message: "Recording duration mismatch, concatAudioFragments totalDuration is greater",
+          extra: { totalDuration, durationInSec },
+        });
+      }
+
       try {
         await cleanRecordings({ lessonId });
 
         await onSubmit({
           uri,
-          duration: durationInSec,
+          duration: durationInSec || totalDuration || 0,
         });
 
         handleStatusChange("idle");
