@@ -28,8 +28,8 @@ export type RootStackParamList = {
     code: string;
   };
   ConfirmEmailScreen: {
-    code: string;
-    userId: string;
+    code?: string;
+    userId?: string;
   };
   ForgotPassword: undefined;
   RegisterAccount: undefined;

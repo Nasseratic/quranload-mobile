@@ -159,10 +159,17 @@ const english = {
       male: "Male",
       female: "Female",
     },
+    verifyManually: "Verify Email Manually",
+    verifyEmail: "Verify Email",
   },
   confirmEmailScreen: {
     confirming: "Confirming your email",
     emailVerified: "Your account has been verified",
+    verifyEmail: "Verify Your Email",
+    verificationCode: "Verification Code",
+    userId: "User ID",
+    verify: "Verify",
+    missingFields: "Please enter both verification code and user ID",
   },
   teacherHomeScreen: {
     submitted: "Submitted",

@@ -155,6 +155,8 @@ const danish: typeof english = {
     emailResent: "E-mail er gensendt",
     backToLogin: "Tilbage til log ind",
     alreadyRegistered: "Har du allerede en bruger?",
+    verifyManually: "Bekræft e-mail manuelt",
+    verifyEmail: "Bekræft e-mail",
     gender: {
       label: "Køn",
       male: "Mand",
@@ -204,6 +206,11 @@ const danish: typeof english = {
   confirmEmailScreen: {
     confirming: "Bekræfter din email",
     emailVerified: "Din konto er blevet verificeret",
+    verifyEmail: "Bekræft din e-mail",
+    verificationCode: "Bekræftelseskode",
+    userId: "Bruger-ID",
+    verify: "Bekræft",
+    missingFields: "Indtast venligst både bekræftelseskode og bruger-ID",
   },
   readFromTo: "Læs fra side {{from}} til og med {{to}}",
   chatList: {

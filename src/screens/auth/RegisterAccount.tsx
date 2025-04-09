@@ -130,8 +130,13 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
           style={{
             paddingHorizontal: 16,
             paddingBottom: insets.bottom + 16,
+            gap: 12,
           }}
         >
+          <ActionButton
+            title={t("registerAccountScreen.verifyManually")}
+            onPress={() => navigation.navigate("ConfirmEmailScreen", {})}
+          />
           <ActionButton
             title={t("registerAccountScreen.backToLogin")}
             onPress={() => navigation.goBack()}
