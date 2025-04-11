@@ -20,7 +20,7 @@ export const ConfirmEmailScreen: FunctionComponent<Props> = ({ navigation, route
   const [code, setCode] = useState(route.params.code || "");
   const [userId, setUserId] = useState(route.params.userId || "");
 
-  const { refetch, isFetching, error, data } = useQuery({
+  const { refetch, isFetching, error, isFetched } = useQuery({
     queryKey: ["confirmEmail", code, userId],
     queryFn: () => {
       if (!code || !userId) {
@@ -46,7 +46,7 @@ export const ConfirmEmailScreen: FunctionComponent<Props> = ({ navigation, route
             <Typography type="SubHeader">{t("confirmEmailScreen.confirming")}...</Typography>
             <ActivityIndicator />
           </>
-        ) : data ? (
+        ) : userId && code && !error && isFetched ? (
           <>
             <LottieView
               source={ConfirmedLottie}

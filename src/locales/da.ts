@@ -156,7 +156,7 @@ const danish: typeof english = {
     backToLogin: "Tilbage til log ind",
     alreadyRegistered: "Har du allerede en bruger?",
     verifyManually: "Bekræft e-mail manuelt",
-    verifyEmail: "Bekræft e-mail",
+    verifyEmail: "Har du brug for at bekræfte din e-mail?",
     gender: {
       label: "Køn",
       male: "Mand",

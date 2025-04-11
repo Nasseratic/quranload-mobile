@@ -160,7 +160,7 @@ const english = {
       female: "Female",
     },
     verifyManually: "Verify Email Manually",
-    verifyEmail: "Verify Email",
+    verifyEmail: "Need to verify your email?",
   },
   confirmEmailScreen: {
     confirming: "Confirming your email",

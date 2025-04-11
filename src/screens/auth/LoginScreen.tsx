@@ -19,7 +19,7 @@ import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
 import { RootStackParamList } from "navigation/navigation";
 import Logo from "@assets/logo.png";
-import { ScrollView } from "tamagui";
+import { ScrollView, Stack } from "tamagui";
 import * as Updates from "expo-updates";
 import { isDevelopmentBuild } from "expo-dev-client";
 import DevelopmentUserSelection, { DevelopmentUser } from "components/DevelopmentUserSelection";
@@ -100,23 +100,32 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
               title={t("loginScreen.signIn")}
               onPress={handleSubmit}
             />
-            <TouchableOpacity
-              onPress={() => navigation.navigate("ForgotPassword")}
-              style={{ alignItems: "center", marginTop: 15 }}
-            >
-              <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
-                {t("loginScreen.forgotPassword")}
-              </Typography>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("RegisterAccount")}
-              style={{ alignItems: "center", marginTop: 15 }}
-            >
-              <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-                {t("loginScreen.notRegistered")}
-              </Typography>
-            </TouchableOpacity>
+            <Stack gap={12} mt={24}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ForgotPassword")}
+                style={{ alignItems: "center" }}
+              >
+                <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
+                  {t("loginScreen.forgotPassword")}
+                </Typography>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ConfirmEmailScreen", { code: "", userId: "" })}
+                style={{ alignItems: "center" }}
+              >
+                <Typography type="CaptionLight" style={{ color: Colors.Primary[1] }}>
+                  {t("registerAccountScreen.verifyEmail")}
+                </Typography>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("RegisterAccount")}
+                style={{ alignItems: "center" }}
+              >
+                <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
+                  {t("loginScreen.notRegistered")}
+                </Typography>
+              </TouchableOpacity>
+            </Stack>
           </View>
         </FormikProvider>
       </ScrollView>
