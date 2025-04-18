@@ -10,7 +10,7 @@ posthog.register({
   otaVersion: OTA_VERSION,
 });
 
-type Events =
+type Event =
   | "RetriedUploadRecording"
   | "DiscardedRecordingUploadErrorAlert"
   | "PressedShareRecodingToWhatsApp"
@@ -20,7 +20,8 @@ type Events =
   | "RecordingDiscarded"
   | "RecordingSubmitPressed"
   | "RecordingUploaded"
-  | "RecordingUploadFailed";
+  | "RecordingUploadFailed"
+  | "RecordingStatusChangedWith0Duration";
 
 type Properties = {
   [key: string]: any;
@@ -28,6 +29,18 @@ type Properties = {
   duration?: number;
 };
 
-export const track = (event: Events, properties?: Properties) => {
+export const track = (event: Event, properties?: Properties) => {
   posthog.capture(event, properties);
+};
+
+export const throttleTrack = (throttleTime: number) => {
+  let lastTrackTime = 0;
+
+  return (event: Event, properties?: { [key: string]: any }) => {
+    const now = Date.now();
+    if (now - lastTrackTime > throttleTime) {
+      track(event, properties);
+      lastTrackTime = now;
+    }
+  };
 };

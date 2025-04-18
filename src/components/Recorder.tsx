@@ -38,9 +38,12 @@ import { toast } from "./Toast";
 import { PermissionStatus } from "../../node_modules/expo-modules-core/src/PermissionsInterface";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 import { Sentry } from "utils/sentry";
+import { throttleTrack, track } from "utils/tracking";
 
 let currentRecordingDurationMillis = 0;
 let currentRecording: Audio.Recording | null = null;
+
+const throttledTrack = throttleTrack(2000);
 
 const cleanCurrentRecording = async () => {
   if (currentRecording) {
@@ -255,6 +258,7 @@ export const Recorder = ({
             message: "onRecordingStatusUpdate received 0 duration",
             extra: { durationMillis },
           });
+          throttledTrack("RecordingStatusChangedWith0Duration");
         }
 
         currentRecordingDurationMillis = durationMillis;
