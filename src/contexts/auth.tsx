@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: Props) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const updateUserInfo = useCvxMutation(cvx.user.updateUserInfo);
   const {
-    refetch,
+    refetch: fetchUser,
     data: user,
     isFetching,
   } = useQuery([profileQueryKey], fetchUserProfile, {
@@ -100,9 +100,26 @@ export const AuthProvider = ({ children }: Props) => {
     }
     setAccessToken(accessToken);
     try {
-      const { data: user } = await refetch({ throwOnError: true });
+      const { data: user } = await fetchUser({ throwOnError: true });
+      if (!user) {
+        throw new Error("User not found");
+      }
+
       setSignedIn(true);
+
+      posthog.identify(user.id, {
+        email: user.emailAddress,
+        username: user.username,
+        role: user.roles[0],
+        gender: user.gender,
+        phoneNumber: user.phoneNumber,
+        activeTeams: user.teams
+          .filter((team) => team.isActive)
+          .map((team) => `${team.organizationName} (${team.name})`),
+      });
+
       const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+
       if (storedRefreshToken) {
         try {
           const data = await refreshToken({ refreshToken: storedRefreshToken });
@@ -113,25 +130,14 @@ export const AuthProvider = ({ children }: Props) => {
           console.error("Failed to refresh token", error);
         }
       }
-      if (user) {
-        posthog.identify(user.id, {
-          email: user.emailAddress,
-          username: user.username,
-          role: user.roles[0],
-          gender: user.gender,
-          phoneNumber: user.phoneNumber,
-          activeTeams: user.teams
-            .filter((team) => team.isActive)
-            .map((team) => `${team.organizationName} (${team.name})`),
-        });
-        await updateUserInfo({
-          userId: user.id!,
-          currentOtaVersion: OTA_VERSION,
-          currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
-          platform: Platform.OS,
-          lastSeen: Date.now(),
-        });
-      }
+
+      await updateUserInfo({
+        userId: user.id!,
+        currentOtaVersion: OTA_VERSION,
+        currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
+        platform: Platform.OS,
+        lastSeen: Date.now(),
+      });
     } catch (err: any) {
       if (err?.status !== 401) {
         setSignedIn(false);
