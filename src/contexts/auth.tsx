@@ -93,44 +93,47 @@ export const AuthProvider = ({ children }: Props) => {
     }
   };
 
-  const handleSignIn = () => {
-    AsyncStorage.getItem("accessToken").then(setAccessToken);
-    refetch({ throwOnError: true })
-      .then(async ({ data: user }) => {
-        setSignedIn(true);
-        const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
-        if (storedRefreshToken) {
-          try {
-            const data = await refreshToken({ refreshToken: storedRefreshToken });
-            await AsyncStorage.setItem("refreshToken", data.refreshToken);
-            await AsyncStorage.setItem("accessToken", data.accessToken);
-            console.log("Token refreshed successfully 🔐");
-          } catch (error) {
-            console.log("Failed to refresh token");
-            console.error(error);
-          }
+  const handleSignIn = async () => {
+    const accessToken = await AsyncStorage.getItem("accessToken");
+    if (!accessToken) {
+      return;
+    }
+    setAccessToken(accessToken);
+    try {
+      const { data: user } = await refetch({ throwOnError: true });
+      setSignedIn(true);
+      const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+      if (storedRefreshToken) {
+        try {
+          const data = await refreshToken({ refreshToken: storedRefreshToken });
+          await AsyncStorage.setItem("refreshToken", data.refreshToken);
+          await AsyncStorage.setItem("accessToken", data.accessToken);
+          console.log("Token refreshed successfully 🔐");
+        } catch (error) {
+          console.error("Failed to refresh token", error);
         }
-        if (user) {
-          posthog.identify(user.id, {
-            email: user.emailAddress,
-            username: user.username,
-            role: user.roles[0],
-            gender: user.gender,
-            phoneNumber: user.phoneNumber,
-            activeTeams: user.teams
-              .filter((team) => team.isActive)
-              .map((team) => `${team.organizationName} (${team.name})`),
-          });
-          await updateUserInfo({
-            userId: user.id!,
-            currentOtaVersion: OTA_VERSION,
-            currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
-            platform: Platform.OS,
-            lastSeen: Date.now(),
-          });
-        }
-      })
-      .catch((err) => {
+      }
+      if (user) {
+        posthog.identify(user.id, {
+          email: user.emailAddress,
+          username: user.username,
+          role: user.roles[0],
+          gender: user.gender,
+          phoneNumber: user.phoneNumber,
+          activeTeams: user.teams
+            .filter((team) => team.isActive)
+            .map((team) => `${team.organizationName} (${team.name})`),
+        });
+        await updateUserInfo({
+          userId: user.id!,
+          currentOtaVersion: OTA_VERSION,
+          currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
+          platform: Platform.OS,
+          lastSeen: Date.now(),
+        });
+      }
+    } catch (err: any) {
+      if (err?.status !== 401) {
         setSignedIn(false);
         Sentry.captureException(err, { tags: { module: "AuthProvider.handleSignIn" } });
         toast.show({
@@ -139,14 +142,14 @@ export const AuthProvider = ({ children }: Props) => {
           subTitle: t("reportedToIT"),
           duration: 10 * 1000,
         });
-      })
-      .finally(() => {
-        setInitialized(true);
-        // a delay to not show login screen for already logged in users
-        setTimeout(() => {
-          SplashScreen.hideAsync();
-        }, 400);
-      });
+      }
+    } finally {
+      setInitialized(true);
+      // a delay to not show login screen for already logged in users
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 400);
+    }
   };
 
   const signOut = async () => {
