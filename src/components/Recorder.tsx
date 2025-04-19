@@ -176,7 +176,7 @@ export const Recorder = ({
       const durationInSec =
         Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
 
-      if (totalDuration && totalDuration > durationInSec) {
+      if (totalDuration && totalDuration > durationInSec && totalDuration - durationInSec > 5) {
         Sentry.captureEvent({
           message: "Recording duration mismatch, concatAudioFragments totalDuration is greater",
           extra: { totalDuration, durationInSec },
