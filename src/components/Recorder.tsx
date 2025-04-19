@@ -254,10 +254,6 @@ export const Recorder = ({
       },
       ({ durationMillis }) => {
         if (durationMillis === 0) {
-          Sentry.captureEvent({
-            message: "onRecordingStatusUpdate received 0 duration",
-            extra: { durationMillis },
-          });
           throttledTrack("RecordingStatusChangedWith0Duration");
         }
 
