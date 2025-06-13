@@ -234,6 +234,13 @@ const danish: typeof english = {
     title: "Support",
     welcomeMessage: "Assalamu Alaikum! Hvordan kan vi hjælpe dig i dag?",
     placeholder: "Skriv din besked...",
+    bottomSheet: {
+      title: "🐛 Ny Support Chat",
+      description:
+        "Har du fundet en fejl eller et problem? Rapporter det her og få svar fra vores supportteam. Hjælp os med at forbedre appen ved at fortælle os, hvad der ikke fungerer korrekt.",
+      actionText:
+        "Tryk på supportikonet i headeren når som helst for at rapportere fejl eller problemer.",
+    },
   },
   chat: {
     imageUploadFailed: "Billedupload mislykkedes. Prøv igen.",

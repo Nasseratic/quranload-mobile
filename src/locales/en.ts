@@ -233,6 +233,12 @@ const english = {
     title: "Support",
     welcomeMessage: "Assalamu Alaikum! How can we help you today?",
     placeholder: "Type your message...",
+    bottomSheet: {
+      title: "🐛 New Support Chat",
+      description:
+        "Found a bug or issue? Report it here and get replies from our support team. Help us improve the app by letting us know what's not working properly.",
+      actionText: "Tap the support icon in the header anytime to report bugs or issues.",
+    },
   },
   chat: {
     imageUploadFailed: "Image upload failed. Please try again.",
