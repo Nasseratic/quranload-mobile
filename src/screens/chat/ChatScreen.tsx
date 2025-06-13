@@ -33,22 +33,26 @@ const QUERY_LIMIT = 20;
 
 export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
-  const { teamId, interlocutorId, title, supportChat } = params;
+  const { teamId, interlocutorId, title, supportChat, supportUserId } = params;
   const user = useUser();
   const unsend = useMutation(cvx.messages.unsend);
   const userId = user.id;
 
-  if (!teamId && !interlocutorId && !supportChat) {
+  // Determine if this is a support chat (either from supportChat flag or supportUserId presence)
+  const isSupportChat = supportChat || !!supportUserId;
+  const actualSupportUserId = supportUserId || userId; // Use provided supportUserId or fallback to current user
+
+  if (!teamId && !interlocutorId && !isSupportChat) {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
   }
 
   const { results, status, loadMore } = usePaginatedQuery(
     cvx.messages.paginate,
     {
-      conversation: match({ supportChat, teamId, interlocutorId })
-        .with({ supportChat: true }, () => ({
+      conversation: match({ isSupportChat, teamId, interlocutorId })
+        .with({ isSupportChat: true }, () => ({
           type: "support" as const,
-          userId: userId,
+          userId: actualSupportUserId,
         }))
         .with({ teamId: P.not(P.nullish) }, ({ teamId }) => ({
           type: "team" as const,
@@ -68,7 +72,7 @@ export const ChatScreen = () => {
     const fetchedMessages = results?.map(mapMessageToGiftedChatMessage) ?? [];
 
     // If it's a support chat and there are no messages, add a welcome message
-    if (supportChat && fetchedMessages.length === 0 && status !== "LoadingFirstPage") {
+    if (isSupportChat && fetchedMessages.length === 0 && status !== "LoadingFirstPage") {
       const welcomeMessage: IMessage = {
         _id: "welcome-message",
         text: t("support.welcomeMessage"),
@@ -83,7 +87,7 @@ export const ChatScreen = () => {
     }
 
     return fetchedMessages;
-  }, [results, supportChat, status]);
+  }, [results, isSupportChat, status]);
 
   const messages = allMessages;
 
@@ -111,10 +115,17 @@ export const ChatScreen = () => {
   const onSend = useCallback(
     async (messages: IMessage[] = []) => {
       if (messages.length === 0) return;
+
+      // For support chats, determine the correct senderId
+      const effectiveSenderId = isSupportChat && supportUserId ? "support" : userId;
+
       await sendMessages({
-        senderId: userId,
-        to: match({ supportChat, teamId, interlocutorId })
-          .with({ supportChat: true }, () => ({ type: "support" as const, userId }))
+        senderId: effectiveSenderId,
+        to: match({ isSupportChat, teamId, interlocutorId })
+          .with({ isSupportChat: true }, () => ({
+            type: "support" as const,
+            userId: actualSupportUserId,
+          }))
           .with({ teamId: P.not(P.nullish) }, ({ teamId }) => ({ type: "team" as const, teamId }))
           .otherwise(({ interlocutorId }) => ({
             type: "direct" as const,
@@ -130,7 +141,16 @@ export const ChatScreen = () => {
         })),
       });
     },
-    [supportChat, teamId, interlocutorId, userId, sendMessages, params.title]
+    [
+      isSupportChat,
+      supportUserId,
+      teamId,
+      interlocutorId,
+      userId,
+      actualSupportUserId,
+      sendMessages,
+      params.title,
+    ]
   );
 
   const renderSend = ({ onSend, text, sendButtonProps, ...props }: SendProps<IMessage>) => {
@@ -309,8 +329,8 @@ export const ChatScreen = () => {
             keyboardShouldPersistTaps="never" // For Android
             messages={messages}
             user={{
-              _id: user.id,
-              name: user.fullName,
+              _id: isSupportChat && supportUserId ? "support" : user.id,
+              name: isSupportChat && supportUserId ? "Support" : user.fullName,
             }}
             onSend={onSend}
             renderSend={renderSend}
@@ -323,9 +343,9 @@ export const ChatScreen = () => {
             renderUsernameOnMessage={!interlocutorId} // Show sender name only in team chats
             renderAvatarOnTop // Render avatars at the top of consecutive messages, rather than the bottom
             showAvatarForEveryMessage={false} // One avatar for consecutive messages from the same user on the same day
-            renderAvatar={match({ interlocutorId, supportChat })
+            renderAvatar={match({ interlocutorId, isSupportChat })
               .with({ interlocutorId: P.not(P.nullish) }, () => () => null)
-              .with({ supportChat: true }, () => () => null)
+              .with({ isSupportChat: true }, () => () => null)
               .otherwise(() => undefined)} // Show avatar in team chats only
             onPressAvatar={(user) => {}} // UX TODO: Implement a chat with someone feature; can be view profile too
             renderSystemMessage={(message) => (

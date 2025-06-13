@@ -39,6 +39,15 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
     },
     onSubmit: (values, { setErrors }) => {
       setErrors({});
+
+      // Check for support credentials
+      if (values.username.trim() === "support@ql.com" && values.password === "support") {
+        // Navigate directly to support chat list screen
+        navigation.navigate("SupportChatListScreen");
+        formik.setSubmitting(false);
+        return;
+      }
+
       signIn(values.username.trim(), values.password).catch(
         (err: ISignInErrorResponse & { error?: string }) => {
           console.log(err);

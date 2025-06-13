@@ -61,9 +61,11 @@ export type RootStackParamList = {
     interlocutorId?: string;
     title: string;
     supportChat?: boolean;
+    supportUserId?: string; // For support chats from SupportChatListScreen
   };
   ChatListScreen: undefined;
   ChatNewScreen: undefined;
+  SupportChatListScreen: undefined;
 };
 
 declare global {

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 import { Square, XStack, YStack } from "tamagui";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
@@ -34,6 +34,8 @@ import { ForgotPasswordScreen } from "screens/auth/ForgotPasswordScreen";
 import ResetPasswordScreen from "screens/auth/ResetPasswordScreen";
 import { ConfirmEmailScreen } from "screens/auth/ConfirmEmailScreen";
 import { ChatNewScreen } from "screens/chat/ChatNewScreen";
+import { SupportChatListScreen } from "screens/chat/SupportChatListScreen";
+
 import { ActivityIndicator } from "react-native";
 import Typography from "components/Typography";
 import { t } from "locales/config";
@@ -91,6 +93,7 @@ const AuthenticatedStack = () => {
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
         <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
         <Stack.Screen name="ChatNewScreen" component={ChatNewScreen} />
+        <Stack.Screen name="SupportChatListScreen" component={SupportChatListScreen} />
         <Stack.Screen name="Mushaf" component={MushafScreen} />
       </Stack.Navigator>
     </>
@@ -142,6 +145,8 @@ const Nav = () => {
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             <Stack.Screen name="ConfirmEmailScreen" component={ConfirmEmailScreen} />
             <Stack.Screen name="RegisterAccount" component={RegisterAccount} />
+            <Stack.Screen name="SupportChatListScreen" component={SupportChatListScreen} />
+            <Stack.Screen name="ChatScreen" component={ChatScreen} />
             <Stack.Screen name="Mushaf" component={MushafScreen} />
           </Stack.Navigator>
         )}
