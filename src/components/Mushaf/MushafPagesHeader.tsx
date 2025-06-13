@@ -8,7 +8,7 @@ import { ChevronLeftIcon } from "assets/icons";
 import Typography from "components/Typography";
 import { t } from "locales/config";
 
-const MUSHUF_PAGE_HEADER_HEIGHT = 50;
+export const MUSHUF_PAGE_HEADER_HEIGHT = 50;
 
 export const MushafPagesHeader = ({
   surahName,
