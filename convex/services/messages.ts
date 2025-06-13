@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { messageInitializer } from "../schema";
 import { isNotNullish } from "utils/notNullish";
 import { pushNotifications } from "./pushNotifications";
+import { match } from "ts-pattern";
 
 export const paginate = query({
   args: {
@@ -17,18 +18,22 @@ export const paginate = query({
         type: v.literal("direct"),
         participantX: v.string(),
         participantY: v.string(),
+      }),
+      v.object({
+        type: v.literal("support"),
+        userId: v.string(),
       })
     ),
   },
   handler: async (ctx, { paginationOpts, conversation }) => {
-    const conversationId =
-      conversation.type === "team"
-        ? conversation.teamId
-        : (await getConversationId(ctx, conversation)) ??
-          // TODO: this will cause error in client, if you start conversation with someone new
-          // because the getConversationId will return undefined first time, but after first message it will change to return conversationId
-          // this will trigger cursor changed error
-          "_";
+    const conversationId = await match(conversation)
+      .with({ type: "support" }, async ({ userId }) => `support_${userId}`)
+      .with({ type: "team" }, ({ teamId }) => teamId)
+      .with(
+        { type: "direct" },
+        async (directConversation) => (await getConversationId(ctx, directConversation)) ?? "_"
+      )
+      .exhaustive();
 
     return ctx.db
       .query("messages")
@@ -61,6 +66,10 @@ export const send = mutation({
       v.object({
         type: v.literal("direct"),
         receiverId: v.string(),
+      }),
+      v.object({
+        type: v.literal("support"),
+        userId: v.string(),
       })
     ),
     messages: v.array(
@@ -72,24 +81,32 @@ export const send = mutation({
   handler: async (ctx, { senderId, messages, to }) => {
     if (!senderId) return new ConvexError("Sender ID is required");
 
-    const conversationId =
-      to.type === "team"
-        ? to.teamId
-        : await getOrCreateDirectConversation(ctx, {
+    const conversationId = await match(to)
+      .with({ type: "support" }, async ({ userId }) => `support_${userId}`)
+      .with({ type: "team" }, ({ teamId }) => teamId)
+      .with(
+        { type: "direct" },
+        async ({ receiverId }) =>
+          await getOrCreateDirectConversation(ctx, {
             senderId,
-            receiverId: to.receiverId,
-          });
+            receiverId,
+          })
+      )
+      .exhaustive();
 
     await Promise.all(
       messages.map(async (message) =>
         ctx.db.insert("messages", {
           ...message,
           senderId,
-          receiverId: isDirectConversation(to) ? to.receiverId : undefined,
+          receiverId:
+            to.type === "direct" ? to.receiverId : to.type === "support" ? "support" : undefined,
           conversationId,
+          chatType: to.type === "support" ? "support" : "normal",
         })
       )
     );
+
     const mediaBody =
       messages?.[0]?.mediaUrl && messages?.[0]?.mediaType
         ? messages[0].mediaType === "image"
@@ -97,7 +114,7 @@ export const send = mutation({
           : `🎙️ Audio`
         : undefined;
 
-    if (isDirectConversation(to)) {
+    if (to.type === "direct") {
       try {
         await pushNotifications.sendPushNotification(ctx, {
           userId: to.receiverId,

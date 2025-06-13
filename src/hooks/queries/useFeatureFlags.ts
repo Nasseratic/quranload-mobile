@@ -7,6 +7,7 @@ type FF = keyof FunctionReturnType<typeof cvx.featureFlags.ffs>;
 const devFfs = {
   chat: true,
   inAppEnrolment: true,
+  supportChat: true,
 } satisfies Record<FF, boolean>;
 
 export const useFeatureFlags = () => {

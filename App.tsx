@@ -32,6 +32,22 @@ Audio.setAudioModeAsync({
 
 SplashScreen.preventAutoHideAsync();
 
+// Filter out the React 18.3 key prop warning from react-native-gifted-chat (development only)
+if (__DEV__) {
+  const originalWarn = console.error;
+  console.error = (...args) => {
+    // Check if this is the specific warning we want to suppress
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes('A props object containing a "key" prop is being spread into JSX')
+    ) {
+      return; // Don't log this warning
+    }
+    // Log all other warnings normally
+    originalWarn.apply(console, args);
+  };
+}
+
 function App() {
   const [loaded] = useFonts({
     Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),

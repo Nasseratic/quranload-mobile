@@ -18,10 +18,15 @@ export const useSupabaseMediaUploader = ({
     return uploadImages;
   };
 
-  const { mutateAsync: upload, isLoading } = useMutation({
+  const {
+    mutateAsync: upload,
+    isLoading,
+    error,
+  } = useMutation({
     mutationKey: ["media"],
     mutationFn: supabaseUploadChatImages,
   });
+  console.log(error);
 
   return {
     ...picker,

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 export const messageInitializer = {
   isSystem: v.boolean(),
+  chatType: v.optional(v.union(v.literal("normal"), v.literal("support"))),
   mediaType: v.optional(
     v.union(v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file"))
   ),
@@ -29,7 +30,7 @@ export const userInfo = {
 
 export default defineSchema({
   featureFlags: defineTable({
-    name: v.union(v.literal("chat"), v.literal("inAppEnrolment")),
+    name: v.union(v.literal("chat"), v.literal("inAppEnrolment"), v.literal("supportChat")),
     enabled: v.boolean(),
   }),
   messages: defineTable({

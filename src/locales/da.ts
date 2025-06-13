@@ -230,5 +230,13 @@ const danish: typeof english = {
     contactUs: "Kontakt os",
   },
   reportedToIT: "Dette problem er blevet rapporteret til vores IT-team",
+  support: {
+    title: "Support",
+    welcomeMessage: "Assalamu Alaikum! Hvordan kan vi hjælpe dig i dag?",
+    placeholder: "Skriv din besked...",
+  },
+  chat: {
+    imageUploadFailed: "Billedupload mislykkedes. Prøv igen.",
+  },
 };
 export default danish;

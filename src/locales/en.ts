@@ -229,5 +229,13 @@ const english = {
     contactUs: "Contact Us",
   },
   reportedToIT: "This issue has been reported to our IT team",
+  support: {
+    title: "Support",
+    welcomeMessage: "Assalamu Alaikum! How can we help you today?",
+    placeholder: "Type your message...",
+  },
+  chat: {
+    imageUploadFailed: "Image upload failed. Please try again.",
+  },
 };
 export default english;

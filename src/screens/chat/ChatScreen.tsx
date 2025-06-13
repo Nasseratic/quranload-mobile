@@ -24,40 +24,68 @@ import { uploadChatMedia } from "utils/uploadChatMedia";
 import { AudioPlayer } from "components/AudioPlayer";
 import { useMutation, usePaginatedQuery } from "convex/react";
 import { cvx, Id } from "api/convex";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 import { t } from "locales/config";
+import { isNotNullish } from "utils/notNullish";
+import { toast } from "components/Toast";
 
 const QUERY_LIMIT = 20;
 
 export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
-  const { teamId, interlocutorId, title } = params;
+  const { teamId, interlocutorId, title, supportChat } = params;
   const user = useUser();
   const unsend = useMutation(cvx.messages.unsend);
   const userId = user.id;
 
-  if (!teamId && !interlocutorId) {
-    throw Error("teamId or interlocutorId must be provided");
+  if (!teamId && !interlocutorId && !supportChat) {
+    throw Error("teamId, interlocutorId, or supportChat must be provided");
   }
 
   const { results, status, loadMore } = usePaginatedQuery(
     cvx.messages.paginate,
     {
-      conversation: teamId
-        ? {
-            type: "team",
-            teamId: teamId,
-          }
-        : {
-            type: "direct",
-            participantX: userId,
-            participantY: interlocutorId!,
-          },
+      conversation: match({ supportChat, teamId, interlocutorId })
+        .with({ supportChat: true }, () => ({
+          type: "support" as const,
+          userId: userId,
+        }))
+        .with({ teamId: P.not(P.nullish) }, ({ teamId }) => ({
+          type: "team" as const,
+          teamId: teamId,
+        }))
+        .otherwise(() => ({
+          type: "direct" as const,
+          participantX: userId,
+          participantY: interlocutorId!,
+        })),
     },
     { initialNumItems: QUERY_LIMIT }
   );
 
-  const messages = results?.map(mapMessageToGiftedChatMessage) ?? [];
+  // Add welcome message for support chat when there are no messages
+  const allMessages = useMemo(() => {
+    const fetchedMessages = results?.map(mapMessageToGiftedChatMessage) ?? [];
+
+    // If it's a support chat and there are no messages, add a welcome message
+    if (supportChat && fetchedMessages.length === 0 && status !== "LoadingFirstPage") {
+      const welcomeMessage: IMessage = {
+        _id: "welcome-message",
+        text: t("support.welcomeMessage"),
+        createdAt: new Date(),
+        user: {
+          _id: "support",
+          name: "Support",
+        },
+        system: true,
+      };
+      return [welcomeMessage];
+    }
+
+    return fetchedMessages;
+  }, [results, supportChat, status]);
+
+  const messages = allMessages;
 
   const sendMessages = useMutation(cvx.messages.send);
 
@@ -67,8 +95,8 @@ export const ChatScreen = () => {
 
   const { pickImage, images, removeImage, upload, isUploading } = useSupabaseMediaUploader();
 
-  if (!teamId && !interlocutorId) {
-    throw Error("teamId or interlocutorId must be provided");
+  if (!teamId && !interlocutorId && !supportChat) {
+    throw Error("teamId, interlocutorId, or supportChat must be provided");
   }
 
   useEffect(() => {
@@ -80,21 +108,30 @@ export const ChatScreen = () => {
     };
   }, []);
 
-  const onSend = useCallback(async (messages: IMessage[] = []) => {
-    if (messages.length === 0) return;
-    await sendMessages({
-      senderId: userId,
-      to: teamId ? { type: "team", teamId } : { type: "direct", receiverId: interlocutorId! },
-      messages: messages.map(({ text, audio, image, user }) => ({
-        text,
-        senderName: user.name,
-        receiverName: params.title,
-        mediaUrl: image ?? audio,
-        mediaType: audio ? "audio" : image ? "image" : undefined,
-        isSystem: false,
-      })),
-    });
-  }, []);
+  const onSend = useCallback(
+    async (messages: IMessage[] = []) => {
+      if (messages.length === 0) return;
+      await sendMessages({
+        senderId: userId,
+        to: match({ supportChat, teamId, interlocutorId })
+          .with({ supportChat: true }, () => ({ type: "support" as const, userId }))
+          .with({ teamId: P.not(P.nullish) }, ({ teamId }) => ({ type: "team" as const, teamId }))
+          .otherwise(({ interlocutorId }) => ({
+            type: "direct" as const,
+            receiverId: interlocutorId!,
+          })),
+        messages: messages.map(({ text, audio, image, user }) => ({
+          text,
+          senderName: user.name,
+          receiverName: params.title,
+          mediaUrl: image ?? audio,
+          mediaType: audio ? "audio" : image ? "image" : undefined,
+          isSystem: false,
+        })),
+      });
+    },
+    [supportChat, teamId, interlocutorId, userId, sendMessages, params.title]
+  );
 
   const renderSend = ({ onSend, text, sendButtonProps, ...props }: SendProps<IMessage>) => {
     const isTextOrImages = text || images.length > 0;
@@ -110,8 +147,15 @@ export const ChatScreen = () => {
             }
             if (images.length > 0) {
               const uploadedImages = await upload();
-              const lastImage = uploadedImages[uploadedImages.length - 1];
-              const restImages = uploadedImages.slice(0, uploadedImages.length - 1);
+              const validUploadedImages = uploadedImages.filter(isNotNullish);
+              if (validUploadedImages.length === 0) {
+                // All uploads failed
+                toast.show({ status: "Error", title: t("chat.imageUploadFailed") });
+                return;
+              }
+
+              const lastImage = validUploadedImages[validUploadedImages.length - 1];
+              const restImages = validUploadedImages.slice(0, validUploadedImages.length - 1);
               onSend?.(
                 [
                   ...restImages.map((image) => ({ image })),
@@ -279,7 +323,10 @@ export const ChatScreen = () => {
             renderUsernameOnMessage={!interlocutorId} // Show sender name only in team chats
             renderAvatarOnTop // Render avatars at the top of consecutive messages, rather than the bottom
             showAvatarForEveryMessage={false} // One avatar for consecutive messages from the same user on the same day
-            renderAvatar={interlocutorId ? () => null : undefined} // Show avatar in team chats only
+            renderAvatar={match({ interlocutorId, supportChat })
+              .with({ interlocutorId: P.not(P.nullish) }, () => () => null)
+              .with({ supportChat: true }, () => () => null)
+              .otherwise(() => undefined)} // Show avatar in team chats only
             onPressAvatar={(user) => {}} // UX TODO: Implement a chat with someone feature; can be view profile too
             renderSystemMessage={(message) => (
               <Card bg="$white0" p={12} my={16} mx={8} borderRadius={8}>
@@ -305,7 +352,9 @@ export const ChatScreen = () => {
             )}
             onLongPress={(context, message) => {
               const options = [
-                ...(message.user._id === userId ? [t("unsend")] : []),
+                ...match(message.user._id === userId)
+                  .with(true, () => [t("unsend")])
+                  .otherwise(() => []),
                 t("copy"),
                 t("cancel"),
               ];

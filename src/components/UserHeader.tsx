@@ -7,6 +7,7 @@ import { Colors } from "constants/Colors";
 import { useNavigation } from "@react-navigation/native";
 import { XStack } from "tamagui";
 import { ChatIcon } from "./icons/ChatIcon";
+import { SupportIcon } from "./icons/SupportIcon";
 import { useFeatureFlags } from "hooks/queries/useFeatureFlags";
 
 const UserHeader = () => {
@@ -40,11 +41,25 @@ const UserHeader = () => {
       >
         <Typography type="HeadlineHeavy">{user?.fullName}</Typography>
         <XStack gap={16} jc="center" ai="center">
+          {user && ff?.supportChat && (
+            <TouchableOpacity
+              hitSlop={10}
+              onPress={() =>
+                navigation.navigate("ChatScreen", {
+                  title: "Support",
+                  supportChat: true,
+                })
+              }
+            >
+              <SupportIcon size={20} color={Colors.Primary[1]} />
+            </TouchableOpacity>
+          )}
           {user && ff?.chat && (
             <TouchableOpacity hitSlop={10} onPress={() => navigation.navigate("ChatListScreen")}>
               <ChatIcon size={20} color={Colors.Primary[1]} />
             </TouchableOpacity>
           )}
+
           <TouchableOpacity hitSlop={10} onPress={() => navigation.navigate("Profile")}>
             <CogIcon width={20} height={18} color={Colors.Primary[1]} />
           </TouchableOpacity>

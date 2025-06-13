@@ -5,7 +5,13 @@ import {
   useQuery,
 } from "convex/react";
 import { api } from "../../convex/_generated/api";
-export const client = new ConvexReactClient("https://courteous-goat-120.convex.cloud");
+import { isDevelopmentBuild } from "expo-dev-client";
+
+export const client = new ConvexReactClient(
+  isDevelopmentBuild()
+    ? "https://courteous-goat-120.convex.cloud"
+    : "https://gregarious-aardvark-817.convex.cloud"
+);
 
 export type { FunctionReturnType } from "convex/server";
 
