@@ -1,0 +1,186 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# QuranLoad Mobile Development Guide
+
+## Project Overview
+QuranLoad is a React Native mobile application built with Expo and uses Tamagui for UI components and Convex for the backend. The app supports both iOS and Android platforms.
+
+## Technology Stack
+
+### Frontend
+- **React Native** with **Expo** (SDK 52)
+- **TypeScript** for type safety
+- **Tamagui** for UI components and styling
+- **React Navigation** for navigation
+- **React Query (@tanstack/react-query)** for data fetching
+- **React Hook Form** with **Formik** for form handling
+- **Expo AV** for audio/video functionality
+- **Supabase** for additional backend services
+
+### Backend
+- **Convex** for real-time database and backend functions
+- **Push notifications** via Convex Expo integration
+- **Feature flags** system
+- **Real-time messaging** and chat functionality
+
+## Project Structure
+
+### Main Application Files
+- [App.tsx](mdc:App.tsx) - Main app entry point with providers
+- [package.json](mdc:package.json) - Dependencies and scripts
+- [tamagui.config.ts](mdc:tamagui.config.ts) - Tamagui configuration
+
+### Source Code Structure
+```
+src/
+├── components/     # Reusable UI components
+├── screens/        # Screen components
+├── navigation/     # Navigation configuration
+├── api/           # API client and Convex setup
+├── contexts/      # React contexts (auth, etc.)
+├── hooks/         # Custom React hooks
+├── services/      # Business logic services
+├── utils/         # Utility functions
+├── types/         # TypeScript type definitions
+├── constants/     # App constants
+├── styles/        # Style definitions
+├── assets/        # Images, fonts, etc.
+├── locales/       # Internationalization
+└── __generated/   # Generated API types
+```
+
+### Backend Structure
+```
+convex/
+├── schema.ts           # Database schema definitions
+├── convex.config.ts    # Convex app configuration
+├── services/           # Backend functions
+│   ├── messages.ts     # Message handling
+│   ├── user.ts         # User management
+│   ├── support.ts      # Support functionality
+│   ├── featureFlags.ts # Feature flag management
+│   └── pushNotifications.ts # Push notification handling
+└── _generated/         # Generated Convex files
+```
+
+## Development Setup
+
+### Prerequisites
+- Node.js (latest LTS)
+- Expo CLI
+- iOS Simulator (for iOS development)
+- Android Studio/Emulator (for Android development)
+
+### Getting Started
+1. Install dependencies: `npm install`
+2. Start development server: `npm start`
+3. Use development builds from Expo:
+   - Android: Check README for latest build link
+   - iOS: Check README for latest build link
+
+### Available Scripts
+- `npm start` - Start Expo development server
+- `npm run android` - Run on Android
+- `npm run ios` - Run on iOS
+- `npm run web` - Run on web
+- `npm run lint` - Run ESLint
+- `npm run lint-fix` - Fix ESLint issues
+- `npm run gen:api` - Generate API client from OpenAPI spec
+- `npm run supagen` - Generate Supabase types
+
+## Development Guidelines
+
+### UI Development with Tamagui
+- Use Tamagui components for consistent styling
+- Follow the configured theme in [tamagui.config.ts](mdc:tamagui.config.ts)
+- Utilize Tamagui's responsive design features
+- Keep components in `src/components/` directory
+
+### Backend Development with Convex
+- Define database schema in [convex/schema.ts](mdc:convex/schema.ts)
+- Create backend functions in `convex/services/`
+- Use Convex queries for reading data
+- Use Convex mutations for writing data
+- Implement real-time subscriptions where needed
+- Use Convex MCP tools when needed
+
+### Code Organization
+- Place screen components in `src/screens/`
+- Create reusable hooks in `src/hooks/`
+- Keep business logic in `src/services/`
+- Store TypeScript types in `src/types/`
+- Use contexts for global state management
+
+### API Integration
+- Convex client setup is in [src/api/convex.tsx](mdc:src/api/convex.tsx)
+- API interceptors are configured in [src/api/apiClientInterceptors.ts](mdc:src/api/apiClientInterceptors.ts)
+- Use React Query for data fetching and caching
+- Generated API types are in `src/__generated/`
+
+### Styling Guidelines
+- Use Tamagui's styling system
+- Implement responsive design patterns
+- Follow the established theme and color scheme
+- Use consistent spacing and typography
+
+### State Management
+- Use React Query for server state
+- Use React contexts for global app state
+- Implement proper error handling and loading states
+- Use TypeScript for type safety
+
+### Testing and Quality
+- Follow ESLint configuration in [.eslintrc.js](mdc:.eslintrc.js)
+- Use Prettier for code formatting
+- Implement proper TypeScript types
+- Test on both iOS and Android platforms
+
+### Push Notifications
+- Configured through Convex with Expo integration
+- Backend logic in [convex/services/pushNotifications.ts](mdc:convex/services/pushNotifications.ts)
+- Use `@convex-dev/expo-push-notifications` package
+
+### Feature Flags
+- Managed through Convex backend
+- Implementation in [convex/services/featureFlags.ts](mdc:convex/services/featureFlags.ts)
+- Use for gradual feature rollouts
+
+## Common Development Tasks
+
+### Adding a New Screen
+1. Create screen component in `src/screens/`
+2. Add navigation configuration
+3. Import necessary Tamagui components
+4. Implement proper TypeScript types
+
+### Adding Backend Functionality
+1. Define data schema in [convex/schema.ts](mdc:convex/schema.ts)
+2. Create functions in appropriate service file
+3. Update frontend to use new Convex functions
+4. Test with both queries and mutations
+
+### Implementing Real-time Features
+1. Use Convex subscriptions for real-time data
+2. Implement proper loading and error states
+3. Handle connection status changes
+4. Test across different network conditions
+
+### Internationalization
+- Use `i18n-js` for translations
+- Store translations in `src/locales/`
+- Configure language detection and fallbacks
+
+## Deployment
+- Uses EAS Build for creating development/production builds
+- Azure Pipelines for CI/CD (see [azure-pipelines.yml](mdc:azure-pipelines.yml))
+- Environment-specific configurations
+- Proper versioning and OTA updates with Expo
+
+## Troubleshooting
+- Check Expo CLI version compatibility
+- Verify all dependencies are properly installed
+- Clear Metro cache if experiencing build issues
+- Check device/simulator connectivity for development builds
