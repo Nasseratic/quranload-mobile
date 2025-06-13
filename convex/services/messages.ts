@@ -249,29 +249,26 @@ const getOrCreateDirectConversation = async (
   (await getConversationId(ctx, { participantX: senderId, participantY: receiverId })) ||
   ctx.db.insert("directConversations", { participant1: senderId, participant2: receiverId });
 
+// Alternative more efficient implementation using the compound index
 export const allSupportConversations = query({
   args: {},
   handler: async (ctx) => {
-    // Get all messages with chatType "support"
     const supportMessages = await ctx.db
       .query("messages")
-      .filter((q) => q.eq(q.field("chatType"), "support"))
+      .withIndex("by_chatType", (q) => q.eq("chatType", "support"))
       .collect();
 
-    // Group by conversationId to get unique support conversations
-    const conversationMap = new Map();
+    const conversationLatestMessages = new Map();
 
     for (const message of supportMessages) {
-      const conversationId = message.conversationId;
-      if (
-        !conversationMap.has(conversationId) ||
-        message._creationTime > conversationMap.get(conversationId)._creationTime
-      ) {
-        conversationMap.set(conversationId, message);
+      const existing = conversationLatestMessages.get(message.conversationId);
+      if (!existing || message._creationTime > existing._creationTime) {
+        conversationLatestMessages.set(message.conversationId, message);
       }
     }
 
-    // Return the latest message from each support conversation, sorted by creation time
-    return Array.from(conversationMap.values()).sort((a, b) => b._creationTime - a._creationTime);
+    return Array.from(conversationLatestMessages.values()).sort(
+      (a, b) => b._creationTime - a._creationTime
+    );
   },
 });

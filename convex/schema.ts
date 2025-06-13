@@ -38,7 +38,9 @@ export default defineSchema({
     senderId: v.string(),
     receiverId: v.optional(v.string()),
     conversationId: v.string(),
-  }).index("conversation", ["conversationId"]),
+  })
+    .index("by_chatType", ["chatType"])
+    .index("conversation", ["conversationId"]),
   directConversations: defineTable({
     participant1: v.string(),
     participant2: v.string(),
