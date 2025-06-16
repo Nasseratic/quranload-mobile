@@ -13,7 +13,7 @@ export const ImageMushafPage = ({ pageNumber }: { pageNumber: number }) => {
         px={8}
         f={1}
         w={SCREEN_WIDTH}
-        pt={MUSHUF_PAGE_HEADER_HEIGHT + insets.top}
+        pt={MUSHUF_PAGE_HEADER_HEIGHT}
         pb={(IS_IOS ? 40 : 90) + insets.bottom}
       >
         <Image
