@@ -357,7 +357,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             <Carousel
               data={carouselItems}
               width={SCREEN_WIDTH}
-              height={(IS_IOS ? 40 : 90) + insets.bottom}
+              height={(IS_IOS ? 40 : 105) + insets.bottom}
               renderItem={({ item, index }) =>
                 item === "RECORDER" ? (
                   <Recorder
