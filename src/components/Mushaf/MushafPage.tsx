@@ -9,7 +9,13 @@ export const ImageMushafPage = ({ pageNumber }: { pageNumber: number }) => {
   const insets = useSafeAreaInsets();
   return (
     <Stack>
-      <View px={8} f={1} w={SCREEN_WIDTH} pt={MUSHUF_PAGE_HEADER_HEIGHT} pb={105 + insets.bottom}>
+      <View
+        px={8}
+        f={1}
+        w={SCREEN_WIDTH}
+        pt={MUSHUF_PAGE_HEADER_HEIGHT + 16}
+        pb={105 + insets.bottom}
+      >
         <Image
           style={{
             width: "100%",
