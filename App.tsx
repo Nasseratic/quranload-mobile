@@ -23,6 +23,7 @@ import { AvoidSoftInput } from "react-native-avoid-softinput";
 import { ConvexProvider } from "api/convex";
 import { queryClient } from "utils/reactQueryClient";
 import "api/apiClientInterceptors";
+import { AppUpdateModal } from "components/AppUpdateModal";
 
 require("./src/locales/config");
 
@@ -74,6 +75,7 @@ function App() {
               <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                   <RootToastContainer />
+                  <AppUpdateModal />
                   <Nav />
                 </AuthProvider>
               </QueryClientProvider>

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as services_appVersion from "../services/appVersion.js";
 import type * as services_featureFlags from "../services/featureFlags.js";
 import type * as services_messages from "../services/messages.js";
 import type * as services_pushNotifications from "../services/pushNotifications.js";
@@ -28,6 +29,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "services/appVersion": typeof services_appVersion;
   "services/featureFlags": typeof services_featureFlags;
   "services/messages": typeof services_messages;
   "services/pushNotifications": typeof services_pushNotifications;
