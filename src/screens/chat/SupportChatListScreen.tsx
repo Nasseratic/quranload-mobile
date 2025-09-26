@@ -3,41 +3,24 @@ import { SafeView } from "components/SafeView";
 import { AppBar } from "components/AppBar";
 import { ChatItem } from "./components/ChatItem";
 import { t } from "locales/config";
-import { useQuery } from "convex/react";
-import { cvx } from "api/convex";
+// import { useQuery } from "convex/react";
+// import { cvx } from "api/convex";
 import { EmptyState } from "components/EmptyState";
-import { ActivityIndicator, TouchableOpacity } from "react-native";
-import { Stack } from "tamagui";
+// import { ActivityIndicator, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
+// import { Stack } from "tamagui";
 import { Colors } from "constants/Colors";
 import Typography from "components/Typography";
 
 export const SupportChatListScreen = () => {
   const navigation = useNavigation();
 
-  const supportConversations = useQuery(cvx.messages.allSupportConversations);
-
-  if (supportConversations === undefined) {
-    return (
-      <SafeView f={1} jc="center" ai="center">
-        <AppBar
-          title="Support Conversations"
-          rightComponent={
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={{ paddingHorizontal: 8 }}
-            >
-              <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
-                Logout
-              </Typography>
-            </TouchableOpacity>
-          }
-        />
-        <Stack f={1} jc="center">
-          <ActivityIndicator size="large" />
-        </Stack>
-      </SafeView>
-    );
-  }
+  // const supportConversations = useQuery(cvx.messages.allSupportConversations);
+  const supportConversations: Array<{
+    conversationId: string;
+    senderName?: string | null;
+    text?: string | null;
+  }> = [];
 
   return (
     <SafeView gap={8} px={16}>
