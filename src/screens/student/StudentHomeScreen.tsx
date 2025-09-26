@@ -134,8 +134,6 @@ const StatusSection = ({ teamId }: { teamId: string }) => {
             {i18n.t("homeScreen.readingTime")}
           </Typography>
           <LineChartWithTooltips
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
             data={{
               labels: data.assignmentVelocities.map((a) => fDateDashed(a.submissionDate)),
               datasets: [
@@ -168,7 +166,7 @@ const StatusSection = ({ teamId }: { teamId: string }) => {
                 fontSize: 11,
               },
             }}
-            formatYLabel={(y: number) => y + t("time.m")}
+            formatYLabel={(y) => `${Number(y)}${t("time.m")}`}
             withInnerLines={false}
             withOuterLines={false}
             withVerticalLabels={false}

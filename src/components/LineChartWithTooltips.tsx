@@ -1,8 +1,12 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Circle, G, Rect, Text } from "react-native-svg";
 import { ColorValue, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+import type {
+  LineChartData,
+  LineChartProps,
+} from "react-native-chart-kit/dist/line-chart/LineChart";
 import { Colors } from "constants/Colors";
 import { fMinutesDuration } from "utils/formatTime";
 
@@ -84,28 +88,40 @@ const Tooltip = ({
 };
 
 Tooltip.propTypes = {
-  x: PropTypes.func.isRequired,
-  y: PropTypes.func.isRequired,
-  height: PropTypes.number,
+  x: PropTypes.number.isRequired,
+  y: PropTypes.number.isRequired,
   stroke: PropTypes.string,
   pointStroke: PropTypes.string,
   textX: PropTypes.string,
-  textY: PropTypes.string,
+  textY: PropTypes.number,
   position: PropTypes.string,
 };
 
 Tooltip.defaultProps = {
-  position: "rigth",
+  position: "right",
 };
 
-const tooltipDecorators = (state: any, data: any, valueFormatter: any) => () => {
+type ValueFormatter = (value: number) => number;
+
+type LineChartWithTooltipsProps = Omit<LineChartProps, "decorator" | "onDataPointClick"> & {
+  valueFormatter?: ValueFormatter;
+};
+
+type DataPointEvent = Parameters<NonNullable<LineChartProps["onDataPointClick"]>>[0];
+
+const tooltipDecorators = (
+  state: DataPointEvent | null,
+  data: LineChartData,
+  valueFormatter: ValueFormatter
+) => () => {
   if (state === null) {
     return null;
   }
 
   const { index, value, x, y } = state;
-  const textX = data?.labels[index];
-  const position = data.labels.length === index + 1 ? "left" : "right";
+  const labels = data.labels ?? [];
+  const textX = labels[index] ?? "";
+  const position = labels.length === index + 1 ? "left" : "right";
 
   return (
     <Tooltip
@@ -120,12 +136,23 @@ const tooltipDecorators = (state: any, data: any, valueFormatter: any) => () => 
   );
 };
 
-const LineChartWithTooltips = ({ valueFormatter, ...props }: any) => {
-  const [state, setState] = useState(null);
+const LineChartWithTooltips = ({
+  valueFormatter: providedValueFormatter,
+  data,
+  ...props
+}: LineChartWithTooltipsProps) => {
+  const [state, setState] = useState<DataPointEvent | null>(null);
+
+  const valueFormatter = useMemo<ValueFormatter>(
+    () => providedValueFormatter ?? ((value: number) => value),
+    [providedValueFormatter]
+  );
+
   return (
     <LineChart
       {...props}
-      decorator={tooltipDecorators(state, props.data, valueFormatter)}
+      data={data}
+      decorator={tooltipDecorators(state, data, valueFormatter)}
       onDataPointClick={setState}
     />
   );
@@ -136,7 +163,7 @@ LineChartWithTooltips.propTypes = {
 };
 
 LineChartWithTooltips.defaultProps = {
-  valueFormatter: (value: any) => String(value),
+  valueFormatter: (value: number) => value,
 };
 
 export default LineChartWithTooltips;

@@ -9,8 +9,20 @@ import { ImageMushafPage } from "components/Mushaf/MushafPage";
 export function MushafPages({ pageFrom, pageTo }: { pageFrom: number; pageTo: number }) {
   const findSurahNameOfPage = (pageNumber: number) => {
     const chapter = Chapters.find((chapter) => {
-      return pageNumber >= chapter.pages[0] && pageNumber <= chapter.pages[1];
+      const { pages } = chapter;
+      if (!Array.isArray(pages)) {
+        return false;
+      }
+
+      const [startPage, endPage] = pages;
+      return (
+        typeof startPage === "number" &&
+        typeof endPage === "number" &&
+        pageNumber >= startPage &&
+        pageNumber <= endPage
+      );
     });
+
     return chapter?.name_simple;
   };
 
