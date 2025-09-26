@@ -1,0 +1,41 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Publish Expo Update
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish production update
+        env:
+          DEPLOY_MESSAGE: ${{ github.event.head_commit.message || format('Automated production deploy ({0})', github.sha) }}
+        run: |
+          eas update \
+            --branch main \
+            --message "$DEPLOY_MESSAGE" \
+            --non-interactive
