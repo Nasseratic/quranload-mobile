@@ -38,7 +38,7 @@ import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScre
 import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
-import { cvx, useCvxMutation } from "api/convex";
+// import { cvx, useCvxMutation } from "api/convex";
 import LottieView from "lottie-react-native";
 import UploadingLottie from "assets/lottie/uploading.json";
 import { Sentry } from "utils/sentry";
@@ -51,7 +51,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const queryClient = useQueryClient();
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
-  const celebrateSubmission = useCvxMutation(cvx.messages.celebrateSubmission);
+  // const celebrateSubmission = useCvxMutation(cvx.messages.celebrateSubmission);
   const { role, isTeacher, isStudent } = useAuth();
   const user = useUser();
 
@@ -174,22 +174,22 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             duration,
           });
 
-          try {
-            const celebrateWithTeamId = user.teams.find(({ isActive }) => isActive)?.id;
-            if (celebrateWithTeamId) {
-              await celebrateSubmission({
-                senderId: user.id,
-                senderName: user.fullName,
-                teamId: celebrateWithTeamId,
-                submission:
-                  assignment.startPage && assignment.endPage
-                    ? assignment
-                    : assignment.description ?? "",
-              });
-            }
-          } catch {
-            // ignore for now
-          }
+          // try {
+          //   const celebrateWithTeamId = user.teams.find(({ isActive }) => isActive)?.id;
+          //   if (celebrateWithTeamId) {
+          //     await celebrateSubmission({
+          //       senderId: user.id,
+          //       senderName: user.fullName,
+          //       teamId: celebrateWithTeamId,
+          //       submission:
+          //         assignment.startPage && assignment.endPage
+          //           ? assignment
+          //           : assignment.description ?? "",
+          //     });
+          //   }
+          // } catch {
+          //   // ignore for now
+          // }
         })
         .exhaustive();
       track("RecordingUploaded", { duration });

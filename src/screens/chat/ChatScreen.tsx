@@ -1,6 +1,5 @@
 import { useRoute } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useQueryClient } from "@tanstack/react-query";
 import { AppBar } from "components/AppBar";
 import { SafeView } from "components/SafeView";
 import { IconButton } from "components/buttons/IconButton";
@@ -22,8 +21,8 @@ import { RecordIcon } from "components/icons/RecordIcon";
 import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
 import { uploadChatMedia } from "utils/uploadChatMedia";
 import { AudioPlayer } from "components/AudioPlayer";
-import { useMutation, usePaginatedQuery } from "convex/react";
-import { cvx, Id } from "api/convex";
+// import { useMutation, usePaginatedQuery } from "convex/react";
+// import { cvx, Id } from "api/convex";
 import { match, P } from "ts-pattern";
 import { t } from "locales/config";
 import { isNotNullish } from "utils/notNullish";
@@ -31,11 +30,25 @@ import { toast } from "components/Toast";
 
 const QUERY_LIMIT = 20;
 
+type PaginatedStatus = "LoadingFirstPage" | "CanLoadMore" | "LoadingMore";
+
+type ConvexMessage = {
+  _id: string;
+  text?: string | null;
+  _creationTime: number;
+  senderId: string;
+  senderName?: string | null;
+  mediaType?: "audio" | "image" | "video" | "file" | null;
+  mediaUrl?: string | null;
+  isSystem?: boolean;
+};
+
 export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title, supportChat, supportUserId } = params;
   const user = useUser();
-  const unsend = useMutation(cvx.messages.unsend);
+  // const unsend = useMutation(cvx.messages.unsend);
+  const unsend = async (_: { messageId: unknown }) => {};
   const userId = user.id;
 
   // Determine if this is a support chat (either from supportChat flag or supportUserId presence)
@@ -46,33 +59,36 @@ export const ChatScreen = () => {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
   }
 
-  const { results, status, loadMore } = usePaginatedQuery(
-    cvx.messages.paginate,
-    {
-      conversation: match({ isSupportChat, teamId, interlocutorId })
-        .with({ isSupportChat: true }, () => ({
-          type: "support" as const,
-          userId: actualSupportUserId,
-        }))
-        .with({ teamId: P.not(P.nullish) }, ({ teamId }) => ({
-          type: "team" as const,
-          teamId: teamId,
-        }))
-        .otherwise(() => ({
-          type: "direct" as const,
-          participantX: userId,
-          participantY: interlocutorId!,
-        })),
-    },
-    { initialNumItems: QUERY_LIMIT }
-  );
+  // const { results, status, loadMore } = usePaginatedQuery(
+  //   cvx.messages.paginate,
+  //   {
+  //     conversation: match({ isSupportChat, teamId, interlocutorId })
+  //       .with({ isSupportChat: true }, () => ({
+  //         type: "support" as const,
+  //         userId: actualSupportUserId,
+  //       }))
+  //       .with({ teamId: P.not(P.nullish) }, ({ teamId }) => ({
+  //         type: "team" as const,
+  //         teamId: teamId,
+  //       }))
+  //       .otherwise(() => ({
+  //         type: "direct" as const,
+  //         participantX: userId,
+  //         participantY: interlocutorId!,
+  //       })),
+  //   },
+  //   { initialNumItems: QUERY_LIMIT }
+  // );
+  const results: ConvexMessage[] | undefined = [];
+  const status: PaginatedStatus = "CanLoadMore";
+  const loadMore = (_count?: number) => {};
 
   // Add welcome message for support chat when there are no messages
   const allMessages = useMemo(() => {
     const fetchedMessages = results?.map(mapMessageToGiftedChatMessage) ?? [];
 
     // If it's a support chat and there are no messages, add a welcome message
-    if (isSupportChat && fetchedMessages.length === 0 && status !== "LoadingFirstPage") {
+    if (isSupportChat && fetchedMessages.length === 0) {
       const welcomeMessage: IMessage = {
         _id: "welcome-message",
         text: t("support.welcomeMessage"),
@@ -91,7 +107,8 @@ export const ChatScreen = () => {
 
   const messages = allMessages;
 
-  const sendMessages = useMutation(cvx.messages.send);
+  // const sendMessages = useMutation(cvx.messages.send);
+  const sendMessages = async (_: unknown) => {};
 
   const [imagesModalImages, setImagesModalImages] = useState<string[]>([]);
   const [imagesModalIndex, setImagesModalIndex] = useState(0);
@@ -309,7 +326,7 @@ export const ChatScreen = () => {
       />
       <AppBar title={title} />
       <Separator />
-      {status === "LoadingFirstPage" ? (
+      {false ? (
         <Stack f={1} jc="center">
           <ActivityIndicator />
         </Stack>
@@ -387,7 +404,7 @@ export const ChatScreen = () => {
                 },
                 (buttonIndex: number) => {
                   match(buttonIndex)
-                    .with(0, async () => unsend({ messageId: message._id as Id<"messages"> }))
+                    .with(0, async () => unsend({ messageId: message._id }))
                     .with(1, () => Clipboard.setString(message.text))
                     .otherwise(() => {});
                 }
@@ -403,9 +420,9 @@ export const ChatScreen = () => {
                 }}
               />
             )}
-            loadEarlier={status === "CanLoadMore"}
+            loadEarlier={false}
             onLoadEarlier={() => loadMore(QUERY_LIMIT)}
-            isLoadingEarlier={status === "LoadingMore"}
+            isLoadingEarlier={false}
             // UX TODO?: Jump to most recent message component
           />
         </Fragment>
@@ -414,16 +431,17 @@ export const ChatScreen = () => {
   );
 };
 
-const mapMessageToGiftedChatMessage = (
-  message: (typeof cvx.messages.paginate)["_returnType"]["page"][number]
-) =>
+// const mapMessageToGiftedChatMessage = (
+//   message: (typeof cvx.messages.paginate)["_returnType"]["page"][number]
+// ) =>
+const mapMessageToGiftedChatMessage = (message: ConvexMessage) =>
   ({
     _id: message._id,
     text: message.text ?? "",
     createdAt: new Date(message._creationTime),
     user: {
       _id: message.senderId,
-      name: message.senderName,
+      name: message.senderName ?? "",
     },
     ...(message.mediaType && {
       [message.mediaType]: message.mediaUrl,

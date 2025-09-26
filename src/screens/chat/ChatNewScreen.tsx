@@ -5,18 +5,22 @@ import { ChatItem } from "./components/ChatItem";
 import { useUser } from "contexts/auth";
 import { useStudentsListInAllTeams } from "services/teamService";
 import { ActivityIndicator } from "react-native";
-import { cvx } from "api/convex";
-import { useQuery } from "convex/react";
+// import { cvx } from "api/convex";
+// import { useQuery } from "convex/react";
 
 export const ChatNewScreen = () => {
   const navigation = useNavigation();
   const user = useUser();
   const { studentsList, isLoadingStudentsList } = useStudentsListInAllTeams();
 
-  const conversations = useQuery(cvx.messages.allMyConversations, {
-    userId: user.id,
-    teamIds: user.teams.map(({ id }) => id),
-  });
+  // const conversations = useQuery(cvx.messages.allMyConversations, {
+  //   userId: user.id,
+  //   teamIds: user.teams.map(({ id }) => id),
+  // });
+  const conversations: Array<{
+    senderId?: string | null;
+    receiverId?: string | null;
+  }> = [];
 
   return (
     <SafeView gap={8} px={16}>
