@@ -5,6 +5,11 @@ import { createTheme } from "tamagui";
 const baseLight = config.themes.light;
 const baseDark = config.themes.dark;
 
+export const QUI_THEME_NAMES = {
+  light: "qui_light",
+  dark: "qui_dark",
+} as const;
+
 const shared = {
   borderColor: "$border",
   borderColorHover: "$borderMuted",
@@ -67,10 +72,10 @@ export const quiThemes = {
   }),
 };
 
-export const QUI_THEME_NAMES = {
-  light: "qui_light",
-  dark: "qui_dark",
+export const quiThemesById = {
+  [QUI_THEME_NAMES.light]: quiThemes.light,
+  [QUI_THEME_NAMES.dark]: quiThemes.dark,
 } as const;
 
-export type QuiThemeName = keyof typeof quiThemes;
-export type QuiThemeIdentifier = (typeof QUI_THEME_NAMES)[keyof typeof QUI_THEME_NAMES];
+export type QuiThemeName = keyof typeof QUI_THEME_NAMES;
+export type QuiThemeIdentifier = keyof typeof quiThemesById;

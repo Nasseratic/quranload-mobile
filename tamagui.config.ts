@@ -1,6 +1,6 @@
 import { config } from "@tamagui/config/v3";
 import { createTamagui, createTokens } from "tamagui";
-import { quiFonts, quiRawTokens, quiThemes, QUI_THEME_NAMES } from "./src/QUI";
+import { quiFonts, quiRawTokens, quiThemesById } from "./src/QUI/theme";
 
 const tokens = createTokens({
   color: {
@@ -34,8 +34,7 @@ export const tamaguiConfig = createTamagui({
   tokens,
   themes: {
     ...config.themes,
-    [QUI_THEME_NAMES.light]: quiThemes.light,
-    [QUI_THEME_NAMES.dark]: quiThemes.dark,
+    ...quiThemesById,
   },
 });
 
