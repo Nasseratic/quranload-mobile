@@ -24,6 +24,13 @@ module.exports = function (api) {
           },
         },
       ],
+      [
+        "tamagui",
+        {
+          config: "./tamagui.config.ts",
+          components: ["tamagui"],
+        },
+      ],
       "transform-inline-environment-variables",
       "react-native-reanimated/plugin",
     ],
