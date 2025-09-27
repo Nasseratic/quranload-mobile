@@ -9,8 +9,7 @@ import Nav from "navigation/Nav";
 import { AuthProvider } from "contexts/auth";
 import * as SplashScreen from "expo-splash-screen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "./tamagui.config";
+import { QUIProvider, QUI_THEME_NAMES } from "./src/QUI";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -68,7 +67,7 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <QUIProvider defaultTheme={QUI_THEME_NAMES.light}>
           <BottomSheetModalProvider>
             {/* <ConvexProvider> */}
             <QueryClientProvider client={queryClient}>
@@ -80,7 +79,7 @@ function App() {
             <RootActionSheetContainer />
             {/* </ConvexProvider> */}
           </BottomSheetModalProvider>
-        </TamaguiProvider>
+        </QUIProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
