@@ -1,0 +1,177 @@
+name: Expo Preview Updates
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  issue_comment:
+    types:
+      - created
+
+concurrency:
+  group: expo-preview-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  publish-preview:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve pull request information
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pullNumber = context.payload.pull_request?.number ?? context.payload.issue?.number;
+            if (!pullNumber) {
+              core.notice('Event is not associated with a pull request. Skipping.');
+              core.setOutput('skip', 'true');
+              return;
+            }
+            if (context.payload.issue && !context.payload.issue.pull_request) {
+              core.notice('Issue comment is not on a pull request. Skipping.');
+              core.setOutput('skip', 'true');
+              return;
+            }
+            const { data: pull } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: pullNumber,
+            });
+            if (pull.draft) {
+              core.notice('Pull request is marked as draft. Skipping preview publication.');
+              core.setOutput('skip', 'true');
+              return;
+            }
+            core.setOutput('number', String(pull.number));
+            core.setOutput('head_sha', pull.head.sha);
+            core.setOutput('title', pull.title);
+            core.setOutput('skip', 'false');
+
+      - name: Checkout pull request
+        if: steps.pr_info.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr_info.outputs.head_sha }}
+          repository: ${{ github.repository }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        if: steps.pr_info.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.pr_info.outputs.skip == 'false'
+        run: npm ci
+
+      - name: Read Expo project metadata
+        if: steps.pr_info.outputs.skip == 'false'
+        id: expo_meta
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const configPath = path.join(process.env.GITHUB_WORKSPACE, 'app.json');
+            if (!fs.existsSync(configPath)) {
+              core.setFailed('Unable to locate app.json to derive Expo metadata.');
+              return;
+            }
+            const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            if (!raw.expo) {
+              core.setFailed('Expo configuration missing from app.json.');
+              return;
+            }
+            core.setOutput('owner', raw.expo.owner ?? '');
+            core.setOutput('slug', raw.expo.slug ?? '');
+
+      - name: Set up Expo CLI
+        if: steps.pr_info.outputs.skip == 'false'
+        uses: expo/expo-github-action@v7
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish Expo update preview
+        if: steps.pr_info.outputs.skip == 'false'
+        id: publish
+        env:
+          PR_NUMBER: ${{ steps.pr_info.outputs.number }}
+        run: |
+          set -euo pipefail
+          BRANCH="pr-${PR_NUMBER}"
+          MESSAGE="Preview for PR #${PR_NUMBER} (${GITHUB_SHA})"
+          eas update --branch "$BRANCH" --message "$MESSAGE" --non-interactive --platform all --json > update.json
+          cat update.json
+          {
+            echo "json<<EOF"
+            cat update.json
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Share preview link on pull request
+        if: steps.pr_info.outputs.skip == 'false'
+        uses: actions/github-script@v7
+        env:
+          UPDATE_JSON: ${{ steps.publish.outputs.json }}
+          OWNER: ${{ steps.expo_meta.outputs.owner }}
+          SLUG: ${{ steps.expo_meta.outputs.slug }}
+          PR_NUMBER: ${{ steps.pr_info.outputs.number }}
+        with:
+          script: |
+            if (!process.env.UPDATE_JSON) {
+              core.setFailed('Expo update output missing.');
+              return;
+            }
+            let updates;
+            try {
+              updates = JSON.parse(process.env.UPDATE_JSON);
+            } catch (error) {
+              core.setFailed(`Failed to parse Expo update output: ${error}`);
+              return;
+            }
+            const first = Array.isArray(updates) ? updates[0] : null;
+            if (!first) {
+              core.setFailed('Expo update output does not contain any updates.');
+              return;
+            }
+            const group = first.group || first.updateGroup || first.id || '';
+            let url = first.updateUrl || first.updateGroupUrl || '';
+            if (!url && group && process.env.OWNER && process.env.SLUG) {
+              url = `https://expo.dev/accounts/${process.env.OWNER}/projects/${process.env.SLUG}/updates/${group}`;
+            }
+            if (!url) {
+              core.setFailed('Unable to determine Expo update preview URL.');
+              return;
+            }
+            const marker = '<!-- expo-preview -->';
+            const body = `${marker}\n🚀 Expo preview ready: ${url}\n\n_Last updated: ${new Date().toISOString()}_`;
+            const issue_number = Number(process.env.PR_NUMBER);
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number,
+            });
+            const existing = comments.find((comment) => comment.user?.login === 'github-actions[bot]' && comment.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number,
+                body,
+              });
+            }
