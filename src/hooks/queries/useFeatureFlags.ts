@@ -6,7 +6,7 @@ import { isDevelopmentBuild } from "expo-dev-client";
 type FF = "chat" | "inAppEnrolment" | "supportChat";
 
 const devFfs = {
-  chat: true,
+  chat: false,
   inAppEnrolment: true,
   supportChat: false,
 } satisfies Record<FF, boolean>;
