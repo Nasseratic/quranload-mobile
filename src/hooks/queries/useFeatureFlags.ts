@@ -8,7 +8,7 @@ type FF = "chat" | "inAppEnrolment" | "supportChat";
 const devFfs = {
   chat: true,
   inAppEnrolment: true,
-  supportChat: true,
+  supportChat: false,
 } satisfies Record<FF, boolean>;
 
 export const useFeatureFlags = () => {
