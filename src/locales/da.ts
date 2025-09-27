@@ -226,7 +226,7 @@ const danish: typeof english = {
   feedbackCard: {
     newAppVersion: "✨ Bliv ved med at give feedback!",
     shareFeedback:
-      "Takket være din feedback forbedrer vi os. Vi sætter pris på dit input - bliv ved med at komme med det! Ønsker dig en glædelig Eid Mubarak! 🌙",
+      "Hvis du oplever problemer eller har spørgsmål til appens funktioner, så tøv ikke med at kontakte os.",
     contactUs: "Kontakt os",
   },
   reportedToIT: "Dette problem er blevet rapporteret til vores IT-team",
