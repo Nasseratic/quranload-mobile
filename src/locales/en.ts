@@ -92,6 +92,8 @@ const english = {
     changePassword: "Change password",
     changeLanguage: "Change language",
     cancelSubscription: "Cancel subscription",
+    enableDevMode: "Enable dev mode",
+    disableDevMode: "Disable dev mode",
   },
   changePasswordScreen: {
     title: "Change password",

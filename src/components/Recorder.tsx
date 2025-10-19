@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Audio } from "expo-av";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
@@ -38,7 +38,9 @@ import { toast } from "./Toast";
 import { PermissionStatus } from "../../node_modules/expo-modules-core/src/PermissionsInterface";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 import { Sentry } from "utils/sentry";
-import { throttleTrack, track } from "utils/tracking";
+import { throttleTrack } from "utils/tracking";
+import { DevLogOverlay } from "./DevLogOverlay";
+import { logDevEvent } from "state/devMode";
 
 let currentRecordingDurationMillis = 0;
 let currentRecording: Audio.Recording | null = null;
@@ -89,19 +91,31 @@ export const Recorder = ({
 
   const handleStatusChange = useCallback(
     (status: RecordingState) => {
+      logDevEvent("Recording status changed", {
+        status,
+        fragments: recordings.length,
+        currentRecordingDurationMillis,
+      });
       setRecordingState(status);
       onStatusChange?.(status, recordings);
     },
     [onStatusChange]
   );
   async function startRecording() {
+    logDevEvent("Attempting to start recording", {
+      permissionStatus: permissionStatus?.status,
+    });
     let isDenied = permissionStatus && permissionStatus.status === PermissionStatus.DENIED;
     if (!permissionStatus || permissionStatus.status === PermissionStatus.UNDETERMINED) {
       const { granted } = await requestPermission();
       if (!granted) isDenied = true;
+      logDevEvent("Microphone permission request completed", {
+        granted,
+      });
     }
 
     if (isDenied) {
+      logDevEvent("Microphone permission denied by the user");
       Alert.alert(
         "Permission required",
         "You need to grant permission to record audio to use this app.",
@@ -121,15 +135,22 @@ export const Recorder = ({
       if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleStatusChange("recording");
 
+      logDevEvent("Starting recorder with auto fragmenting");
       await startRecordingWithAutoFragmenting();
     } catch (err) {
       toast.reportError(err, t("recordingScreen.failedToStartRecording"));
       handleStatusChange("idle");
+      logDevEvent("Failed to start recording", {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
   const cutRecording = async () => {
     if (!currentRecording) return;
+    logDevEvent("Cutting active recording fragment", {
+      fragments: recordings.length,
+    });
     const { durationMillis } = await currentRecording.getStatusAsync();
     const durationInMs = Math.max(durationMillis, currentRecordingDurationMillis);
     if (durationMillis < currentRecordingDurationMillis) {
@@ -145,17 +166,25 @@ export const Recorder = ({
         uri,
         durationInMs,
       });
+      logDevEvent("Stored recording fragment", {
+        durationInMs,
+        fragments: recordings.length,
+      });
       if (lessonId) persistAudioRecordings({ lessonId, recordings });
     }
   };
 
   const pauseRecording = async () => {
     if (!currentRecording) return;
+    logDevEvent("Pausing recording session");
     handleStatusChange("paused");
     await cutRecording();
   };
 
   const discardRecording = useCallback(async () => {
+    logDevEvent("Discarding all recording fragments", {
+      fragments: recordings.length,
+    });
     await cleanRecordings({ lessonId });
     handleStatusChange("idle");
     if (IS_IOS)
@@ -167,9 +196,13 @@ export const Recorder = ({
   const submitRecording = async () => {
     if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
+    logDevEvent("Submitting recording", { fragments: recordings.length });
     try {
       handleStatusChange("submitting");
       await cutRecording();
+      logDevEvent("Preparing submission payload", {
+        fragments: recordings.length,
+      });
 
       const { uri, totalDuration } = await concatAudioFragments(recordings.map(({ uri }) => uri));
 
@@ -181,6 +214,10 @@ export const Recorder = ({
           message: "Recording duration mismatch, concatAudioFragments totalDuration is greater",
           extra: { totalDuration, durationInSec },
         });
+        logDevEvent("Detected duration mismatch after concatenation", {
+          totalDuration,
+          durationInSec,
+        });
       }
 
       try {
@@ -191,8 +228,15 @@ export const Recorder = ({
           duration: durationInSec || totalDuration || 0,
         });
 
+        logDevEvent("Recording submitted successfully", {
+          durationInSec,
+          totalDuration,
+        });
         handleStatusChange("idle");
-      } catch {
+      } catch (error) {
+        logDevEvent("Failed to submit recording, persisting fragments for retry", {
+          error: error instanceof Error ? error.message : String(error),
+        });
         if (lessonId) {
           persistAudioRecordings({
             lessonId,
@@ -207,10 +251,13 @@ export const Recorder = ({
       } finally {
         onFinished?.({ uri, duration: durationInSec });
       }
-    } catch {
-      // add log to sentry
+    } catch (error) {
+      logDevEvent("Unexpected error during recording submission", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       handleStatusChange("paused");
+      logDevEvent("Submission flow completed");
       if (IS_IOS)
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
@@ -227,6 +274,7 @@ export const Recorder = ({
     if (currentRecording) {
       await cleanCurrentRecording();
       toast.show({ title: "want to record while having current recording", status: "Warning" });
+      logDevEvent("Cleaned up dangling recording before starting a new one");
     }
     const { recording } = await Audio.Recording.createAsync(
       {
@@ -262,6 +310,7 @@ export const Recorder = ({
       100
     );
     currentRecording = recording;
+    logDevEvent("Started new recording fragment");
 
     await sleep(RECORDING_INTERVAL);
 
@@ -273,8 +322,12 @@ export const Recorder = ({
           if (!status.isRecording) break;
           if (status.metering && status.metering < -40) {
             console.log("Metering is too low, stopping recording");
+            logDevEvent("Stopped fragment due to low metering", { metering: status.metering });
             break;
-          } else console.log("Metering is", status.metering);
+          } else {
+            console.log("Metering is", status.metering);
+            logDevEvent("Recording metering", { metering: status.metering });
+          }
           await sleep(METERING_CHECK_INTERVAL);
         }
       })(),
@@ -283,10 +336,14 @@ export const Recorder = ({
     try {
       if (currentRecording) {
         await cutRecording();
+        logDevEvent("Fragment interval reached, starting a new fragment");
         await startRecordingWithAutoFragmenting();
       }
     } catch (err) {
       toast.reportError(err, "Error while creating extra recording fragment");
+      logDevEvent("Error while creating extra recording fragment", {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
@@ -298,6 +355,7 @@ export const Recorder = ({
     if (recordingState === "recording") {
       pauseRecording();
       toast.show({ title: t("audioRecordingPaused"), status: "Warning" });
+      logDevEvent("Paused recording due to audio playback");
     }
   });
 
@@ -308,12 +366,18 @@ export const Recorder = ({
           recordings = savedRecordings;
           handleStatusChange("paused");
           console.log("Restored recordings", savedRecordings);
+          logDevEvent("Restored saved recording fragments", {
+            fragments: savedRecordings.length,
+          });
         }
       });
     }
     return () => {
       cutRecording().then(() => {
         if (recordings.length === 0) return;
+        logDevEvent("Prompting user to discard pending recordings on exit", {
+          fragments: recordings.length,
+        });
         Alert.alert(
           t("recordingScreen.discardRecording"),
           t("recordingScreen.discardRecordingDescription"),
@@ -337,6 +401,7 @@ export const Recorder = ({
   }, [lessonId]);
 
   const handleDiscard = () => {
+    logDevEvent("User initiated discard confirmation");
     pauseRecording();
     Alert.alert(
       t("recordingScreen.discardRecording"),
@@ -345,12 +410,18 @@ export const Recorder = ({
         {
           text: t("cancel"),
           style: "cancel",
-          onPress: startRecording,
+          onPress: () => {
+            logDevEvent("User cancelled discard dialog");
+            startRecording();
+          },
         },
         {
           text: t("discard"),
           style: "destructive",
-          onPress: discardRecording,
+          onPress: () => {
+            logDevEvent("User confirmed discard dialog");
+            discardRecording();
+          },
         },
       ]
     );
@@ -364,37 +435,40 @@ export const Recorder = ({
     );
 
   return (
-    <XStack jc="center" ai="center" gap="$8">
-      <View>
-        {recordingState !== "idle" && (
-          <IconButton size="sm" bg={Colors.Black[2]} icon={<CrossIcon />} onPress={handleDiscard} />
-        )}
-      </View>
+    <View style={styles.wrapper}>
+      <DevLogOverlay style={styles.devLogOverlay} />
+      <XStack jc="center" ai="center" gap="$8">
+        <View>
+          {recordingState !== "idle" && (
+            <IconButton size="sm" bg={Colors.Black[2]} icon={<CrossIcon />} onPress={handleDiscard} />
+          )}
+        </View>
 
-      <TouchableOpacity
-        onPress={
-          recordingState === "recording"
-            ? () => {
-                if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                pauseRecording();
-              }
-            : startRecording
-        }
-        activeOpacity={0.9}
-      >
-        <RecordingButton recordingState={recordingState} />
-      </TouchableOpacity>
-      <View>
-        {recordingState !== "idle" && (
-          <IconButton
-            size="sm"
-            bg={Colors.Success[1]}
-            icon={<Checkmark />}
-            onPress={submitRecording}
-          />
-        )}
-      </View>
-    </XStack>
+        <TouchableOpacity
+          onPress={
+            recordingState === "recording"
+              ? () => {
+                  if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  pauseRecording();
+                }
+              : startRecording
+          }
+          activeOpacity={0.9}
+        >
+          <RecordingButton recordingState={recordingState} />
+        </TouchableOpacity>
+        <View>
+          {recordingState !== "idle" && (
+            <IconButton
+              size="sm"
+              bg={Colors.Success[1]}
+              icon={<Checkmark />}
+              onPress={submitRecording}
+            />
+          )}
+        </View>
+      </XStack>
+    </View>
   );
 };
 
@@ -485,6 +559,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
+  },
+  wrapper: {
+    width: "100%",
+    position: "relative",
+    alignItems: "center",
+  },
+  devLogOverlay: {
+    position: "absolute",
+    bottom: "100%",
+    left: 0,
+    right: 0,
+    marginBottom: 12,
   },
   container: {
     justifyContent: "space-between",

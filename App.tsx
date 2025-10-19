@@ -23,6 +23,8 @@ import { AvoidSoftInput } from "react-native-avoid-softinput";
 // import { ConvexProvider } from "api/convex";
 import { queryClient } from "utils/reactQueryClient";
 import "api/apiClientInterceptors";
+import { Provider as JotaiProvider } from "jotai";
+import { jotaiStore } from "state/store";
 
 require("./src/locales/config");
 
@@ -68,19 +70,21 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-          <BottomSheetModalProvider>
-            {/* <ConvexProvider> */}
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <RootToastContainer />
-                <Nav />
-              </AuthProvider>
-            </QueryClientProvider>
-            <RootActionSheetContainer />
-            {/* </ConvexProvider> */}
-          </BottomSheetModalProvider>
-        </TamaguiProvider>
+        <JotaiProvider store={jotaiStore}>
+          <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+            <BottomSheetModalProvider>
+              {/* <ConvexProvider> */}
+              <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <RootToastContainer />
+                  <Nav />
+                </AuthProvider>
+              </QueryClientProvider>
+              <RootActionSheetContainer />
+              {/* </ConvexProvider> */}
+            </BottomSheetModalProvider>
+          </TamaguiProvider>
+        </JotaiProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -94,6 +94,8 @@ const danish: typeof english = {
     changePassword: "Skift kode",
     changeLanguage: "Skift sprog",
     cancelSubscription: "Opsig abonnement",
+    enableDevMode: "Aktiver udviklertilstand",
+    disableDevMode: "Deaktiver udviklertilstand",
   },
   changePasswordScreen: {
     title: "Skift kode",

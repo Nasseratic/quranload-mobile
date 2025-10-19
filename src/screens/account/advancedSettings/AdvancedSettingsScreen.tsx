@@ -1,4 +1,4 @@
-import { FunctionComponent, useContext, useMemo } from "react";
+import { FunctionComponent, useContext, useMemo, useCallback } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { i18n, t } from "locales/config";
 import Menu from "components/menu/Menu";
@@ -16,12 +16,22 @@ import { View } from "tamagui";
 import { toast } from "components/Toast";
 import { isDevelopmentBuild } from "expo-dev-client";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
-import { format } from "date-fns";
 import { OTA_VERSION } from "components/Version";
+import { useAtom } from "jotai";
+import { devModeAtom, logDevEvent } from "state/devMode";
 type Props = NativeStackScreenProps<RootStackParamList, "AdvancedSettings">;
 
 const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
   const { signOut, user } = useContext(AuthContext);
+  const [isDevMode, setIsDevMode] = useAtom(devModeAtom);
+
+  const handleToggleDevMode = useCallback(() => {
+    setIsDevMode((prev) => {
+      const next = !prev;
+      logDevEvent(`Dev mode ${next ? "enabled" : "disabled"}`);
+      return next;
+    });
+  }, [setIsDevMode]);
 
   const handleSignout = async () => {
     await signOut();
@@ -68,6 +78,14 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
       <AppBar title={i18n.t("advancedSettingsScreen.title")} />
       <View gap={16} paddingHorizontal={16}>
         <Menu menuItems={menuItems} />
+        <ActionButton
+          onPress={handleToggleDevMode}
+          title={
+            isDevMode
+              ? i18n.t("advancedSettingsScreen.disableDevMode")
+              : i18n.t("advancedSettingsScreen.enableDevMode")
+          }
+        />
         <ActionButton
           style={{ backgroundColor: Colors.Error["1"] }}
           onPress={handleSignout}
