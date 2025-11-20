@@ -1,32 +1,33 @@
-import { Audio } from "expo-av";
+import { setAudioModeAsync } from "expo-audio";
+import type { AudioPlayer } from "expo-audio";
 import { useEffect, useState } from "react";
 
-let activeSound: Audio.Sound | null = null;
+let activeSound: AudioPlayer | null = null;
 
 const audioListeners = new Set<() => void>();
 
-export const useAudioManager = (initialSound?: Audio.Sound | null) => {
-  const [sound, setSound] = useState<Audio.Sound | null | undefined>(initialSound);
+export const useAudioManager = (initialSound?: AudioPlayer | null) => {
+  const [sound, setSound] = useState<AudioPlayer | null | undefined>(initialSound);
 
   const playSound = async () => {
     if (activeSound != null && activeSound !== sound) {
-      await activeSound.pauseAsync();
+      activeSound.pause();
     }
     if (sound) {
       audioListeners.forEach((listener) => listener());
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
+      await setAudioModeAsync({
+        allowsRecording: false,
       });
       activeSound = sound;
-      await sound.playAsync();
+      sound.play();
     }
   };
 
-  const pauseSound = async () => {
+  const pauseSound = () => {
     if (activeSound === sound) {
       activeSound = null;
     }
-    sound?.pauseAsync();
+    sound?.pause();
   };
 
   useEffect(() => {
@@ -34,14 +35,14 @@ export const useAudioManager = (initialSound?: Audio.Sound | null) => {
       if (activeSound === sound) {
         activeSound = null;
       }
-      sound?.unloadAsync();
+      sound?.release();
     };
   }, [sound]);
 
   return {
     playSound,
     pauseSound,
-    sound: sound as Omit<Audio.Sound, "playAsync" | "pauseAsync">,
+    sound: sound as Omit<AudioPlayer, "play" | "pause">,
     setSound,
   };
 };

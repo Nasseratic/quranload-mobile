@@ -14,7 +14,6 @@ import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View } from "tamagui";
 import { toast } from "components/Toast";
-import { isDevelopmentBuild } from "expo-dev-client";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
 import { format } from "date-fns";
 import { OTA_VERSION } from "components/Version";
@@ -38,7 +37,7 @@ const AdvancedSettingsScreen: FunctionComponent<Props> = ({ navigation }) => {
             if (isNew) await Updates.reloadAsync();
             else toast.show({ status: "Success", title: t("you_are_on_latest_version") });
           } catch (e) {
-            if (!isDevelopmentBuild()) toast.reportError(e);
+            if (!__DEV__) toast.reportError(e);
             else toast.show({ status: "Error", title: "Updates are not available in dev mode" });
           }
         },

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Audio } from "expo-av";
+import { createAudioPlayer, type AudioPlayer as ExpoAudioPlayer } from "expo-audio";
 import { useState, useRef, useEffect, memo, useId } from "react";
 import { ActivityIndicator } from "react-native";
 import { XStack, YStack, Text, Slider, Button } from "tamagui";
@@ -40,7 +40,7 @@ export const AudioPlayer = memo(
     const wasPlaying = useRef(false);
 
     async function play() {
-      if (durationSec - positionSec < 0.3) sound?.setPositionAsync(0);
+      if (durationSec - positionSec < 0.3) sound?.seekTo(0);
       playSound();
     }
 
@@ -52,7 +52,11 @@ export const AudioPlayer = memo(
 
     useEffect(() => {
       return () => {
-        sound?.unloadAsync();
+        // Clear the status tracking interval if it exists
+        if ((sound as any)?._statusInterval) {
+          clearInterval((sound as any)._statusInterval);
+        }
+        sound?.release();
         const toCancel = onProgressFiles.filter((file) => file.componentId === componentId);
         toCancel.forEach((file) => file.instance.cancelAsync());
         onProgressFiles = onProgressFiles.filter((file) => file.componentId !== componentId);
@@ -71,22 +75,27 @@ export const AudioPlayer = memo(
               );
             })
           : uri;
-        const { sound, status } = await Audio.Sound.createAsync(
-          {
-            uri: playableUri,
-          },
-          { progressUpdateIntervalMillis: 300 },
-          (status) => {
-            if (status.isLoaded && status.isPlaying) {
-              setIsPlaying(true);
-              setPositionSec((status.positionMillis ?? 0) / 1000);
-            } else setIsPlaying(false);
+        
+        const player = createAudioPlayer(playableUri, { updateInterval: 300 });
+        
+        // Set up interval to track playback status
+        const statusInterval = setInterval(() => {
+          if (player.playing) {
+            setIsPlaying(true);
+            setPositionSec(player.currentTime);
+          } else {
+            setIsPlaying(false);
           }
-        );
-        if (!status.isLoaded) return;
-        setSound(sound);
+        }, 300);
+        
+        // Store interval ID for cleanup
+        (player as any)._statusInterval = statusInterval;
+        
+        setSound(player);
+        
+        // Wait a bit for the player to load the audio metadata
         setTimeout(() => {
-          setDurationSec((status.durationMillis ?? 0) / 1000);
+          setDurationSec(player.duration || 0);
         }, 100);
       })();
     }, [uri]);
@@ -115,12 +124,10 @@ export const AudioPlayer = memo(
 
       if (valueSec < 0 || valueSec > durationSec) return;
       setPositionSec(valueSec);
-      sound?.getStatusAsync().then((status) => {
-        if (status.isLoaded && status.isPlaying) {
-          pauseSound();
-          wasPlaying.current = true;
-        }
-      });
+      if (sound?.playing) {
+        pauseSound();
+        wasPlaying.current = true;
+      }
     };
 
     return (
@@ -151,7 +158,7 @@ export const AudioPlayer = memo(
                 onSlideStart={(_, value) => updateValue(value)}
                 onSlideEnd={(_, value) => {
                   updateValue(value);
-                  sound?.setPositionAsync(convertPresentToPosition(value, durationSec) * 1000);
+                  sound?.seekTo(convertPresentToPosition(value, durationSec));
                   if (wasPlaying.current) {
                     playSound();
                     wasPlaying.current = false;
@@ -191,7 +198,7 @@ export const AudioPlayer = memo(
                 size="xs"
                 onPress={() => {
                   const newPosition = Math.max(positionSec - 3, 0);
-                  sound?.setPositionAsync(newPosition * 1000);
+                  sound?.seekTo(newPosition);
                   setPositionSec(newPosition);
                 }}
                 icon={<ForwardIcon backward />}
@@ -211,7 +218,7 @@ export const AudioPlayer = memo(
                 size="xs"
                 onPress={() => {
                   const newPosition = Math.min(positionSec + 3, durationSec);
-                  sound?.setPositionAsync(newPosition * 1000);
+                  sound?.seekTo(newPosition);
                   setPositionSec(newPosition);
                 }}
                 icon={<ForwardIcon />}

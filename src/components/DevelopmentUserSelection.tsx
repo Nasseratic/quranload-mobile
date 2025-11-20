@@ -1,5 +1,4 @@
 import { Button, Group, YStack } from "tamagui";
-import { isDevelopmentBuild } from "expo-dev-client";
 
 export interface DevelopmentUser {
   username: string;
@@ -25,7 +24,7 @@ interface DevelopmentUserSelectionProps {
 }
 
 const DevelopmentUserSelection = ({ setUserCredentials }: DevelopmentUserSelectionProps) => {
-  if (!isDevelopmentBuild()) return null;
+  if (__DEV__) return null;
 
   return (
     <YStack paddingBottom="$3">

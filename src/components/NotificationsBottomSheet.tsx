@@ -17,7 +17,6 @@ import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
-import { isDevelopmentBuild } from "expo-dev-client";
 import { useMutation as useRQMutation } from "@tanstack/react-query";
 // import { useMutation } from "convex/react";
 // import { cvx } from "api/convex";

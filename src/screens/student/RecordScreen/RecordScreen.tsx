@@ -62,17 +62,17 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const recordingId = assignment.recordingUrl ?? undefined;
   const feedbackId = assignment.feedbackUrl ?? undefined;
 
-  const { data: submissionUrl, isLoading: isLoadingSubmissionUrl } = useQuery(
-    ["recordingUrl", recordingId],
-    () => recordingId && fetchRecordingUrl({ lessonId, recordingId, studentId }),
-    { enabled: !!recordingId }
-  );
+  const { data: submissionUrl, isLoading: isLoadingSubmissionUrl } = useQuery({
+    queryKey: ["recordingUrl", recordingId],
+    queryFn: () => recordingId && fetchRecordingUrl({ lessonId, recordingId, studentId }),
+    enabled: !!recordingId,
+  });
 
-  const { data: feedbackUrl, isLoading: isLoadingFeedbackUrl } = useQuery(
-    ["feedbackUrl", feedbackId],
-    () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
-    { enabled: !!feedbackId }
-  );
+  const { data: feedbackUrl, isLoading: isLoadingFeedbackUrl } = useQuery({
+    queryKey: ["feedbackUrl", feedbackId],
+    queryFn: () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
+    enabled: !!feedbackId,
+  });
 
   const attachments = useMemo(
     () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
@@ -89,16 +89,18 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     uri: string;
     duration: number;
   } | null>(null);
-  const studentSubmission = useMutation(submitLessonRecording, {
+  const studentSubmission = useMutation({
+    mutationFn: submitLessonRecording,
     onSuccess: () => {
-      queryClient.invalidateQueries(["assignments"]);
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
     },
   });
 
-  const teacherFeedback = useMutation(submitFeedback, {
+  const teacherFeedback = useMutation({
+    mutationFn: submitFeedback,
     onSuccess: () => {
-      queryClient.invalidateQueries(["assignments"]);
-      queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: [LESSON_DETAILS_QUERY_KEY, lessonId] });
     },
   });
 
@@ -108,8 +110,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       .with("Student", () => deleteSubmission({ lessonId, studentId }))
       .exhaustive()
       .then(() => {
-        queryClient.invalidateQueries(["assignments"]);
-        queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
+        queryClient.invalidateQueries({ queryKey: ["assignments"] });
+        queryClient.invalidateQueries({ queryKey: [LESSON_DETAILS_QUERY_KEY, lessonId] });
       });
     navigation.setParams({
       assignment: {
@@ -442,7 +444,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           </Stack>
         </Stack>
       )}
-      {(studentSubmission.isLoading || teacherFeedback.isLoading) && (
+      {(studentSubmission.isPending || teacherFeedback.isPending) && (
         <Modal visible transparent>
           <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
             <LottieView

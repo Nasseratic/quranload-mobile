@@ -2,8 +2,8 @@
   "expo": {
     "name": "quranload",
     "slug": "quranload",
-    "version": "1.4.1",
-    "runtimeVersion": "1.4.0",
+    "version": "1.5.0",
+    "runtimeVersion": "1.5.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.quranload.app",
@@ -32,18 +34,15 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
     },
-    "plugins": [
-      [
-        "@config-plugins/ffmpeg-kit-react-native",
-        {
-          "package": "audio"
-        }
-      ],
+    "plugins": [ 
       [
         "@sentry/react-native/expo",
         {
@@ -54,7 +53,10 @@
           "setCommits": true
         }
       ],
-      ["@stripe/stripe-react-native", {}],
+      [
+        "@stripe/stripe-react-native",
+        {}
+      ],
       "expo-font",
       "expo-localization",
       [
@@ -62,7 +64,8 @@
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone to be able to record your recitation, submit feedback or send a voice note in the chat."
         }
-      ]
+      ],
+      "expo-build-properties"
     ],
     "extra": {
       "eas": {

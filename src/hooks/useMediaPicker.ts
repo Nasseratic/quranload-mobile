@@ -20,7 +20,7 @@ export const useSupabaseMediaUploader = ({
 
   const {
     mutateAsync: upload,
-    isLoading,
+    isPending,
     error,
   } = useMutation({
     mutationKey: ["media"],
@@ -30,7 +30,7 @@ export const useSupabaseMediaUploader = ({
 
   return {
     ...picker,
-    isUploading: isLoading,
+    isUploading: isPending,
     upload,
   };
 };
@@ -39,7 +39,7 @@ export const useMediaUploader = ({
   initialRemoteMedia,
 }: { initialRemoteMedia?: MediaResponse[] } = {}) => {
   const picker = useMediaPicker({ initialRemoteMedia });
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationKey: ["media"],
     mutationFn: uploadFile,
   });
@@ -59,7 +59,7 @@ export const useMediaUploader = ({
   return {
     ...picker,
     uploadSelectedMedia,
-    isUploading: isLoading,
+    isUploading: isPending,
   };
 };
 

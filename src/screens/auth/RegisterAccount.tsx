@@ -44,12 +44,13 @@ export const phoneNumberRules = /^\+?\d{7,}$/;
 type Props = NativeStackScreenProps<RootStackParamList, "RegisterAccount">;
 
 const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
-  const { mutate, error, data } = useMutation(signUp);
+  const { mutate, error, data } = useMutation({ mutationFn: signUp });
   const {
     mutate: resendVerification,
     data: resendVerificationData,
-    isLoading: isResendingVerification,
-  } = useMutation(resendVerificationEmail, {
+    isPending: isResendingVerification,
+  } = useMutation({
+    mutationFn: resendVerificationEmail,
     onError: (err: AxiosError) => {
       toast.show({ status: "Error", title: t("defaultError") });
       err;
