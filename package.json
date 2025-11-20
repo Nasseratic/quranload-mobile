@@ -14,7 +14,8 @@
     "pull:api": "curl \"https://quranload-be-dev-app.azurewebsites.net/swagger/v1/swagger.json\" -o ./src/__generated/schema.json && npx replace --quiet \"QD.Application.\" \"\" ./src/__generated/schema.json && npx replace --quiet \"QD.Domain.\" \"\" ./src/__generated/schema.json && npx replace --quiet \"Enumerations\" \"Enum\" ./src/__generated/schema.json",
     "gen:client": "npx openapi-typescript-codegen -i ./src/__generated/schema.json -o ./src/__generated/apiTypes --exportCore false --exportServices false",
     "gen:api": "npm run pull:api && npm run gen:client",
-    "supagen": "supabase gen types typescript --project-id onvbwwnhwmeckrxkjllj --schema public > src/types/Supabase.ts"
+    "supagen": "supabase gen types typescript --project-id onvbwwnhwmeckrxkjllj --schema public > src/types/Supabase.ts",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@config-plugins/ffmpeg-kit-react-native": "^6.0.0",
@@ -112,6 +113,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "openapi-typescript-codegen": "^0.25.0",
+    "patch-package": "^8.0.0",
     "prettier": "^2.8.7",
     "react-native-svg-transformer": "^1.0.0",
     "replace": "^1.2.2",

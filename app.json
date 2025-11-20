@@ -44,6 +44,7 @@
           "package": "audio"
         }
       ],
+      "./plugins/with-ffmpeg-pod.js",
       [
         "@sentry/react-native/expo",
         {
