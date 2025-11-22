@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { createAudioPlayer, type AudioPlayer as ExpoAudioPlayer } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useState, useRef, useEffect, memo, useId } from "react";
 import { ActivityIndicator } from "react-native";
 import { XStack, YStack, Text, Slider, Button } from "tamagui";
@@ -7,8 +7,8 @@ import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { Colors } from "constants/Colors";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
+import { File, Directory, Paths } from "expo-file-system";
+import { fetch } from "expo/fetch";
 import { IconButton } from "./buttons/IconButton";
 import { ForwardIcon } from "components/icons/ForwerdIcon";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
@@ -16,7 +16,8 @@ import { useAudioManager } from "hooks/useAudioManager";
 
 let onProgressFiles: {
   componentId: string;
-  instance: FileSystem.DownloadResumable;
+  abortController: AbortController;
+  onProgress?: (progress: number) => void;
 }[] = [];
 
 export const AudioPlayer = memo(
@@ -33,14 +34,21 @@ export const AudioPlayer = memo(
   }) => {
     const componentId = useId();
     const [downloadProgress, setDownloadProgress] = useState<number>();
-    const { playSound, pauseSound, sound, setSound } = useAudioManager();
-    const [durationSec, setDurationSec] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [positionSec, setPositionSec] = useState(0);
+    const [playableUri, setPlayableUri] = useState<string | null>(null);
+    const { playSound, pauseSound, setSound } = useAudioManager();
     const wasPlaying = useRef(false);
 
+    // Use the new useAudioPlayer hook with the playableUri
+    const player = useAudioPlayer(playableUri, { updateInterval: 300 });
+    const status = useAudioPlayerStatus(player);
+
+    // Extract values from status
+    const durationSec = status.duration || 0;
+    const isPlaying = status.playing;
+    const positionSec = status.currentTime || 0;
+
     async function play() {
-      if (durationSec - positionSec < 0.3) sound?.seekTo(0);
+      if (durationSec - positionSec < 0.3) player?.seekTo(0);
       playSound();
     }
 
@@ -52,53 +60,34 @@ export const AudioPlayer = memo(
 
     useEffect(() => {
       return () => {
-        // Clear the status tracking interval if it exists
-        if ((sound as any)?._statusInterval) {
-          clearInterval((sound as any)._statusInterval);
-        }
-        sound?.release();
         const toCancel = onProgressFiles.filter((file) => file.componentId === componentId);
-        toCancel.forEach((file) => file.instance.cancelAsync());
+        toCancel.forEach((file) => file.abortController.abort());
         onProgressFiles = onProgressFiles.filter((file) => file.componentId !== componentId);
       };
     }, []);
 
+    // Download audio and set playableUri
     useEffect(() => {
       (async () => {
         if (!uri) return;
 
         const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
-        const playableUri = isRemoteFile
+        const resolvedUri = isRemoteFile
           ? await downloadAudio(uri, componentId, (progress) => {
-              setDownloadProgress(
-                Math.floor((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100)
-              );
+              setDownloadProgress(Math.floor(progress));
             })
           : uri;
         
-        const player = createAudioPlayer(playableUri, { updateInterval: 300 });
-        
-        // Set up interval to track playback status
-        const statusInterval = setInterval(() => {
-          if (player.playing) {
-            setIsPlaying(true);
-            setPositionSec(player.currentTime);
-          } else {
-            setIsPlaying(false);
-          }
-        }, 300);
-        
-        // Store interval ID for cleanup
-        (player as any)._statusInterval = statusInterval;
-        
-        setSound(player);
-        
-        // Wait a bit for the player to load the audio metadata
-        setTimeout(() => {
-          setDurationSec(player.duration || 0);
-        }, 100);
+        setPlayableUri(resolvedUri);
       })();
     }, [uri]);
+
+    // Set the player in the audio manager when it's ready
+    useEffect(() => {
+      if (player) {
+        setSound(player);
+      }
+    }, [player]);
 
     const onTogglePlay = () => {
       if (isPlaying) pauseSound();
@@ -123,8 +112,7 @@ export const AudioPlayer = memo(
       const valueSec = convertPresentToPosition(value, durationSec);
 
       if (valueSec < 0 || valueSec > durationSec) return;
-      setPositionSec(valueSec);
-      if (sound?.playing) {
+      if (player?.playing) {
         pauseSound();
         wasPlaying.current = true;
       }
@@ -158,7 +146,7 @@ export const AudioPlayer = memo(
                 onSlideStart={(_, value) => updateValue(value)}
                 onSlideEnd={(_, value) => {
                   updateValue(value);
-                  sound?.seekTo(convertPresentToPosition(value, durationSec));
+                  player?.seekTo(convertPresentToPosition(value, durationSec));
                   if (wasPlaying.current) {
                     playSound();
                     wasPlaying.current = false;
@@ -198,8 +186,7 @@ export const AudioPlayer = memo(
                 size="xs"
                 onPress={() => {
                   const newPosition = Math.max(positionSec - 3, 0);
-                  sound?.seekTo(newPosition);
-                  setPositionSec(newPosition);
+                  player?.seekTo(newPosition);
                 }}
                 icon={<ForwardIcon backward />}
               />
@@ -218,8 +205,7 @@ export const AudioPlayer = memo(
                 size="xs"
                 onPress={() => {
                   const newPosition = Math.min(positionSec + 3, durationSec);
-                  sound?.seekTo(newPosition);
-                  setPositionSec(newPosition);
+                  player?.seekTo(newPosition);
                 }}
                 icon={<ForwardIcon />}
               />
@@ -239,13 +225,17 @@ const convertPositionToPresent = (position: number, duration: number) => {
   return (position / duration) * 100;
 };
 
-const recordingDir = `${FileSystem.cacheDirectory}recordings/`;
+const recordingsDir = new Directory(Paths.cache, "recordings");
 
 // clean old files in recording dir
-const cleanAndCreateRecordingsDir = () =>
-  FileSystem.deleteAsync(recordingDir, { idempotent: true }).then(() => {
-    FileSystem.makeDirectoryAsync(recordingDir, { intermediates: true });
-  });
+const cleanAndCreateRecordingsDir = () => {
+  try {
+    recordingsDir.delete();
+  } catch (error) {
+    // Directory might not exist, which is fine
+  }
+  recordingsDir.create({ intermediates: true });
+};
 
 // clean when app starts
 cleanAndCreateRecordingsDir();
@@ -253,24 +243,69 @@ cleanAndCreateRecordingsDir();
 const downloadAudio = async (
   uri: string,
   componentId: string,
-  callback?: (data: FileSystem.DownloadProgressData) => void
+  onProgress?: (progress: number) => void
 ): Promise<string> => {
   const filename = uri.split("/").pop()?.split("?")[0];
 
-  const localFileUri = recordingDir + filename + ".mp3";
-  const fileInfo = await FileSystem.getInfoAsync(localFileUri);
+  const localFile = new File(recordingsDir, filename + ".mp3");
 
-  if (fileInfo.exists) {
-    return fileInfo.uri;
+  if (localFile.exists) {
+    return localFile.uri;
   }
 
-  const downloadResumable = FileSystem.createDownloadResumable(uri, localFileUri, {}, callback);
+  const abortController = new AbortController();
+  onProgressFiles.push({ componentId, abortController, onProgress });
 
-  onProgressFiles.push({ componentId, instance: downloadResumable });
+  try {
+    const response = await fetch(uri, { signal: abortController.signal });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  const file = await downloadResumable.downloadAsync();
+    const contentLength = response.headers.get('content-length');
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
+    
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
 
-  if (!file) return "";
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedLength = 0;
 
-  return file.uri;
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+
+      chunks.push(value);
+      receivedLength += value.length;
+
+      if (total > 0 && onProgress) {
+        const progress = (receivedLength / total) * 100;
+        onProgress(progress);
+      }
+    }
+
+    // Combine all chunks into a single Uint8Array
+    const allChunks = new Uint8Array(receivedLength);
+    let position = 0;
+    for (const chunk of chunks) {
+      allChunks.set(chunk, position);
+      position += chunk.length;
+    }
+
+    // Write to file
+    localFile.create({ intermediates: true });
+    localFile.write(allChunks);
+    
+    return localFile.uri;
+  } catch (error) {
+    console.error("Error downloading audio:", error);
+    return "";
+  } finally {
+    // Clean up from tracking array
+    onProgressFiles = onProgressFiles.filter((file) => file.componentId !== componentId);
+  }
 };

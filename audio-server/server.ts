@@ -11,8 +11,25 @@ const PORT = process.env.PORT || 3000;
 const AZURE_API_URL = process.env.AZURE_API_URL || "https://quranload-be-prod-app.azurewebsites.net/api/";
 const TEMP_DIR = join(import.meta.dir, "temp");
 
-// Session storage: sessionId -> { chunks: Buffer[], token?: string }
-const sessions = new Map<string, { chunks: { buffer: Buffer; filename: string }[]; token?: string }>();
+// Upload type enum
+enum UploadType {
+  MEDIA_ONLY = "media_only",
+  LESSON_SUBMISSION = "lesson_submission",
+  FEEDBACK_SUBMISSION = "feedback_submission",
+}
+
+// Session storage with upload type and submission parameters
+interface SessionData {
+  chunks: { buffer: Buffer; filename: string }[];
+  token?: string;
+  uploadType?: UploadType;
+  lessonId?: string;
+  studentId?: string;
+  duration?: number;
+  lessonState?: number;
+}
+
+const sessions = new Map<string, SessionData>();
 
 // Ensure temp directory exists
 if (!existsSync(TEMP_DIR)) {
@@ -71,7 +88,7 @@ async function uploadToAzure(filePath: string, token?: string): Promise<{ id: st
   const headers: Record<string, string> = {
     ...form.getHeaders(),
   };
-  
+  console.log('{{token}}:', token);
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -83,6 +100,79 @@ async function uploadToAzure(filePath: string, token?: string): Promise<{ id: st
   });
 
   return response.data;
+}
+
+// Submit lesson recording to backend
+async function submitLessonRecording({
+  filePath,
+  lessonId,
+  duration,
+  token,
+}: {
+  filePath: string;
+  lessonId: string;
+  duration: number;
+  token?: string;
+}): Promise<void> {
+  const form = new FormData();
+  form.append('Recording', createReadStream(filePath), {
+    filename: 'recording.mp3',
+    contentType: 'audio/mpeg'
+  });
+  form.append('LessonId', lessonId);
+  form.append('RecordingDuration', `${duration}`);
+
+  const headers: Record<string, string> = {
+    ...form.getHeaders(),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  await axios.post(`${AZURE_API_URL}LessonSubmission/recording`, form, {
+    headers,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
+  });
+}
+
+// Submit feedback to backend
+async function submitFeedback({
+  filePath,
+  lessonId,
+  studentId,
+  lessonState,
+  token,
+}: {
+  filePath: string;
+  lessonId: string;
+  studentId: string;
+  lessonState: number;
+  token?: string;
+}): Promise<void> {
+  const form = new FormData();
+  form.append('LessonId', lessonId);
+  form.append('StudentId', studentId);
+  form.append('Recording', createReadStream(filePath), {
+    filename: 'feedback.mp3',
+    contentType: 'audio/mpeg'
+  });
+  form.append('LessonState', `${lessonState}`);
+
+  const headers: Record<string, string> = {
+    ...form.getHeaders(),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  await axios.post(`${AZURE_API_URL}LessonSubmission/feedback`, form, {
+    headers,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
+  });
 }
 
 // Clean up session
@@ -167,7 +257,14 @@ const server = serve({
     if (url.pathname === '/finalize' && req.method === 'POST') {
       try {
         const body = await req.json();
-        const { sessionId } = body;
+        const { 
+          sessionId, 
+          uploadType = UploadType.MEDIA_ONLY,
+          lessonId,
+          studentId,
+          duration,
+          lessonState,
+        } = body;
 
         if (!sessionId) {
           return new Response(JSON.stringify({ error: 'Missing sessionId' }), {
@@ -184,7 +281,7 @@ const server = serve({
           });
         }
 
-        console.log(`Finalizing session ${sessionId} with ${session.chunks.length} chunks`);
+        console.log(`Finalizing session ${sessionId} with ${session.chunks.length} chunks, uploadType: ${uploadType}`);
 
         // Get chunk file paths
         const sessionDir = join(TEMP_DIR, sessionId);
@@ -194,18 +291,50 @@ const server = serve({
         const outputPath = join(sessionDir, 'output.mp3');
         await concatAudioFiles(chunkPaths, outputPath);
 
-        // Upload to Azure
-        const uploadResult = await uploadToAzure(outputPath, session.token);
+        let uploadResult: { id: string; uri: string } | null = null;
 
-        // Cleanup
+        // Perform action based on upload type
+        if (uploadType === UploadType.MEDIA_ONLY) {
+          // Only upload to Azure for media-only requests
+          uploadResult = await uploadToAzure(outputPath, session.token);
+          console.log(`Uploaded to Azure, mediaId: ${uploadResult.id}`);
+        } else if (uploadType === UploadType.LESSON_SUBMISSION) {
+          if (!lessonId || duration === undefined) {
+            throw new Error('Missing lessonId or duration for lesson submission');
+          }
+          // Upload directly to lesson submission endpoint
+          await submitLessonRecording({
+            filePath: outputPath,
+            lessonId,
+            duration,
+            token: session.token,
+          });
+          console.log(`Submitted lesson recording for lessonId: ${lessonId}`);
+        } else if (uploadType === UploadType.FEEDBACK_SUBMISSION) {
+          if (!lessonId || !studentId || lessonState === undefined) {
+            throw new Error('Missing lessonId, studentId, or lessonState for feedback submission');
+          }
+          // Upload directly to feedback submission endpoint
+          await submitFeedback({
+            filePath: outputPath,
+            lessonId,
+            studentId,
+            lessonState,
+            token: session.token,
+          });
+          console.log(`Submitted feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
+        }
+
+        // Cleanup (after submissions complete)
         await cleanupSession(sessionId);
 
         console.log(`Successfully processed session ${sessionId}`);
 
         return new Response(JSON.stringify({ 
           success: true, 
-          mediaId: uploadResult.id,
-          mediaUri: uploadResult.uri,
+          mediaId: uploadResult?.id,
+          mediaUri: uploadResult?.uri,
+          uploadType,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

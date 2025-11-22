@@ -6,6 +6,13 @@ const AUDIO_SERVER_URL = __DEV__
   ? "http://localhost:3000" 
   : "http://localhost:3000"; // Update this for production
 
+// Upload type enum matching server
+export enum UploadType {
+  MEDIA_ONLY = "media_only",
+  LESSON_SUBMISSION = "lesson_submission",
+  FEEDBACK_SUBMISSION = "feedback_submission",
+}
+
 export interface UploadChunkParams {
   sessionId: string;
   chunkIndex: number;
@@ -15,12 +22,19 @@ export interface UploadChunkParams {
 
 export interface FinalizeRecordingParams {
   sessionId: string;
+  uploadType?: UploadType;
+  lessonId?: string;
+  studentId?: string;
+  duration?: number;
+  lessonState?: number;
 }
 
 export interface FinalizeRecordingResponse {
   success: boolean;
-  mediaId: string;
-  mediaUri: string;
+  mediaId?: string;
+  mediaUri?: string;
+  filename?: string;
+  uploadType: UploadType;
 }
 
 /**
@@ -57,13 +71,26 @@ export async function uploadChunkToServer({
 
 /**
  * Finalize the recording - concatenate chunks and upload to Azure
+ * Optionally submit lesson or feedback based on uploadType
  */
 export async function finalizeRecording({
   sessionId,
+  uploadType,
+  lessonId,
+  studentId,
+  duration,
+  lessonState,
 }: FinalizeRecordingParams): Promise<FinalizeRecordingResponse> {
   const response = await axios.post(
     `${AUDIO_SERVER_URL}/finalize`,
-    { sessionId },
+    { 
+      sessionId,
+      uploadType,
+      lessonId,
+      studentId,
+      duration,
+      lessonState,
+    },
     {
       timeout: 120000, // 2 minute timeout for concatenation and upload
     }

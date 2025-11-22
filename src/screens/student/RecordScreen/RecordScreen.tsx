@@ -38,11 +38,13 @@ import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScre
 import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
+import { UploadType } from "services/audioServerClient";
 // import { cvx, useCvxMutation } from "api/convex";
 import LottieView from "lottie-react-native";
 import UploadingLottie from "assets/lottie/uploading.json";
 import { Sentry } from "utils/sentry";
 import { track } from "utils/tracking";
+import { sleep } from "utils/sleep";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -92,6 +94,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const studentSubmission = useMutation({
     mutationFn: submitLessonRecording,
     onSuccess: () => {
+      // Only invalidate - this is for local fallback submissions
+      // Server submissions use onServerSubmitSuccess callback
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
     },
   });
@@ -99,6 +103,8 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const teacherFeedback = useMutation({
     mutationFn: submitFeedback,
     onSuccess: () => {
+      // Only invalidate - this is for local fallback submissions
+      // Server submissions use onServerSubmitSuccess callback
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
       queryClient.invalidateQueries({ queryKey: [LESSON_DETAILS_QUERY_KEY, lessonId] });
     },
@@ -366,6 +372,29 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                     lessonId={lessonId}
                     onFinished={(audio) => setAudio(audio)}
                     onSubmit={handleRecordingSubmit}
+                    onServerSubmitSuccess={async (filename) => {
+                      if (filename) {
+                        // Server returned filename, update params immediately
+                        navigation.setParams({
+                          assignment: {
+                            ...assignment,
+                            [isTeacher ? "feedbackUrl" : "recordingUrl"]: filename,
+                          },
+                        });
+                        console.log(`Got ${isTeacher ? "feedback" : "recording"} filename from server:`, filename);
+                      } else {
+                        // Fallback: Server didn't return filename, refetch queries
+                        console.warn("Server didn't return filename, falling back to query refetch");
+                        await queryClient.invalidateQueries({ queryKey: ["assignments"] });
+                      }
+                    }}
+                    uploadType={
+                      isTeacher 
+                        ? UploadType.FEEDBACK_SUBMISSION 
+                        : UploadType.LESSON_SUBMISSION
+                    }
+                    studentId={studentId}
+                    lessonState={isTeacher ? AssignmentStatusEnum.accepted : undefined}
                     onStatusChange={(status, recordings) => {
                       match(status)
                         .with("paused", () => {

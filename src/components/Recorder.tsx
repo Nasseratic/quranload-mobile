@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
 import {
-  AudioRecorder,
+  useAudioRecorder,
+  useAudioRecorderState,
   setAudioModeAsync,
   requestRecordingPermissionsAsync,
   getRecordingPermissionsAsync,
   RecordingPresets,
   RecordingOptions,
-  AndroidAudioEncoder,
-  AndroidOutputFormat,
   IOSOutputFormat,
   AudioQuality,
   PermissionStatus,
+  AudioRecorder,
 } from "expo-audio";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
@@ -47,8 +47,11 @@ import { throttleTrack, track } from "utils/tracking";
 import { 
   uploadChunkToServer, 
   finalizeRecording, 
-  checkServerHealth 
+  checkServerHealth,
+  UploadType 
 } from "services/audioServerClient";
+import { useAuth } from "contexts/auth";
+import { AssignmentStatusEnum } from "types/Lessons";
 
 let currentRecordingDurationMillis = 0;
 let currentRecording: AudioRecorder | null = null;
@@ -100,14 +103,58 @@ export const Recorder = ({
   onSubmit,
   onStatusChange,
   onFinished,
+  onServerSubmitSuccess,
+  uploadType,
+  studentId,
+  lessonState,
 }: {
   lessonId?: string;
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
   onFinished?: (params: { uri: string; duration: number }) => void;
+  onServerSubmitSuccess?: (filename?: string) => void | Promise<void>;
   onStatusChange?: (status: RecordingState, recordings: Recording[]) => void;
+  uploadType?: UploadType;
+  studentId?: string;
+  lessonState?: AssignmentStatusEnum;
 }) => {
+  const { accessToken } = useAuth();
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const permissionStatusRef = useRef<PermissionStatus | null>(null);
+  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const statusUpdateListenerRef = useRef<any>(null);
+
+  // Recording options configuration
+  const recordingOptions: RecordingOptions = {
+    extension: IS_IOS ? ".m4a" : ".mp4",
+    sampleRate: 44100,
+    numberOfChannels: 2,
+    bitRate: IS_IOS ? 128000 : 108000,
+    isMeteringEnabled: true,
+    ios: {
+      extension: ".m4a",
+      outputFormat: IOSOutputFormat.MPEG4AAC,
+      audioQuality: AudioQuality.MAX,
+      sampleRate: 44100,
+      linearPCMBitDepth: 16,
+      linearPCMIsBigEndian: false,
+      linearPCMIsFloat: false,
+    },
+    android: {
+      extension: ".mp4",
+      outputFormat: "mpeg4",
+      audioEncoder: "aac",
+      sampleRate: 44100,
+    },
+  };
+
+  // Create the audio recorder using the hook
+  const audioRecorder = useAudioRecorder(recordingOptions, (status) => {
+    if (status.hasError) {
+      console.error("Recording error:", status.error);
+    }
+  });
+
+  const recorderState = useAudioRecorderState(audioRecorder);
 
   const handleStatusChange = useCallback(
     (status: RecordingState) => {
@@ -145,16 +192,19 @@ export const Recorder = ({
       if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleStatusChange("recording");
 
-      // Check if server is available and initialize session
-      const serverAvailable = await checkServerHealth();
-      if (serverAvailable) {
-        recordingSessionId = generateSessionId();
-        chunkCounter = 0;
-        useServerForRecording = true;
-        console.log("Using server for recording, session:", recordingSessionId);
+      // Only create new session if we don't have one (fresh start)
+      if (!recordingSessionId) {
+        const serverAvailable = await checkServerHealth();
+        if (serverAvailable) {
+          recordingSessionId = generateSessionId();
+          useServerForRecording = true;
+          console.log("Using server for recording, session:", recordingSessionId);
+        } else {
+          useServerForRecording = false;
+          console.log("Server not available, using local recording");
+        }
       } else {
-        useServerForRecording = false;
-        console.log("Server not available, using local recording");
+        console.log("Resuming existing session:", recordingSessionId);
       }
 
       await startRecordingWithAutoFragmenting();
@@ -165,8 +215,10 @@ export const Recorder = ({
   }
 
   const cutRecording = async () => {
-    if (!currentRecording) return;
-    const status = currentRecording.getStatus();
+    if (!audioRecorder) return;
+    if (!currentRecording) return; // No active recording to cut
+    
+    const status = audioRecorder.getStatus();
     const durationInMs = Math.max(status.durationMillis, currentRecordingDurationMillis);
     if (status.durationMillis < currentRecordingDurationMillis) {
       Sentry.captureEvent({
@@ -174,8 +226,11 @@ export const Recorder = ({
         extra: { durationMillis: status.durationMillis, currentRecordingDurationMillis },
       });
     }
-    const uri = currentRecording.uri;
-    await cleanCurrentRecording();
+    const uri = audioRecorder.uri;
+    await audioRecorder.stop();
+    currentRecording = null;
+    currentRecordingDurationMillis = 0;
+    
     if (uri) {
       recordings.push({
         uri,
@@ -190,6 +245,7 @@ export const Recorder = ({
             sessionId: recordingSessionId,
             chunkIndex: chunkCounter++,
             fileUri: uri,
+            token: accessToken || undefined,
           });
           console.log(`Uploaded chunk ${chunkCounter - 1} to server`);
         } catch (error) {
@@ -206,7 +262,7 @@ export const Recorder = ({
   };
 
   const pauseRecording = async () => {
-    if (!currentRecording) return;
+    if (!audioRecorder) return;
     handleStatusChange("paused");
     await cutRecording();
   };
@@ -217,6 +273,7 @@ export const Recorder = ({
     if (IS_IOS)
       await setAudioModeAsync({
         allowsRecording: false,
+        playsInSilentMode: false,
       });
   }, [lessonId]);
 
@@ -230,23 +287,40 @@ export const Recorder = ({
       let uri: string;
       let durationInSec: number;
 
+      // Always concatenate locally first to get a URI for the audio player
+      const concatenatedUri = await concatAudioFragments(
+        recordings.map(({ uri }) => uri)
+      );
+      
+      if (!concatenatedUri) {
+        throw new Error("Failed to concatenate audio fragments");
+      }
+      
+      uri = concatenatedUri;
+      durationInSec =
+        Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
+
       // Try server-based finalization first
       if (useServerForRecording && recordingSessionId) {
         try {
           console.log("Finalizing recording on server...");
-          const result = await finalizeRecording({ sessionId: recordingSessionId });
           
-          // Server returns the media ID and URI from Azure
-          // We need to create a local reference for backward compatibility
-          durationInSec = Math.round(
-            recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000
-          ) ?? 0;
+          const result = await finalizeRecording({ 
+            sessionId: recordingSessionId,
+            uploadType,
+            lessonId,
+            studentId,
+            duration: durationInSec,
+            lessonState,
+          });
+          console.log("Finalized recording on server, result:", result);
           
-          // The server already uploaded to Azure, so we skip local upload
-          // and just pass the result to onFinished
+          // Server handled the complete submission flow
           await cleanRecordings({ lessonId });
           handleStatusChange("idle");
-          onFinished?.({ uri: result.mediaUri, duration: durationInSec });
+          
+          // Trigger callback to let RecordScreen know submission succeeded
+          await onServerSubmitSuccess?.(result.filename);
           
           return; // Exit early since server handled everything
         } catch (error) {
@@ -255,32 +329,18 @@ export const Recorder = ({
             title: "Server processing failed, using local processing", 
             status: "Warning" 
           });
-          // Fall through to local concatenation
+          // Fall through to local submission
         }
       }
 
-      // Fallback to local concatenation
-      const { uri: localUri, totalDuration } = await concatAudioFragments(
-        recordings.map(({ uri }) => uri)
-      );
-      uri = localUri;
-
-      durationInSec =
-        Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
-
-      if (totalDuration && totalDuration > durationInSec && totalDuration - durationInSec > 5) {
-        Sentry.captureEvent({
-          message: "Recording duration mismatch, concatAudioFragments totalDuration is greater",
-          extra: { totalDuration, durationInSec },
-        });
-      }
+      // Fallback to local submission
 
       try {
         await cleanRecordings({ lessonId });
 
         await onSubmit({
           uri,
-          duration: durationInSec || totalDuration || 0,
+          duration: durationInSec || 0,
         });
 
         handleStatusChange("idle");
@@ -307,6 +367,7 @@ export const Recorder = ({
       if (IS_IOS)
         await setAudioModeAsync({
           allowsRecording: false,
+          playsInSilentMode: false,
         });
     }
   };
@@ -315,6 +376,7 @@ export const Recorder = ({
     if (IS_IOS)
       await setAudioModeAsync({
         allowsRecording: true,
+        playsInSilentMode: true,
       });
 
     if (currentRecording) {
@@ -322,44 +384,15 @@ export const Recorder = ({
       toast.show({ title: "want to record while having current recording", status: "Warning" });
     }
 
-    const recordingOptions: RecordingOptions = {
-      extension: IS_IOS ? ".m4a" : ".mp4",
-      sampleRate: 44100,
-      numberOfChannels: 2,
-      bitRate: IS_IOS ? 128000 : 108000,
-      isMeteringEnabled: true,
-      ios: {
-        extension: ".m4a",
-        outputFormat: IOSOutputFormat.MPEG4AAC,
-        audioQuality: AudioQuality.MAX,
-        sampleRate: 44100,
-        linearPCMBitDepth: 16,
-        linearPCMIsBigEndian: false,
-        linearPCMIsFloat: false,
-      },
-      android: {
-        extension: ".mp4",
-        outputFormat: AndroidOutputFormat.MPEG_4,
-        audioEncoder: AndroidAudioEncoder.AAC,
-        sampleRate: 44100,
-      },
-    };
-
-    const recorder = new AudioRecorder(recordingOptions);
-    
-    // Set up status update listener
-    const statusUpdateListener = recorder.addListener("recordingStatusUpdate", (status) => {
-      if (status.hasError) {
-        console.error("Recording error:", status.error);
-      }
-    });
-
-    await recorder.prepareToRecordAsync();
-    recorder.record();
-    currentRecording = recorder;
+    await audioRecorder.prepareToRecordAsync();
+    audioRecorder.record();
+    currentRecording = audioRecorder;
 
     // Poll for duration updates
-    const durationInterval = setInterval(() => {
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+    }
+    durationIntervalRef.current = setInterval(() => {
       if (currentRecording) {
         const status = currentRecording.getStatus();
         if (status.durationMillis === 0) {
@@ -387,8 +420,10 @@ export const Recorder = ({
       })(),
     ]);
 
-    clearInterval(durationInterval);
-    statusUpdateListener.remove();
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+      durationIntervalRef.current = null;
+    }
 
     try {
       if (currentRecording) {
