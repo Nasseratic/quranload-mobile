@@ -24,7 +24,7 @@ interface DevelopmentUserSelectionProps {
 }
 
 const DevelopmentUserSelection = ({ setUserCredentials }: DevelopmentUserSelectionProps) => {
-  if (__DEV__) return null;
+  if (!__DEV__) return null;
 
   return (
     <YStack paddingBottom="$3">

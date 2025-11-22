@@ -4,7 +4,7 @@ import axios from "axios";
 // You can change this to your server's IP address if testing on a physical device
 const AUDIO_SERVER_URL = __DEV__ 
   ? "http://localhost:3000" 
-  : "http://akokoog4gg0gk88gwk0soc0s.213.199.41.153.sslip.io"; // Update this for production
+  : "https://akokoog4gg0gk88gwk0soc0s.thawabcoding.work"; // Update this for production
 
 // Upload type enum matching server
 export enum UploadType {
