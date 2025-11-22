@@ -299,8 +299,8 @@ const server = serve({
           uploadResult = await uploadToAzure(outputPath, session.token);
           console.log(`Uploaded to Azure, mediaId: ${uploadResult.id}`);
         } else if (uploadType === UploadType.LESSON_SUBMISSION) {
-          if (!lessonId || duration === undefined) {
-            throw new Error('Missing lessonId or duration for lesson submission');
+          if (!lessonId || duration === undefined || !studentId) {
+            throw new Error('Missing lessonId, duration, or studentId for lesson submission');
           }
           // Upload directly to lesson submission endpoint
           await submitLessonRecording({
@@ -325,6 +325,62 @@ const server = serve({
           console.log(`Submitted feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
         }
 
+        // Poll for filename
+        let filename: string | null = null;
+        if (uploadType === UploadType.LESSON_SUBMISSION || uploadType === UploadType.FEEDBACK_SUBMISSION) {
+          console.log(`Starting polling for filename for session ${sessionId}...`);
+          const maxRetries = 5;
+          const delays = [500, 1000, 2000, 3000, 5000];
+
+          for (let i = 0; i < maxRetries; i++) {
+            console.log(`Polling attempt ${i + 1}/${maxRetries} (waiting ${delays[i]}ms)...`);
+            await sleep(delays[i] || 1000);
+
+            try {
+              const lessonDetails = await fetchLessonDetails(lessonId || "", session.token);
+              console.log(`[DEBUG] Full lesson details response:`, JSON.stringify(lessonDetails, null, 2));
+              
+              // Find the submission for this student
+              // For lesson submission, we need to find the student's submission
+              // For feedback submission, we need to find the submission for the student we are giving feedback to
+              
+              const targetStudentId = studentId; // This should be passed in the request
+              console.log(`Looking for submission for studentId: ${targetStudentId}`);
+
+              if (lessonDetails.lessonSubmissions && targetStudentId) {
+                const submission = lessonDetails.lessonSubmissions.find(
+                  (s: any) => s.student?.id === targetStudentId
+                );
+
+                if (submission) {
+                  if (uploadType === UploadType.LESSON_SUBMISSION) {
+                    filename = submission.recording?.uri;
+                    console.log(`Found submission, recording uri: ${filename}`);
+                  } else if (uploadType === UploadType.FEEDBACK_SUBMISSION) {
+                    filename = submission.feedback?.uri;
+                    console.log(`Found submission, feedback uri: ${filename}`);
+                  }
+                } else {
+                  console.log(`No submission found for studentId: ${targetStudentId}`);
+                }
+              } else {
+                 console.log(`Missing lessonSubmissions or targetStudentId`);
+              }
+
+              if (filename) {
+                console.log(`Found filename: ${filename}`);
+                break;
+              }
+            } catch (error) {
+              console.error(`Error fetching lesson details during polling:`, error);
+            }
+          }
+
+          if (!filename) {
+            console.warn(`Failed to retrieve filename after ${maxRetries} attempts`);
+          }
+        }
+
         // Cleanup (after submissions complete)
         await cleanupSession(sessionId);
 
@@ -334,6 +390,7 @@ const server = serve({
           success: true, 
           mediaId: uploadResult?.id,
           mediaUri: uploadResult?.uri,
+          filename,
           uploadType,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -357,3 +414,25 @@ const server = serve({
 console.log(`🎙️  Audio server running on http://localhost:${PORT}`);
 console.log(`📦 Azure API: ${AZURE_API_URL}`);
 console.log(`📁 Temp directory: ${TEMP_DIR}`);
+
+async function fetchLessonDetails(lessonId: string, token: string) {
+  console.log(`Fetching lesson details for lessonId: ${lessonId}`);
+  const response = await fetch(
+    `https://quranload-be-prod-app.azurewebsites.net/api/Lessons/${lessonId}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch lesson details: ${response.status} ${response.statusText}`);
+  }
+  
+  return await response.json();
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
