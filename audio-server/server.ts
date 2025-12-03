@@ -11,7 +11,66 @@ const PORT = process.env.PORT || 3000;
 const AZURE_API_URL = process.env.AZURE_API_URL || "https://quranload-be-prod-app.azurewebsites.net/api/";
 const TEMP_DIR = join(import.meta.dir, "temp");
 
-// Upload type enum
+// Retry configuration
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
+
+// Timestamp helper for consistent logging
+function getTimestamp(): string {
+  return new Date().toISOString();
+}
+
+function log(message: string, ...args: any[]) {
+  console.log(`[${getTimestamp()}]`, message, ...args);
+}
+
+function logError(message: string, ...args: any[]) {
+  console.error(`[${getTimestamp()}]`, message, ...args);
+}
+
+function logWarn(message: string, ...args: any[]) {
+  console.warn(`[${getTimestamp()}]`, message, ...args);
+}
+
+// Helper to sleep for a given duration
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Generic retry wrapper with exponential backoff
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  maxAttempts: number = MAX_RETRY_ATTEMPTS,
+  delays: number[] = RETRY_DELAYS
+): Promise<T> {
+  let lastError: Error | unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      log(`${operationName} - Attempt ${attempt}/${maxAttempts}`);
+      const result = await operation();
+      if (attempt > 1) {
+        log(`${operationName} - Succeeded on attempt ${attempt}`);
+      }
+      return result;
+    } catch (error) {
+      lastError = error;
+      logError(`${operationName} - Attempt ${attempt}/${maxAttempts} failed:`, error instanceof Error ? error.message : error);
+
+      if (attempt < maxAttempts) {
+        const delay = delays[attempt - 1] || delays[delays.length - 1] || 1000;
+        logWarn(`${operationName} - Retrying in ${delay}ms...`);
+        await sleep(delay);
+      }
+    }
+  }
+
+  logError(`${operationName} - All ${maxAttempts} attempts failed`);
+  throw lastError;
+}
+
+// Ensure temp directory exists
 enum UploadType {
   MEDIA_ONLY = "media_only",
   LESSON_SUBMISSION = "lesson_submission",
@@ -52,7 +111,7 @@ async function concatAudioFiles(files: string[], outputPath: string): Promise<vo
       outputPath
     ];
 
-    console.log('Running FFmpeg with args:', args);
+    log('Running FFmpeg with args:', args);
     
     const ffmpeg = spawn('ffmpeg', args);
     
@@ -65,7 +124,7 @@ async function concatAudioFiles(files: string[], outputPath: string): Promise<vo
       if (code === 0) {
         resolve();
       } else {
-        console.error('FFmpeg error:', stderr);
+        logError('FFmpeg error:', stderr);
         reject(new Error(`FFmpeg exited with code ${code}`));
       }
     });
@@ -78,28 +137,33 @@ async function concatAudioFiles(files: string[], outputPath: string): Promise<vo
 
 // Upload to Azure Media API
 async function uploadToAzure(filePath: string, token?: string): Promise<{ id: string; uri: string }> {
-  const form = new FormData();
-  form.append('File', createReadStream(filePath), {
-    filename: 'audio.mp3',
-    contentType: 'audio/mpeg'
-  });
-  form.append('MediaType', '2');
+  return retryWithBackoff(
+    async () => {
+      const form = new FormData();
+      form.append('File', createReadStream(filePath), {
+        filename: 'audio.mp3',
+        contentType: 'audio/mpeg'
+      });
+      form.append('MediaType', '2');
 
-  const headers: Record<string, string> = {
-    ...form.getHeaders(),
-  };
-  console.log('{{token}}:', token);
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+      const headers: Record<string, string> = {
+        ...form.getHeaders(),
+      };
+      log('{{token}}:', token);
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-  const response = await axios.post(`${AZURE_API_URL}Media`, form, {
-    headers,
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-  });
+      const response = await axios.post(`${AZURE_API_URL}Media`, form, {
+        headers,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
 
-  return response.data;
+      return response.data;
+    },
+    'Upload to Azure Media API'
+  );
 }
 
 // Submit lesson recording to backend
@@ -114,27 +178,32 @@ async function submitLessonRecording({
   duration: number;
   token?: string;
 }): Promise<void> {
-  const form = new FormData();
-  form.append('Recording', createReadStream(filePath), {
-    filename: 'recording.mp3',
-    contentType: 'audio/mpeg'
-  });
-  form.append('LessonId', lessonId);
-  form.append('RecordingDuration', `${duration}`);
+  return retryWithBackoff(
+    async () => {
+      const form = new FormData();
+      form.append('Recording', createReadStream(filePath), {
+        filename: 'recording.mp3',
+        contentType: 'audio/mpeg'
+      });
+      form.append('LessonId', lessonId);
+      form.append('RecordingDuration', `${duration}`);
 
-  const headers: Record<string, string> = {
-    ...form.getHeaders(),
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+      const headers: Record<string, string> = {
+        ...form.getHeaders(),
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-  await axios.post(`${AZURE_API_URL}LessonSubmission/recording`, form, {
-    headers,
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-  });
+      await axios.post(`${AZURE_API_URL}LessonSubmission/recording`, form, {
+        headers,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+    },
+    `Submit lesson recording (lessonId: ${lessonId})`
+  );
 }
 
 // Submit feedback to backend
@@ -151,28 +220,33 @@ async function submitFeedback({
   lessonState: number;
   token?: string;
 }): Promise<void> {
-  const form = new FormData();
-  form.append('LessonId', lessonId);
-  form.append('StudentId', studentId);
-  form.append('Recording', createReadStream(filePath), {
-    filename: 'feedback.mp3',
-    contentType: 'audio/mpeg'
-  });
-  form.append('LessonState', `${lessonState}`);
+  return retryWithBackoff(
+    async () => {
+      const form = new FormData();
+      form.append('LessonId', lessonId);
+      form.append('StudentId', studentId);
+      form.append('Recording', createReadStream(filePath), {
+        filename: 'feedback.mp3',
+        contentType: 'audio/mpeg'
+      });
+      form.append('LessonState', `${lessonState}`);
 
-  const headers: Record<string, string> = {
-    ...form.getHeaders(),
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+      const headers: Record<string, string> = {
+        ...form.getHeaders(),
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-  await axios.post(`${AZURE_API_URL}LessonSubmission/feedback`, form, {
-    headers,
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-  });
+      await axios.post(`${AZURE_API_URL}LessonSubmission/feedback`, form, {
+        headers,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+    },
+    `Submit feedback (lessonId: ${lessonId}, studentId: ${studentId})`
+  );
 }
 
 // Clean up session
@@ -239,13 +313,13 @@ const server = serve({
         const session = sessions.get(sessionId)!;
         session.chunks.push({ buffer, filename });
 
-        console.log(`Received chunk ${chunkIndex} for session ${sessionId}`);
+        log(`Received chunk ${chunkIndex} for session ${sessionId}`);
 
         return new Response(JSON.stringify({ success: true, chunkIndex }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('Error uploading chunk:', error);
+        logError('Error uploading chunk:', error);
         return new Response(JSON.stringify({ error: 'Failed to upload chunk' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -281,7 +355,7 @@ const server = serve({
           });
         }
 
-        console.log(`Finalizing session ${sessionId} with ${session.chunks.length} chunks, uploadType: ${uploadType}`);
+        log(`Finalizing session ${sessionId} with ${session.chunks.length} chunks, uploadType: ${uploadType}`);
 
         // Get chunk file paths
         const sessionDir = join(TEMP_DIR, sessionId);
@@ -297,7 +371,7 @@ const server = serve({
         if (uploadType === UploadType.MEDIA_ONLY) {
           // Only upload to Azure for media-only requests
           uploadResult = await uploadToAzure(outputPath, session.token);
-          console.log(`Uploaded to Azure, mediaId: ${uploadResult.id}`);
+          log(`Uploaded to Azure, mediaId: ${uploadResult.id}`);
         } else if (uploadType === UploadType.LESSON_SUBMISSION) {
           if (!lessonId || duration === undefined || !studentId) {
             throw new Error('Missing lessonId, duration, or studentId for lesson submission');
@@ -309,7 +383,7 @@ const server = serve({
             duration,
             token: session.token,
           });
-          console.log(`Submitted lesson recording for lessonId: ${lessonId}`);
+          log(`Submitted lesson recording for lessonId: ${lessonId}`);
         } else if (uploadType === UploadType.FEEDBACK_SUBMISSION) {
           if (!lessonId || !studentId || lessonState === undefined) {
             throw new Error('Missing lessonId, studentId, or lessonState for feedback submission');
@@ -322,30 +396,30 @@ const server = serve({
             lessonState,
             token: session.token,
           });
-          console.log(`Submitted feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
+          log(`Submitted feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
         }
 
         // Poll for filename
         let filename: string | null = null;
         if (uploadType === UploadType.LESSON_SUBMISSION || uploadType === UploadType.FEEDBACK_SUBMISSION) {
-          console.log(`Starting polling for filename for session ${sessionId}...`);
+          log(`Starting polling for filename for session ${sessionId}...`);
           const maxRetries = 5;
           const delays = [500, 1000, 2000, 3000, 5000];
 
           for (let i = 0; i < maxRetries; i++) {
-            console.log(`Polling attempt ${i + 1}/${maxRetries} (waiting ${delays[i]}ms)...`);
+            log(`Polling attempt ${i + 1}/${maxRetries} (waiting ${delays[i]}ms)...`);
             await sleep(delays[i] || 1000);
 
             try {
               const lessonDetails = await fetchLessonDetails(lessonId || "", session.token);
-              console.log(`[DEBUG] Full lesson details response:`, JSON.stringify(lessonDetails, null, 2));
+              log(`[DEBUG] Full lesson details response:`, JSON.stringify(lessonDetails, null, 2));
               
               // Find the submission for this student
               // For lesson submission, we need to find the student's submission
               // For feedback submission, we need to find the submission for the student we are giving feedback to
               
               const targetStudentId = studentId; // This should be passed in the request
-              console.log(`Looking for submission for studentId: ${targetStudentId}`);
+              log(`Looking for submission for studentId: ${targetStudentId}`);
 
               if (lessonDetails.lessonSubmissions && targetStudentId) {
                 const submission = lessonDetails.lessonSubmissions.find(
@@ -355,36 +429,36 @@ const server = serve({
                 if (submission) {
                   if (uploadType === UploadType.LESSON_SUBMISSION) {
                     filename = submission.recording?.uri;
-                    console.log(`Found submission, recording uri: ${filename}`);
+                    log(`Found submission, recording uri: ${filename}`);
                   } else if (uploadType === UploadType.FEEDBACK_SUBMISSION) {
                     filename = submission.feedback?.uri;
-                    console.log(`Found submission, feedback uri: ${filename}`);
+                    log(`Found submission, feedback uri: ${filename}`);
                   }
                 } else {
-                  console.log(`No submission found for studentId: ${targetStudentId}`);
+                  log(`No submission found for studentId: ${targetStudentId}`);
                 }
               } else {
-                 console.log(`Missing lessonSubmissions or targetStudentId`);
+                 log(`Missing lessonSubmissions or targetStudentId`);
               }
 
               if (filename) {
-                console.log(`Found filename: ${filename}`);
+                log(`Found filename: ${filename}`);
                 break;
               }
             } catch (error) {
-              console.error(`Error fetching lesson details during polling:`, error);
+              logError(`Error fetching lesson details during polling:`, error);
             }
           }
 
           if (!filename) {
-            console.warn(`Failed to retrieve filename after ${maxRetries} attempts`);
+            logWarn(`Failed to retrieve filename after ${maxRetries} attempts`);
           }
         }
 
         // Cleanup (after submissions complete)
         await cleanupSession(sessionId);
 
-        console.log(`Successfully processed session ${sessionId}`);
+        log(`Successfully processed session ${sessionId}`);
 
         return new Response(JSON.stringify({ 
           success: true, 
@@ -396,7 +470,7 @@ const server = serve({
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('Error finalizing:', error);
+        logError('Error finalizing:', error);
         return new Response(JSON.stringify({ 
           error: 'Failed to finalize recording',
           details: error instanceof Error ? error.message : 'Unknown error',
@@ -411,28 +485,29 @@ const server = serve({
   },
 });
 
-console.log(`🎙️  Audio server running on http://localhost:${PORT}`);
-console.log(`📦 Azure API: ${AZURE_API_URL}`);
-console.log(`📁 Temp directory: ${TEMP_DIR}`);
+log(`🎙️  Audio server running on http://localhost:${PORT}`);
+log(`📦 Azure API: ${AZURE_API_URL}`);
+log(`📁 Temp directory: ${TEMP_DIR}`);
 
 async function fetchLessonDetails(lessonId: string, token: string) {
-  console.log(`Fetching lesson details for lessonId: ${lessonId}`);
-  const response = await fetch(
-    `https://quranload-be-prod-app.azurewebsites.net/api/Lessons/${lessonId}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    }
+  return retryWithBackoff(
+    async () => {
+      log(`Fetching lesson details for lessonId: ${lessonId}`);
+      const response = await fetch(
+        `https://quranload-be-prod-app.azurewebsites.net/api/Lessons/${lessonId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch lesson details: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.json();
+    },
+    `Fetch lesson details (lessonId: ${lessonId})`
   );
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch lesson details: ${response.status} ${response.statusText}`);
-  }
-  
-  return await response.json();
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }

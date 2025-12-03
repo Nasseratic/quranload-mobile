@@ -9,6 +9,8 @@ A Bun server for receiving, concatenating, and uploading audio recordings from t
 - Uploads final audio to Azure Media API
 - Session-based chunk management
 - CORS enabled for local development
+- **Automatic retry with exponential backoff** for all network requests (3 attempts with 1s, 2s, 4s delays)
+- **Timestamped logging** for all operations (ISO 8601 format)
 
 ## Prerequisites
 
