@@ -8,11 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Sentry } from "utils/sentry";
 import { toast } from "components/Toast";
 import { t } from "locales/config";
-import { captureException } from "@sentry/react-native";
-// import { cvx, useCvxMutation } from "api/convex";
-// import { OTA_VERSION } from "components/Version";
-// import * as Application from "expo-application";
-// import { Platform } from "react-native";
+import { cvx, useCvxMutation } from "api/convex";
+import { OTA_VERSION } from "components/Version";
+import * as Application from "expo-application";
+import { Platform } from "react-native";
 import { posthog } from "utils/tracking";
 
 interface AuthContextData {
@@ -62,7 +61,7 @@ export const AuthProvider = ({ children }: Props) => {
   const [signedIn, setSignedIn] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  // const updateUserInfo = useCvxMutation(cvx.user.updateUserInfo);
+  const updateUserInfo = useCvxMutation(cvx.user.updateUserInfo);
   const {
     refetch: fetchUser,
     data: user,
@@ -125,19 +124,25 @@ export const AuthProvider = ({ children }: Props) => {
           const data = await refreshToken({ refreshToken: storedRefreshToken });
           await AsyncStorage.setItem("refreshToken", data.refreshToken);
           await AsyncStorage.setItem("accessToken", data.accessToken);
-          console.log("Token refreshed successfully 🔐");
+          console.log("Token refreshed successfully");
         } catch (error) {
           console.error("Failed to refresh token", error);
         }
       }
 
-      // await updateUserInfo({
-      //   userId: user.id!,
-      //   currentOtaVersion: OTA_VERSION,
-      //   currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
-      //   platform: Platform.OS,
-      //   lastSeen: Date.now(),
-      // });
+      // Update user info in Convex
+      try {
+        await updateUserInfo({
+          userId: user.id!,
+          currentOtaVersion: OTA_VERSION,
+          currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
+          platform: Platform.OS,
+          lastSeen: Date.now(),
+        });
+      } catch (error) {
+        // Non-critical error, don't block sign in
+        console.error("Failed to update user info", error);
+      }
     } catch (err: any) {
       if (err?.status !== 401) {
         setSignedIn(false);

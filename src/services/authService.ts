@@ -1,41 +1,57 @@
-import request from "api/apiClient";
-import { subYears } from "date-fns";
+import { client } from "api/convex";
+import { api } from "../../convex/_generated/api";
 
 export async function signIn(data: {
   email: string;
   password: string;
 }): Promise<ISignInResponse["data"]> {
-  return await request.post("Account/GetToken", {
-    username: data.email,
+  const result = await client.mutation(api.services.auth.signIn, {
+    email: data.email,
     password: data.password,
   });
+  return {
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
+    userId: result.userId,
+  };
 }
 
 export async function refreshToken(data: { refreshToken: string }): Promise<IRefreshTokenResponse> {
-  return await request.post("Account/RefreshToken", data);
+  const result = await client.mutation(api.services.auth.refreshToken, {
+    refreshToken: data.refreshToken,
+  });
+  return {
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
+  };
 }
 
 export const forgotPassword = async (data: { userName: string }): Promise<void> => {
-  return await request.post("Account/forgotPassword", data);
+  await client.mutation(api.services.auth.forgotPassword, {
+    email: data.userName,
+  });
 };
 
-export const resetPassword = (data: {
+export const resetPassword = async (data: {
   code: string;
   username: string;
   password: string;
   confirmPassword: string;
-}) =>
-  request.post("Account/ResetPassword", {
-    ...data,
-    code: encodeURIComponent(data.code),
+}): Promise<void> => {
+  await client.mutation(api.services.auth.resetPassword, {
+    email: data.username,
+    code: data.code,
+    password: data.password,
+    confirmPassword: data.confirmPassword,
   });
+};
 
-export const confirmEmail = (data: { code: string; userId: string }) =>
-  request.put(
-    `Account/ConfirmEmail?Code=${encodeURIComponent(encodeURIComponent(data.code))}&UserId=${
-      data.userId
-    }`
-  );
+export const confirmEmail = async (data: { code: string; userId: string }): Promise<void> => {
+  await client.mutation(api.services.auth.confirmEmail, {
+    userId: data.userId,
+    code: data.code,
+  });
+};
 
 export const signUp = async (data: {
   password: string;
@@ -44,16 +60,17 @@ export const signUp = async (data: {
   firstName: string;
   lastName: string;
 }): Promise<void> => {
-  return await request.post("Account/Register", {
-    ...data,
-    // TODO: check if we need username and date of birth and remove or update this if needed
-    username: data.email,
-    dateOfBirth: subYears(new Date(), 18).toISOString(),
+  await client.mutation(api.services.auth.signUp, {
+    email: data.email,
+    password: data.password,
+    confirmPassword: data.confirmPassword,
+    firstName: data.firstName,
+    lastName: data.lastName,
   });
 };
 
 export const resendVerificationEmail = async (data: { email: string }): Promise<void> => {
-  return await request.post("Account/ResendConfirmationEmail", {
-    username: data.email,
+  await client.mutation(api.services.auth.resendConfirmationEmail, {
+    email: data.email,
   });
 };

@@ -1,14 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import apiClient from "api/apiClient";
-import Paginated from "types/Paginated";
-import { Organizations_Dto_OrganizationGetResponse } from "__generated/apiTypes";
+import { client } from "api/convex";
+import { api } from "../../../convex/_generated/api";
 
 export const useOrganizations = () => {
   const { data, isLoading } = useQuery(["organizations"], async () => {
-    const response = await apiClient.get<Paginated<Organizations_Dto_OrganizationGetResponse>>(
-      "Organizations"
-    );
-
+    const response = await client.query(api.services.teams.getOrganizations, {});
     return response.list;
   });
 
