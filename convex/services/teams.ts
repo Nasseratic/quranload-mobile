@@ -1,6 +1,23 @@
-import { mutation, query } from "../_generated/server";
-import { v } from "convex/values";
-import { ConvexError } from "convex/values";
+import { mutation, query, QueryCtx } from "../_generated/server";
+import { v, ConvexError } from "convex/values";
+import { Id } from "../_generated/dataModel";
+
+// Helper to get user profile data
+async function getUserProfile(ctx: QueryCtx, userId: Id<"users">) {
+  const profile = await ctx.db
+    .query("userProfiles")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .first();
+  const user = await ctx.db.get(userId);
+  return {
+    fullName: profile?.fullName ?? user?.name ?? "",
+    phoneNumber: profile?.phoneNumber ?? "",
+    gender: profile?.gender ?? "",
+    dateOfBirth: profile?.dateOfBirth,
+    roles: profile?.roles ?? ["Student"],
+    email: user?.email ?? "",
+  };
+}
 
 // Get all organizations
 export const getOrganizations = query({
@@ -59,7 +76,10 @@ export const getStudentsList = query({
     const students = await Promise.all(
       memberships.map(async (membership) => {
         const user = await ctx.db.get(membership.userId);
-        if (!user || !user.roles.includes("Student")) {
+        if (!user) return null;
+
+        const profile = await getUserProfile(ctx, membership.userId);
+        if (!profile.roles.includes("Student")) {
           return null;
         }
 
@@ -91,14 +111,14 @@ export const getStudentsList = query({
 
         return {
           id: user._id,
-          fullName: user.fullName,
-          emailAddress: user.email,
-          phoneNumber: user.phoneNumber ?? "",
-          gender: user.gender ?? "",
-          dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
+          fullName: profile.fullName,
+          emailAddress: profile.email,
+          phoneNumber: profile.phoneNumber,
+          gender: profile.gender,
+          dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth) : new Date(),
           teams: teams.filter((t) => t !== null),
-          roles: user.roles,
-          username: user.username ?? user.email,
+          roles: profile.roles,
+          username: profile.email,
           percentageOfAcceptedOrSubmittedLessons: 0,
         };
       })

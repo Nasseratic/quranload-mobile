@@ -1,15 +1,5 @@
 import { mutation, query } from "../_generated/server";
-import { v } from "convex/values";
-import { ConvexError } from "convex/values";
-
-// Simple hash function for passwords (same as auth.ts)
-function hashPassword(password: string): string {
-  return Buffer.from(password).toString("base64");
-}
-
-function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
-}
+import { v, ConvexError } from "convex/values";
 
 // Get user profile by ID
 export const getProfile = query({
@@ -22,6 +12,12 @@ export const getProfile = query({
     if (!user) {
       throw new ConvexError("User not found");
     }
+
+    // Get user profile from userProfiles table
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
 
     // Get user's team memberships
     const teamMemberships = await ctx.db
@@ -62,14 +58,14 @@ export const getProfile = query({
 
     return {
       id: user._id,
-      fullName: user.fullName,
-      emailAddress: user.email,
-      phoneNumber: user.phoneNumber ?? "",
-      gender: user.gender ?? "",
-      dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
+      fullName: profile?.fullName ?? user.name ?? "",
+      emailAddress: user.email ?? "",
+      phoneNumber: profile?.phoneNumber ?? "",
+      gender: profile?.gender ?? "",
+      dateOfBirth: profile?.dateOfBirth ? new Date(profile.dateOfBirth) : new Date(),
       teams: teams.filter((t) => t !== null),
-      roles: user.roles,
-      username: user.username ?? user.email,
+      roles: profile?.roles ?? ["Student"],
+      username: user.email ?? "",
       percentageOfAcceptedOrSubmittedLessons: 0, // TODO: Calculate
     };
   },
@@ -83,36 +79,38 @@ export const updateProfile = mutation({
     emailAddress: v.string(),
     phoneNumber: v.string(),
   },
-  handler: async (ctx, { userId, fullName, emailAddress, phoneNumber }) => {
+  handler: async (ctx, { userId, fullName, phoneNumber }) => {
     const user = await ctx.db.get(userId);
 
     if (!user) {
       throw new ConvexError("User not found");
     }
 
-    // Check if email is being changed and if it's already taken
-    if (emailAddress.toLowerCase() !== user.email) {
-      const existingUser = await ctx.db
-        .query("users")
-        .withIndex("by_email", (q) => q.eq("email", emailAddress.toLowerCase()))
-        .first();
+    // Get or create user profile
+    const existingProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
 
-      if (existingUser) {
-        throw new ConvexError("Email already in use");
-      }
+    if (existingProfile) {
+      await ctx.db.patch(existingProfile._id, {
+        fullName,
+        phoneNumber,
+      });
+    } else {
+      await ctx.db.insert("userProfiles", {
+        userId,
+        fullName,
+        phoneNumber,
+        roles: ["Student"],
+      });
     }
-
-    await ctx.db.patch(userId, {
-      fullName,
-      email: emailAddress.toLowerCase(),
-      phoneNumber,
-    });
 
     return { message: "Profile updated successfully" };
   },
 });
 
-// Change password
+// Change password - Note: With Convex Auth, password changes should be handled through auth reset flows
 export const changePassword = mutation({
   args: {
     userId: v.id("users"),
@@ -120,7 +118,7 @@ export const changePassword = mutation({
     newPassword: v.string(),
     confirmNewPassword: v.string(),
   },
-  handler: async (ctx, { userId, currentPassword, newPassword, confirmNewPassword }) => {
+  handler: async (ctx, { userId, newPassword, confirmNewPassword }) => {
     if (newPassword !== confirmNewPassword) {
       throw new ConvexError("New passwords do not match");
     }
@@ -131,15 +129,9 @@ export const changePassword = mutation({
       throw new ConvexError("User not found");
     }
 
-    if (!verifyPassword(currentPassword, user.passwordHash)) {
-      throw new ConvexError("Current password is incorrect");
-    }
-
-    await ctx.db.patch(userId, {
-      passwordHash: hashPassword(newPassword),
-    });
-
-    return { message: "Password changed successfully" };
+    // Note: With Convex Auth, password changes are handled through the auth system
+    // This mutation is kept for API compatibility but may need adjustment
+    throw new ConvexError("Password changes should be done through the password reset flow");
   },
 });
 
@@ -155,12 +147,6 @@ export const getSubscriptions = query({
       .collect();
 
     return {
-      pager: {
-        currentPageIndex: 0,
-        pageSize: subscriptions.length,
-        totalRecordCount: subscriptions.length,
-        pageCount: 1,
-      },
       list: subscriptions.map((sub) => ({
         id: sub._id,
         amount: sub.amount,
@@ -266,7 +252,7 @@ export const getTeacherStats = query({
     userId: v.id("users"),
     teamIds: v.array(v.id("teams")),
   },
-  handler: async (ctx, { userId, teamIds }) => {
+  handler: async (ctx, { teamIds }) => {
     let totalSubmissions = 0;
     let totalRejections = 0;
     let totalMissed = 0;

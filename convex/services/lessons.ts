@@ -1,8 +1,21 @@
-import { mutation, query } from "../_generated/server";
-import { v } from "convex/values";
-import { ConvexError } from "convex/values";
+import { mutation, query, QueryCtx } from "../_generated/server";
+import { v, ConvexError } from "convex/values";
+import { Id } from "../_generated/dataModel";
 
 type LessonStatus = "pending" | "submitted" | "accepted" | "rejected";
+
+// Helper to get user's full name from userProfiles
+async function getUserFullName(ctx: QueryCtx, userId: Id<"users">): Promise<string> {
+  const profile = await ctx.db
+    .query("userProfiles")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .first();
+  if (profile) {
+    return profile.fullName;
+  }
+  const user = await ctx.db.get(userId);
+  return user?.name ?? "";
+}
 
 // Get lessons with pagination and filtering
 export const getLessons = query({
@@ -51,7 +64,7 @@ export const getLessons = query({
     // Enrich lessons with student and submission data
     const enrichedLessons = await Promise.all(
       paginatedLessons.map(async (lesson) => {
-        const student = await ctx.db.get(lesson.studentId);
+        const studentName = await getUserFullName(ctx, lesson.studentId);
         const submission = await ctx.db
           .query("submissions")
           .withIndex("by_lesson", (q) => q.eq("lessonId", lesson._id))
@@ -66,7 +79,7 @@ export const getLessons = query({
           assignmentId: lesson.assignmentId,
           teamId: lesson.teamId,
           studentId: lesson.studentId,
-          studentName: student?.fullName ?? "",
+          studentName,
           teacherId: lesson.teacherId,
           title: lesson.title,
           description: lesson.description,
@@ -125,8 +138,8 @@ export const getLessonDetails = query({
       throw new ConvexError("Lesson not found");
     }
 
-    const student = await ctx.db.get(lesson.studentId);
-    const teacher = lesson.teacherId ? await ctx.db.get(lesson.teacherId) : null;
+    const studentName = await getUserFullName(ctx, lesson.studentId);
+    const teacherName = lesson.teacherId ? await getUserFullName(ctx, lesson.teacherId) : "";
     const team = await ctx.db.get(lesson.teamId);
     const assignment = lesson.assignmentId ? await ctx.db.get(lesson.assignmentId) : null;
 
@@ -146,9 +159,9 @@ export const getLessonDetails = query({
       teamId: lesson.teamId,
       teamName: team?.name ?? "",
       studentId: lesson.studentId,
-      studentName: student?.fullName ?? "",
+      studentName,
       teacherId: lesson.teacherId,
-      teacherName: teacher?.fullName ?? "",
+      teacherName,
       title: lesson.title,
       description: lesson.description ?? assignment?.description ?? "",
       startPage: lesson.startPage,

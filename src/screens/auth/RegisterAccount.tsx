@@ -1,29 +1,23 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { i18n, t } from "locales/config";
 import { Image, ImageSourcePropType, TouchableOpacity, View } from "react-native";
 import { FormikProvider, useFormik } from "formik";
-import FormErrorView from "components/forms/FormErrorView";
 import ActionBtn from "components/buttons/ActionBtn";
 import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import InputField from "components/forms/InputField";
-import { useMutation } from "@tanstack/react-query";
-import { resendVerificationEmail, signUp } from "services/authService";
-import { AxiosError } from "axios";
 import * as Yup from "yup";
-import { MailBoxSvg } from "components/svgs/MailBox";
-import GeneralConstants, { SCREEN_WIDTH } from "constants/GeneralConstants";
-import { YSpacer } from "components/Spacer";
-import TextButton from "components/buttons/TextButton";
-import ActionButton from "components/buttons/ActionBtn";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import GeneralConstants from "constants/GeneralConstants";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { RootStackParamList } from "navigation/navigation";
 import { AppBar } from "components/AppBar";
 import { ScrollView } from "tamagui";
 import Logo from "@assets/logo.png";
 import { toast } from "components/Toast";
 import { GenderSelect } from "components/forms/GenderSelect";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { createUserProfile } from "services/authService";
 
 interface Form {
   firstName: string;
@@ -44,19 +38,10 @@ export const phoneNumberRules = /^\+?\d{7,}$/;
 type Props = NativeStackScreenProps<RootStackParamList, "RegisterAccount">;
 
 const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
-  const { mutate, error, data } = useMutation(signUp);
-  const {
-    mutate: resendVerification,
-    data: resendVerificationData,
-    isLoading: isResendingVerification,
-  } = useMutation(resendVerificationEmail, {
-    onError: (err: AxiosError) => {
-      toast.show({ status: "Error", title: t("defaultError") });
-      err;
-    },
-  });
+  const { signIn } = useAuthActions();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const insets = useSafeAreaInsets();
   const formik = useFormik<Form>({
     initialValues: {
       firstName: "",
@@ -82,68 +67,49 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
       confirmPassword: Yup.string().oneOf([Yup.ref("password")], "Passwords must match"),
       gender: Yup.number().required(t("form.required")),
     }),
-    onSubmit: (values, { setSubmitting }) => {
+    onSubmit: async (values) => {
       const trimmedValues = {
-        ...values,
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
         email: values.email.trim(),
+        password: values.password,
+        gender: values.gender,
       };
-      mutate(trimmedValues, {
-        onSettled: () => setSubmitting(false),
-      });
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        // Sign up using Convex Auth
+        await signIn("password", {
+          email: trimmedValues.email,
+          password: trimmedValues.password,
+          flow: "signUp",
+        });
+
+        // Create user profile after successful signup
+        await createUserProfile({
+          fullName: `${trimmedValues.firstName} ${trimmedValues.lastName}`,
+          gender: trimmedValues.gender === 1 ? "male" : "female",
+          role: "Student",
+        });
+
+        // Registration successful - user is now signed in
+        toast.show({
+          status: "Success",
+          title: t("registerAccountScreen.success"),
+        });
+      } catch (err: unknown) {
+        setError(err as Error);
+        toast.show({
+          status: "Error",
+          title: t("defaultError"),
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     },
   });
-
-  if (data)
-    return (
-      <SafeAreaView style={{ flex: 1, justifyContent: "space-between" }}>
-        <AppBar title={i18n.t("registerAccountScreen.createAccount")} />
-        <View
-          style={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: 16,
-          }}
-        >
-          <View>
-            <MailBoxSvg width={SCREEN_WIDTH * 0.6} />
-            <YSpacer space={20} />
-            <Typography type="TitleHeavy" adjustsFontSizeToFit style={{ width: "100%" }}>
-              {t("registerAccountScreen.success")}
-            </Typography>
-            <Typography type="SubHeaderLight">
-              {t("registerAccountScreen.successDescription")}
-            </Typography>
-            <YSpacer space={12} />
-            <TextButton
-              disabled={isResendingVerification}
-              onPress={() => resendVerification({ email: formik.values.email })}
-            >
-              {resendVerificationData
-                ? t("registerAccountScreen.emailResent")
-                : t("registerAccountScreen.resendEmail")}
-            </TextButton>
-          </View>
-        </View>
-        <View
-          style={{
-            paddingHorizontal: 16,
-            paddingBottom: insets.bottom + 16,
-            gap: 12,
-          }}
-        >
-          <ActionButton
-            title={t("registerAccountScreen.verifyManually")}
-            onPress={() => navigation.navigate("ConfirmEmailScreen", {})}
-          />
-          <ActionButton
-            title={t("registerAccountScreen.backToLogin")}
-            onPress={() => navigation.goBack()}
-          />
-        </View>
-      </SafeAreaView>
-    );
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -214,10 +180,14 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
               onBlur={formik.handleBlur("confirmPassword")}
             />
           </View>
-          <FormErrorView error={error as AxiosError} />
+          {error && (
+            <Typography type="BodyLight" style={{ color: Colors.Error[1], marginTop: 8 }}>
+              {error.message || t("defaultError")}
+            </Typography>
+          )}
           <View style={{ alignItems: "center", marginTop: 25 }}>
             <ActionBtn
-              isLoading={formik.isSubmitting}
+              isLoading={isSubmitting}
               title={t("registerAccountScreen.createAccount")}
               onPress={formik.handleSubmit}
             />
