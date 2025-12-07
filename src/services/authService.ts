@@ -1,76 +1,71 @@
+// Auth service for Convex Auth
+// Note: Most auth operations are now handled through Convex Auth hooks
+// This file provides helper functions for registration and password reset flows
+
 import { client } from "api/convex";
 import { api } from "../../convex/_generated/api";
 
-export async function signIn(data: {
-  email: string;
-  password: string;
-}): Promise<ISignInResponse["data"]> {
-  const result = await client.mutation(api.services.auth.signIn, {
-    email: data.email,
-    password: data.password,
-  });
-  return {
-    accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
-    userId: result.userId,
-  };
-}
+// signIn is now handled through useAuthActions hook in auth context
 
-export async function refreshToken(data: { refreshToken: string }): Promise<IRefreshTokenResponse> {
-  const result = await client.mutation(api.services.auth.refreshToken, {
-    refreshToken: data.refreshToken,
-  });
-  return {
-    accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
-  };
-}
-
-export const forgotPassword = async (data: { userName: string }): Promise<void> => {
-  await client.mutation(api.services.auth.forgotPassword, {
-    email: data.userName,
+// Create user profile after signup
+export const createUserProfile = async (data: {
+  fullName: string;
+  phoneNumber?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  role?: "Student" | "Teacher";
+}): Promise<void> => {
+  await client.mutation(api.services.auth.createUserProfile, {
+    fullName: data.fullName,
+    phoneNumber: data.phoneNumber,
+    gender: data.gender,
+    dateOfBirth: data.dateOfBirth,
+    role: data.role,
   });
 };
 
-export const resetPassword = async (data: {
+// Update user profile
+export const updateProfile = async (data: {
+  fullName: string;
+  emailAddress: string;
+  phoneNumber: string;
+}): Promise<void> => {
+  await client.mutation(api.services.auth.updateProfile, {
+    fullName: data.fullName,
+    emailAddress: data.emailAddress,
+    phoneNumber: data.phoneNumber,
+  });
+};
+
+// Note: The following functions are placeholders
+// Convex Auth with Password provider doesn't include built-in email verification or password reset
+// You would need to implement these using Convex actions with an email provider
+
+export const forgotPassword = async (_data: { userName: string }): Promise<void> => {
+  // TODO: Implement password reset flow with email provider
+  console.warn("Password reset not yet implemented with Convex Auth");
+  throw new Error("Password reset not yet implemented");
+};
+
+export const resetPassword = async (_data: {
   code: string;
   username: string;
   password: string;
   confirmPassword: string;
 }): Promise<void> => {
-  await client.mutation(api.services.auth.resetPassword, {
-    email: data.username,
-    code: data.code,
-    password: data.password,
-    confirmPassword: data.confirmPassword,
-  });
+  // TODO: Implement password reset confirmation with email provider
+  console.warn("Password reset not yet implemented with Convex Auth");
+  throw new Error("Password reset not yet implemented");
 };
 
-export const confirmEmail = async (data: { code: string; userId: string }): Promise<void> => {
-  await client.mutation(api.services.auth.confirmEmail, {
-    userId: data.userId,
-    code: data.code,
-  });
+export const confirmEmail = async (_data: { code: string; userId: string }): Promise<void> => {
+  // TODO: Implement email confirmation with email provider
+  console.warn("Email confirmation not yet implemented with Convex Auth");
+  throw new Error("Email confirmation not yet implemented");
 };
 
-export const signUp = async (data: {
-  password: string;
-  confirmPassword: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}): Promise<void> => {
-  await client.mutation(api.services.auth.signUp, {
-    email: data.email,
-    password: data.password,
-    confirmPassword: data.confirmPassword,
-    firstName: data.firstName,
-    lastName: data.lastName,
-  });
-};
-
-export const resendVerificationEmail = async (data: { email: string }): Promise<void> => {
-  await client.mutation(api.services.auth.resendConfirmationEmail, {
-    email: data.email,
-  });
+export const resendVerificationEmail = async (_data: { email: string }): Promise<void> => {
+  // TODO: Implement resend verification with email provider
+  console.warn("Resend verification not yet implemented with Convex Auth");
+  throw new Error("Resend verification not yet implemented");
 };
