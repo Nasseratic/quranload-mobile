@@ -1,6 +1,5 @@
-import { AxiosError, AxiosRequestConfig } from "axios";
+import { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { refreshToken } from "services/authService";
 import { camelize, axiosClient } from "api/apiClient";
 
 axiosClient.interceptors.request.use(async (conf) => {

@@ -209,4 +209,15 @@ export default defineSchema({
     uploadedBy: v.optional(v.id("users")),
     createdAt: v.number(),
   }).index("by_uploader", ["uploadedBy"]),
+
+  // User profiles table - extended profile data separate from auth users table
+  // This allows Convex Auth to manage the users table while we store app-specific profile data here
+  userProfiles: defineTable({
+    userId: v.id("users"),
+    fullName: v.string(),
+    phoneNumber: v.optional(v.string()),
+    gender: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
+    roles: v.array(v.union(v.literal("Student"), v.literal("Teacher"))),
+  }).index("by_userId", ["userId"]),
 });
