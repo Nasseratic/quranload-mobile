@@ -49,14 +49,11 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
       }
 
       signIn(values.username.trim(), values.password).catch(
-        (err: ISignInErrorResponse & { error?: string }) => {
+        (err: Error & { data?: { message?: string } }) => {
           console.log(err);
-          if (err?.response?.data?.message) {
-            setErrors({ error: err.response.data.message });
-          }
-          if (err?.error) {
-            setErrors({ error: err.error });
-          }
+          // Handle Convex Auth errors (err.message) and legacy errors
+          const errorMessage = err?.message || err?.data?.message || t("loginScreen.invalidCredentials");
+          setErrors({ error: errorMessage });
           formik.setSubmitting(false);
         }
       );
