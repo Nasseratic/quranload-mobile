@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export const messageInitializer = {
   isSystem: v.boolean(),
@@ -29,6 +30,7 @@ export const userInfo = {
 };
 
 export default defineSchema({
+  ...authTables,
   featureFlags: defineTable({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment"), v.literal("supportChat")),
     enabled: v.boolean(),
@@ -52,26 +54,17 @@ export default defineSchema({
 
   // ======= NEW TABLES FOR MIGRATION =======
 
-  // Users table for authentication and profile data
+  // Users table for authentication - managed by Convex Auth
+  // All app-specific profile data should go in userProfiles table
   users: defineTable({
-    email: v.string(),
-    passwordHash: v.string(),
-    fullName: v.string(),
-    phoneNumber: v.optional(v.string()),
-    gender: v.optional(v.string()),
-    dateOfBirth: v.optional(v.string()),
-    username: v.optional(v.string()),
-    roles: v.array(v.union(v.literal("Student"), v.literal("Teacher"))),
-    emailConfirmed: v.boolean(),
-    emailConfirmationCode: v.optional(v.string()),
-    passwordResetCode: v.optional(v.string()),
-    passwordResetExpiry: v.optional(v.number()),
-    refreshToken: v.optional(v.string()),
-    refreshTokenExpiry: v.optional(v.number()),
-  })
-    .index("by_email", ["email"])
-    .index("by_username", ["username"])
-    .index("by_refreshToken", ["refreshToken"]),
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+  }).index("email", ["email"]),
 
   // Organizations table
   organizations: defineTable({

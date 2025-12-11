@@ -11,6 +11,7 @@ import { Platform } from "react-native";
 import { posthog } from "utils/tracking";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface AuthContextData {
   initialized: boolean;
@@ -81,6 +82,27 @@ export const AuthProvider = ({ children }: Props) => {
         percentageOfAcceptedOrSubmittedLessons: user.percentageOfAcceptedOrSubmittedLessons,
       }
     : undefined;
+
+  // Clear old auth tokens on first load (migration to Convex Auth)
+  useEffect(() => {
+    const clearOldAuthTokens = async () => {
+      try {
+        // Check if we've already done this migration
+        const hasMigrated = await AsyncStorage.getItem("convex_auth_migrated_v2");
+        if (!hasMigrated) {
+          console.log("Running Convex Auth migration - clearing all storage...");
+          // Clear ALL storage to ensure no conflicts with new auth system
+          await AsyncStorage.clear();
+          // Mark migration as complete
+          await AsyncStorage.setItem("convex_auth_migrated_v2", "true");
+          console.log("Convex Auth migration complete");
+        }
+      } catch (error) {
+        console.error("Failed to clear old auth tokens", error);
+      }
+    };
+    clearOldAuthTokens();
+  }, []);
 
   // Handle initialization and splash screen
   useEffect(() => {

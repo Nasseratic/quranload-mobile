@@ -1,4 +1,4 @@
-import { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useState } from "react";
 import { i18n, t } from "locales/config";
 import { Image, ImageSourcePropType, TouchableOpacity, View } from "react-native";
 import { FormikProvider, useFormik } from "formik";
@@ -17,7 +17,7 @@ import Logo from "@assets/logo.png";
 import { toast } from "components/Toast";
 import { GenderSelect } from "components/forms/GenderSelect";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { createUserProfile } from "services/authService";
+import { cvx, useCvxMutation } from "api/convex";
 
 interface Form {
   firstName: string;
@@ -39,6 +39,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "RegisterAccount">;
 
 const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
   const { signIn } = useAuthActions();
+  const createProfileMutation = useCvxMutation(cvx.auth.createUserProfile);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -88,13 +89,13 @@ const RegisterAccount: FunctionComponent<Props> = ({ navigation }) => {
         });
 
         // Create user profile after successful signup
-        await createUserProfile({
+        await createProfileMutation({
           fullName: `${trimmedValues.firstName} ${trimmedValues.lastName}`,
           gender: trimmedValues.gender === 1 ? "male" : "female",
           role: "Student",
         });
 
-        // Registration successful - user is now signed in
+        // Registration successful
         toast.show({
           status: "Success",
           title: t("registerAccountScreen.success"),
