@@ -21,7 +21,6 @@ import { RootStackParamList } from "navigation/navigation";
 import Logo from "@assets/logo.png";
 import { ScrollView, Stack } from "tamagui";
 import * as Updates from "expo-updates";
-import { isDevelopmentBuild } from "expo-dev-client";
 import DevelopmentUserSelection, { DevelopmentUser } from "components/DevelopmentUserSelection";
 import { format } from "date-fns";
 import { toast } from "components/Toast";
@@ -34,7 +33,7 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
   const formik = useFormik({
     initialValues: {
       username: "",
-      password: isDevelopmentBuild() ? "P@ssw0rd" : "",
+      password: __DEV__ ? "P@ssw0rd" : "",
       error: "",
     },
     onSubmit: (values, { setErrors }) => {

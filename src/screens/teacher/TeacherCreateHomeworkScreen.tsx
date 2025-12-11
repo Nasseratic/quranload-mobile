@@ -39,7 +39,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
     initialRemoteMedia: route.params.assignment?.attachments ?? undefined,
   });
   const queryClient = useQueryClient();
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationKey: ["createCustomAssignment"],
     mutationFn: async () => {
       const attachments = await uploadSelectedMedia();
@@ -83,7 +83,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
       await mutateAsync();
       navigation.goBack();
       navigation.goBack();
-      queryClient.refetchQueries(["assignments"]);
+      queryClient.refetchQueries({ queryKey: ["assignments"] });
     } catch (e) {
       toast.reportError(e);
     }
@@ -95,7 +95,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
     !description.trim() ||
     isUploading ||
     images.length === 0 ||
-    isLoading;
+    isPending;
 
   return (
     <SafeAreaView>
@@ -219,7 +219,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
         <Form.Trigger asChild disabled={isSubmitDisabled}>
           <ActionButton
             title={t(isEditing ? "update" : "create")}
-            isLoading={isLoading || isUploading}
+            isLoading={isPending || isUploading}
           />
         </Form.Trigger>
       </Form>

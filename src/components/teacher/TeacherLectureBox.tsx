@@ -21,10 +21,10 @@ interface Props {
 const TeacherLectureBox = ({ team }: Props) => {
   const navigation = useNavigation();
 
-  const { data, isLoading } = useQuery(
-    ["auto-assignment", team.id],
-    () => fetchAutoAssignment({ teamId: team.id, typeId: 1 }) // typeId 1 is the auto assignment
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ["auto-assignment", team.id],
+    queryFn: () => fetchAutoAssignment({ teamId: team.id, typeId: 1 }), // typeId 1 is the auto assignment
+  });
 
   if (isLoading) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
 

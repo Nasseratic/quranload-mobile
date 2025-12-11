@@ -1,6 +1,5 @@
-import { cvx, FunctionReturnType } from "api/convex";
+import { cvx } from "api/convex";
 import { useQuery } from "convex/react";
-import { isDevelopmentBuild } from "expo-dev-client";
 
 type FF = "chat" | "inAppEnrolment" | "supportChat";
 
@@ -13,6 +12,6 @@ const devFfs = {
 export const useFeatureFlags = () => {
   const ffs = useQuery(cvx.featureFlags.ffs);
   return {
-    ff: isDevelopmentBuild() ? devFfs : ffs ?? devFfs,
+    ff: __DEV__ ? devFfs : ffs ?? devFfs,
   };
 };

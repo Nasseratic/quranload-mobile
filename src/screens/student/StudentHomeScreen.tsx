@@ -97,9 +97,10 @@ const StudentTeamOverview = ({ team }: { team: Team }) => {
 };
 
 const StatusSection = ({ teamId }: { teamId: string }) => {
-  const { data, isLoading, error } = useQuery(["student-stats", teamId], () =>
-    fetchStudentStatistics({ teamId })
-  );
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["student-stats", teamId],
+    queryFn: () => fetchStudentStatistics({ teamId }),
+  });
 
   if (error)
     return (

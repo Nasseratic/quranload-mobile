@@ -24,12 +24,17 @@ export const LESSON_DETAILS_QUERY_KEY = "lessonDetails";
 
 export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navigation }) => {
   const { homework } = route.params;
-  const { data, isLoading } = useQuery([LESSON_DETAILS_QUERY_KEY, homework.id], () =>
-    fetchLessonDetails({ lessonId: homework.id })
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: [LESSON_DETAILS_QUERY_KEY, homework.id],
+    queryFn: () => fetchLessonDetails({ lessonId: homework.id }),
+  });
 
-  const { mutateAsync: deleteAssignmentAsync } = useMutation(deleteAssignment);
-  const { mutateAsync: deleteHomeworkAsync } = useMutation(deleteLesson);
+  const { mutateAsync: deleteAssignmentAsync } = useMutation({
+    mutationFn: deleteAssignment,
+  });
+  const { mutateAsync: deleteHomeworkAsync } = useMutation({
+    mutationFn: deleteLesson,
+  });
 
   const queryClient = useQueryClient();
 
@@ -97,7 +102,7 @@ export const TeacherSubmissionsScreen: FunctionComponent<Props> = ({ route, navi
                                   } else {
                                     await deleteAssignmentAsync(homework.assignmentId);
                                   }
-                                  queryClient.refetchQueries(["assignments"]);
+                                  queryClient.refetchQueries({ queryKey: ["assignments"] });
                                   navigation.goBack();
                                 } catch (e) {
                                   toast.reportError(e);

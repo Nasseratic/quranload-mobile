@@ -1,4 +1,4 @@
-import * as Localization from "expo-localization";
+import {getLocales} from "expo-localization";
 import { I18n, TranslateOptions } from "i18n-js";
 import danish from "locales/da";
 import english from "locales/en";
@@ -10,27 +10,21 @@ const translations = {
   da: danish,
   en: english,
 };
+const local = getLocales()[0].languageTag;
 
+console.log(local);
 export const i18n = new I18n(translations);
+const init = () => {
+  
 
 // Set the locale once at the beginning of your app.
-i18n.locale = match(Localization.locale)
+i18n.locale = match(local)
   .with(
     P.when((locale) => locale.startsWith("en") || locale.startsWith("da")),
-    () => Localization.locale
+    () => local
   )
   .otherwise(() => "en-GB");
 
-export const dateNfsLocale = match(Localization.locale)
-  .with(
-    P.when((locale) => locale.startsWith("en")),
-    () => enGB
-  )
-  .with(
-    P.when((locale) => locale.startsWith("da")),
-    () => da
-  )
-  .otherwise(() => enGB);
 
 // When a value is missing from a language it'll fall back to another language with the key present.
 i18n.enableFallback = true;
@@ -49,14 +43,28 @@ type Leaves<T, D extends number = 4> = [D] extends [never]
   ? { [K in keyof T]-?: Join<K, Leaves<T[K], Prev[D]>> }[keyof T]
   : "";
 
-export const t = <T extends Leaves<typeof english>>(path: T, options?: TranslateOptions): string => i18n.t(path, options);
+  
+  setLocale({
+    mixed: {
+      required: t("form.required"),
+      defined: t("form.required"),
+    },
+    string: {
+      email: t("form.validEmail"),
+    },
+  });
+}
+  
+  export const t = <T extends Leaves<typeof english>>(path: T, options?: TranslateOptions): string => i18n.t(path, options);
 
-setLocale({
-  mixed: {
-    required: t("form.required"),
-    defined: t("form.required"),
-  },
-  string: {
-    email: t("form.validEmail"),
-  },
-});
+
+export const dateNfsLocale = match(local)
+  .with(
+    P.when((locale) => locale.startsWith("en")),
+    () => enGB
+  )
+  .with(
+    P.when((locale) => locale.startsWith("da")),
+    () => da
+  )
+  .otherwise(() => enGB);

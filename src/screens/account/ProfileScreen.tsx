@@ -21,7 +21,10 @@ import { nameRules, phoneNumberRules } from "screens/auth/RegisterAccount";
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
 const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
-  const { data, isLoading } = useQuery([profileQueryKey], fetchUserProfile);
+  const { data, isLoading } = useQuery({
+    queryKey: [profileQueryKey],
+    queryFn: fetchUserProfile,
+  });
 
   const initialValues = useMemo(
     () =>
@@ -50,7 +53,7 @@ const ProfileScreen: FunctionComponent<Props> = ({ navigation }) => {
     onSubmit(values) {
       updateUserProfile(values)
         .then(() => {
-          queryClient.invalidateQueries([profileQueryKey]);
+          queryClient.invalidateQueries({ queryKey: [profileQueryKey] });
           toast.show({ status: "Success", title: i18n.t("profileScreen.profileUpdated") });
         })
         .catch((error) => {
