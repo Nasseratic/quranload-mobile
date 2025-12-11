@@ -17,7 +17,9 @@
     "supagen": "supabase gen types typescript --project-id onvbwwnhwmeckrxkjllj --schema public > src/types/Supabase.ts"
   },
   "dependencies": {
+    "@auth/core": "^0.37.0",
     "@config-plugins/ffmpeg-kit-react-native": "^6.0.0",
+    "@convex-dev/auth": "^0.0.90",
     "@convex-dev/expo-push-notifications": "^0.1.3",
     "@expo-google-fonts/noto-sans": "^0.2.3",
     "@expo/use-updates": "^0.1.0",
