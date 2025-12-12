@@ -1,5 +1,5 @@
-import React, { useEffect, useLayoutEffect } from "react";
-import { Square, XStack, YStack } from "tamagui";
+import React, { useLayoutEffect } from "react";
+import { Square, XStack } from "tamagui";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { Colors } from "constants/Colors";
@@ -8,7 +8,6 @@ import AssignmentsScreen from "screens/student/AssignmentsScreen";
 import LoginScreen from "screens/auth/LoginScreen";
 import ProfileScreen from "screens/account/ProfileScreen";
 import AdvancedSettingsScreen from "screens/account/advancedSettings/AdvancedSettingsScreen";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SplashScreen from "expo-splash-screen";
 import ChangePasswordScreen from "screens/account/advancedSettings/ChangePasswordScreen";
 import ChangeLanguageScreen from "screens/account/advancedSettings/ChangeLanguageScreen";
@@ -101,20 +100,16 @@ const AuthenticatedStack = () => {
 };
 
 const Nav = () => {
-  const { signed, user, handleSignIn, isLoadingUserData } = useAuth();
+  const { signed, user, initialized, isLoadingUserData } = useAuth();
   const insets = useSafeAreaInsets();
-  useLayoutEffect(() => {
-    async function initialize() {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      if (accessToken) {
-        handleSignIn();
-      } else {
-        SplashScreen.hideAsync();
-      }
-    }
 
-    initialize().catch(console.error);
-  }, []);
+  // Convex Auth handles token restoration automatically
+  // Hide splash screen once auth state is initialized
+  useLayoutEffect(() => {
+    if (initialized && !isLoadingUserData) {
+      SplashScreen.hideAsync();
+    }
+  }, [initialized, isLoadingUserData]);
 
   return (
     <NavigationContainer ref={navigationRef}>

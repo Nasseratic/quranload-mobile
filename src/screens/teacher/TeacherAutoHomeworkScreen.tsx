@@ -6,7 +6,8 @@ import LetterCheckbox from "components/forms/LetterCheckbox";
 import { RootStackParamList } from "navigation/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { i18n, t } from "locales/config";
-import apiClient from "api/apiClient";
+import { client, Id } from "api/convex";
+import { api } from "../../../convex/_generated/api";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppBar } from "components/AppBar";
@@ -39,23 +40,24 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
   const [weekDaysInput, setWeekDaysInput] = useState(weekDays ?? []);
 
   const { mutate, isLoading } = useMutation({
-    // TODO: move this to a service
     mutationFn: async () => {
       const body = {
         typeId: 1, // typeId 1 is the auto assignment
-        teamId: teamId,
-        pagesPerDay: pagesPerDayInput,
-        startFromPage: startFromPageInput,
+        teamId: teamId as Id<"teams">,
+        pagesPerDay: pagesPerDayInput ?? undefined,
+        startFromPage: startFromPageInput ?? undefined,
         days: calculateDaysRef(weekDaysInput),
       };
 
       try {
-        if (assignmentId)
-          await apiClient.put("Assignments", {
-            id: assignmentId,
+        if (assignmentId) {
+          await client.mutation(api.services.assignments.updateAssignment, {
+            id: assignmentId as Id<"assignments">,
             ...body,
           });
-        else await apiClient.post("Assignments", body);
+        } else {
+          await client.mutation(api.services.assignments.createAssignment, body);
+        }
         queryClient.refetchQueries(["auto-assignment"]);
         navigation.goBack();
         toast.show({

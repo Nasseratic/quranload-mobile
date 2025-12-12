@@ -76,9 +76,10 @@ export const TeacherHomeScreen: FunctionComponent<Props> = () => {
 };
 
 const StatusSection = ({ teamId }: { teamId: string }) => {
-  const { data, isLoading } = useQuery(["teacher-stats", teamId], () =>
-    fetchTeacherStats({ teamId })
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ["teacher-stats", teamId],
+    queryFn: () => fetchTeacherStats({ teamId }),
+  });
   if (isLoading) return <ActivityIndicator size="small" style={{ marginTop: 40 }} />;
 
   return (

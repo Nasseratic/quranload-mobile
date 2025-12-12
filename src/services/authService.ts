@@ -1,59 +1,71 @@
-import request from "api/apiClient";
-import { subYears } from "date-fns";
+// Auth service for Convex Auth
+// Note: Most auth operations are now handled through Convex Auth hooks
+// This file provides helper functions for registration and password reset flows
 
-export async function signIn(data: {
-  email: string;
-  password: string;
-}): Promise<ISignInResponse["data"]> {
-  return await request.post("Account/GetToken", {
-    username: data.email,
-    password: data.password,
+import { client } from "api/convex";
+import { api } from "../../convex/_generated/api";
+
+// signIn is now handled through useAuthActions hook in auth context
+
+// Create user profile after signup
+export const createUserProfile = async (data: {
+  fullName: string;
+  phoneNumber?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  role?: "Student" | "Teacher";
+}): Promise<void> => {
+  await client.mutation(api.services.auth.createUserProfile, {
+    fullName: data.fullName,
+    phoneNumber: data.phoneNumber,
+    gender: data.gender,
+    dateOfBirth: data.dateOfBirth,
+    role: data.role,
   });
-}
-
-export async function refreshToken(data: { refreshToken: string }): Promise<IRefreshTokenResponse> {
-  return await request.post("Account/RefreshToken", data);
-}
-
-export const forgotPassword = async (data: { userName: string }): Promise<void> => {
-  return await request.post("Account/forgotPassword", data);
 };
 
-export const resetPassword = (data: {
+// Update user profile
+export const updateProfile = async (data: {
+  fullName: string;
+  emailAddress: string;
+  phoneNumber: string;
+}): Promise<void> => {
+  await client.mutation(api.services.auth.updateProfile, {
+    fullName: data.fullName,
+    emailAddress: data.emailAddress,
+    phoneNumber: data.phoneNumber,
+  });
+};
+
+// Note: The following functions are placeholders
+// Convex Auth with Password provider doesn't include built-in email verification or password reset
+// You would need to implement these using Convex actions with an email provider
+
+export const forgotPassword = async (_data: { userName: string }): Promise<void> => {
+  // TODO: Implement password reset flow with email provider
+  console.warn("Password reset not yet implemented with Convex Auth");
+  throw new Error("Password reset not yet implemented");
+};
+
+export const resetPassword = async (_data: {
   code: string;
   username: string;
   password: string;
   confirmPassword: string;
-}) =>
-  request.post("Account/ResetPassword", {
-    ...data,
-    code: encodeURIComponent(data.code),
-  });
-
-export const confirmEmail = (data: { code: string; userId: string }) =>
-  request.put(
-    `Account/ConfirmEmail?Code=${encodeURIComponent(encodeURIComponent(data.code))}&UserId=${
-      data.userId
-    }`
-  );
-
-export const signUp = async (data: {
-  password: string;
-  confirmPassword: string;
-  email: string;
-  firstName: string;
-  lastName: string;
 }): Promise<void> => {
-  return await request.post("Account/Register", {
-    ...data,
-    // TODO: check if we need username and date of birth and remove or update this if needed
-    username: data.email,
-    dateOfBirth: subYears(new Date(), 18).toISOString(),
-  });
+  // TODO: Implement password reset confirmation with email provider
+  console.warn("Password reset not yet implemented with Convex Auth");
+  throw new Error("Password reset not yet implemented");
 };
 
-export const resendVerificationEmail = async (data: { email: string }): Promise<void> => {
-  return await request.post("Account/ResendConfirmationEmail", {
-    username: data.email,
-  });
+export const confirmEmail = async (_data: { code: string; userId: string }): Promise<void> => {
+  // TODO: Implement email confirmation with email provider
+  console.warn("Email confirmation not yet implemented with Convex Auth");
+  throw new Error("Email confirmation not yet implemented");
+};
+
+export const resendVerificationEmail = async (_data: { email: string }): Promise<void> => {
+  // TODO: Implement resend verification with email provider
+  console.warn("Resend verification not yet implemented with Convex Auth");
+  throw new Error("Resend verification not yet implemented");
 };

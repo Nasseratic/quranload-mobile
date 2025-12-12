@@ -2,14 +2,13 @@ import { t } from "locales/config";
 import Typography from "components/Typography";
 import { Colors } from "constants/Colors";
 import * as Updates from "expo-updates";
-import { isDevelopmentBuild } from "expo-dev-client";
 import { format } from "date-fns";
 import { toast } from "components/Toast";
 import { Stack } from "tamagui";
 
 export const OTA_VERSION =
   (Updates.createdAt ? format(Updates.createdAt, "yy.MM.dd.HH") : "N/A") +
-  (isDevelopmentBuild() ? " ( DEV )" : "");
+  (__DEV__ ? " ( DEV )" : "");
 
 export const AppVersion = () => {
   return (
@@ -21,7 +20,7 @@ export const AppVersion = () => {
           if (isNew) await Updates.reloadAsync();
           else toast.show({ status: "Success", title: t("you_are_on_latest_version") });
         } catch (e) {
-          if (!isDevelopmentBuild()) toast.reportError(e);
+          if (!__DEV__) toast.reportError(e);
           else toast.show({ status: "Error", title: "Updates are not available in dev mode" });
         }
       }}

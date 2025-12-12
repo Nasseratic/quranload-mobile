@@ -1,5 +1,4 @@
 import axios, { AxiosResponse } from "axios";
-import { isDevelopmentBuild } from "expo-dev-client";
 
 const shouldUseDev = false;
 export const BASE_URL = `https://quranload-be-${

@@ -1,10 +1,38 @@
-import apiClient from "api/apiClient";
-import {Assignments_Dto_AssignmentGetResponse} from '../__generated/apiTypes/models/Assignments_Dto_AssignmentGetResponse';
+import { client } from "api/convex";
+import { api } from "../../convex/_generated/api";
+import { Id } from "api/convex";
 import Paginated from "types/Paginated";
 
 interface IFetchAssignmentsRequest {
   teamId: string;
   typeId: number;
 }
-export const fetchAutoAssignment = ({ teamId, typeId }: IFetchAssignmentsRequest) =>
-  apiClient.get<Paginated<Assignments_Dto_AssignmentGetResponse>>(`Assignments?TeamId=${teamId}&TypeId=${typeId}`);
+
+type AssignmentGetResponse = {
+  id: string;
+  teamId: string;
+  typeId: number;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  pagesPerDay?: number;
+  startFromPage?: number;
+  days?: number;
+  attachments?: { id: string; uri: string; sortOrder: number }[];
+  createdAt: string;
+};
+
+export const fetchAutoAssignment = async ({
+  teamId,
+  typeId,
+}: IFetchAssignmentsRequest): Promise<Paginated<AssignmentGetResponse>> => {
+  const result = await client.query(api.services.assignments.getAssignments, {
+    teamId: teamId as Id<"teams">,
+    typeId,
+  });
+
+  return {
+    pager: result.pager,
+    list: result.list as any,
+  };
+};

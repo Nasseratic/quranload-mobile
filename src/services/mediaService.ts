@@ -1,9 +1,13 @@
-import apiClient from "api/apiClient";
-import { Media_Dto_MediaDto } from "__generated/apiTypes/models/Media_Dto_MediaDto";
-import { BASE_URL } from "api/apiClient";
+import { client } from "api/convex";
+import { api } from "../../convex/_generated/api";
+import { Id } from "api/convex";
 import { IS_ANDROID } from "constants/GeneralConstants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type MediaResponse = Pick<Required<Media_Dto_MediaDto>, "id" | "uri">;
+export type MediaResponse = {
+  id: string;
+  uri: string;
+};
 
 declare global {
   interface FormData {
@@ -11,15 +15,55 @@ declare global {
   }
 }
 
-export const uploadFile = async (formData: { uri: string }) => {
-  const form = new FormData();
-  form.append("File", {
-    uri: formData.uri,
-    name: "file",
-    type: IS_ANDROID ? "image/jpeg" : "png",
+export const uploadFile = async (formData: { uri: string }): Promise<MediaResponse> => {
+  const refreshToken = await AsyncStorage.getItem("refreshToken");
+  let uploadedBy: Id<"users"> | undefined;
+
+  if (refreshToken) {
+    const user = await client.query(api.services.auth.getCurrentUser, { refreshToken });
+    if (user) {
+      uploadedBy = user.id as Id<"users">;
+    }
+  }
+
+  // Get upload URL from Convex
+  const uploadUrl = await client.mutation(api.services.media.generateUploadUrl, {});
+
+  // Upload the file
+  const response = await fetch(formData.uri);
+  const blob = await response.blob();
+
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": IS_ANDROID ? "image/jpeg" : "image/png",
+    },
+    body: blob,
   });
-  form.append("MediaType", "2");
-  return apiClient.postForm<MediaResponse>("Media", form);
+
+  if (!uploadResponse.ok) {
+    throw new Error("Failed to upload file");
+  }
+
+  const { storageId } = await uploadResponse.json();
+
+  // Register the media in Convex
+  const result = await client.mutation(api.services.media.uploadMedia, {
+    fileId: storageId,
+    mediaType: 1, // Image
+    uploadedBy,
+  });
+
+  return {
+    id: result.id,
+    uri: result.uri ?? "",
+  };
 };
 
-export const getMediaUri = (id: string) => `${BASE_URL}Media/${id}?filename=Assignment/${id}`;
+export const getMediaUri = async (id: string): Promise<string> => {
+  const result = await client.query(api.services.media.getMediaUrl, {
+    mediaId: id as Id<"media">,
+  });
+
+  return result?.url ?? "";
+};

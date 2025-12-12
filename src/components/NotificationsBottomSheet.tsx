@@ -17,11 +17,8 @@ import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
-import { isDevelopmentBuild } from "expo-dev-client";
-import { useMutation as useRQMutation } from "@tanstack/react-query";
-// import { useMutation } from "convex/react";
-// import { cvx } from "api/convex";
-import request from "api/apiClient";
+import { useMutation } from "convex/react";
+import { cvx, Id } from "api/convex";
 
 const deviceName = Device.deviceName + ", " + Device.modelName;
 
@@ -29,17 +26,8 @@ export const NotificationsBottomSheet = () => {
   const { signed } = useAuth();
   const insets = useSafeAreaInsets();
   const { id } = useUser();
-  // const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
+  const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-
-  const { mutate: registerTokenToBackend } = useRQMutation({
-    mutationKey: ["register-push-token"],
-    mutationFn: ({ token }: { token: string }) =>
-      request.post("Devices", {
-        token,
-        name: deviceName,
-      }),
-  });
 
   useEffect(() => {
     (async () => {
@@ -67,9 +55,8 @@ export const NotificationsBottomSheet = () => {
         projectId: Constants.easConfig?.projectId,
       })
     ).data;
-    // registerToken({ pushToken: token, userId: id });
-    registerTokenToBackend({ token });
-  }, [id, registerTokenToBackend]);
+    registerToken({ pushToken: token, userId: id });
+  }, [id, registerToken]);
 
   const handleEnableNotifications = async () => {
     const status = await Notifications.getPermissionsAsync();

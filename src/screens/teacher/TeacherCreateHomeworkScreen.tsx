@@ -17,7 +17,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";
 import ImageView from "react-native-image-viewing";
 import { isNotNullish } from "utils/notNullish";
-import { useAuth } from "contexts/auth";
 import { ImageWithAuth } from "components/Image";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TeacherCreateHomework">;
@@ -36,12 +35,11 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   );
   const [isImagesModalVisible, setIsImagesModalVisible] = useState(false);
   const [imagesModalIndex, setImagesModalIndex] = useState(0);
-  const { accessToken } = useAuth();
   const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaUploader({
     initialRemoteMedia: route.params.assignment?.attachments ?? undefined,
   });
   const queryClient = useQueryClient();
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationKey: ["createCustomAssignment"],
     mutationFn: async () => {
       const attachments = await uploadSelectedMedia();
@@ -85,7 +83,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
       await mutateAsync();
       navigation.goBack();
       navigation.goBack();
-      queryClient.refetchQueries(["assignments"]);
+      queryClient.refetchQueries({ queryKey: ["assignments"] });
     } catch (e) {
       toast.reportError(e);
     }
@@ -97,19 +95,14 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
     !description.trim() ||
     isUploading ||
     images.length === 0 ||
-    isLoading;
+    isPending;
 
   return (
     <SafeAreaView>
       <AppBar title={t("createHomework")} />
       <ImageView
-        // Change the images type from string[] to ImageSource[]
-        images={images.map((image) => ({
-          uri: image,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }))}
+        // With Convex storage, images are served via signed URLs and don't need auth headers
+        images={images.map((image) => ({ uri: image }))}
         imageIndex={imagesModalIndex}
         visible={isImagesModalVisible}
         onRequestClose={() => setIsImagesModalVisible(false)}
@@ -226,7 +219,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
         <Form.Trigger asChild disabled={isSubmitDisabled}>
           <ActionButton
             title={t(isEditing ? "update" : "create")}
-            isLoading={isLoading || isUploading}
+            isLoading={isPending || isUploading}
           />
         </Form.Trigger>
       </Form>

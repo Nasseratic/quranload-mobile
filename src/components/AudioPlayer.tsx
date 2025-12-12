@@ -1,269 +1,340 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Audio } from "expo-av";
-import { useState, useRef, useEffect, memo, useId } from "react";
-import { ActivityIndicator } from "react-native";
-import { XStack, YStack, Text, Slider, Button } from "tamagui";
+import { StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect } from "react";
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import Typography from "./Typography";
+import { AnimatedText } from "./AnimatedText";
+import Slider from "./Slider";
 import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
-import { formatAudioDuration } from "utils/formatAudioDuration";
 import { Colors } from "constants/Colors";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
-import { IconButton } from "./buttons/IconButton";
-import { ForwardIcon } from "components/icons/ForwerdIcon";
-import { SCREEN_WIDTH } from "constants/GeneralConstants";
-import { useAudioManager } from "hooks/useAudioManager";
+import PressableBounce from "./PressableBounce";
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
 
-let onProgressFiles: {
-  componentId: string;
-  instance: FileSystem.DownloadResumable;
-}[] = [];
 
-export const AudioPlayer = memo(
-  ({
-    uri,
-    isVisible,
-    width = SCREEN_WIDTH,
-    isCompact,
-  }: {
-    uri: string;
-    isVisible: boolean;
-    width?: number;
-    isCompact?: boolean;
-  }) => {
-    const componentId = useId();
-    const [downloadProgress, setDownloadProgress] = useState<number>();
-    const { playSound, pauseSound, sound, setSound } = useAudioManager();
-    const [durationSec, setDurationSec] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [positionSec, setPositionSec] = useState(0);
-    const wasPlaying = useRef(false);
+const DURATION = 30000;
+const COLLAPSED_HEIGHT = 54;
+const EXPANDED_HEIGHT = 70;
+const PADDING = 16;
+const ICON_WIDTH = 36;
+const WIDTH = SCREEN_WIDTH;
+const ADJUSTMENT = 11;
+const EXPANDED_SLIDER_WIDTH = WIDTH - 2 * PADDING - ADJUSTMENT;
+const SLIDER_WIDTH = EXPANDED_SLIDER_WIDTH - 2 * ICON_WIDTH + ADJUSTMENT;
 
-    async function play() {
-      if (durationSec - positionSec < 0.3) sound?.setPositionAsync(0);
-      playSound();
-    }
 
-    useEffect(() => {
-      if (!isVisible) {
-        pauseSound();
-      }
-    }, [isVisible]);
+export function AudioPlayer() {
+  const value = useSharedValue(0);
+  const pressed = useSharedValue(false);
+  const scrubbing = useSharedValue(false);
+  const expanded = useSharedValue(false);
+  const delayTimeout = useSharedValue(0);
+  const lastValueOnPress = useSharedValue(value.value);
+  const playing = useSharedValue(true);
+  const previousPlaying = useSharedValue(false);
+  const internalAnimating = useSharedValue(false);
 
-    useEffect(() => {
-      return () => {
-        sound?.unloadAsync();
-        const toCancel = onProgressFiles.filter((file) => file.componentId === componentId);
-        toCancel.forEach((file) => file.instance.cancelAsync());
-        onProgressFiles = onProgressFiles.filter((file) => file.componentId !== componentId);
-      };
-    }, []);
-
-    useEffect(() => {
-      (async () => {
-        if (!uri) return;
-
-        const isRemoteFile = uri.startsWith("http://") || uri.startsWith("https://");
-        const playableUri = isRemoteFile
-          ? await downloadAudio(uri, componentId, (progress) => {
-              setDownloadProgress(
-                Math.floor((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100)
-              );
-            })
-          : uri;
-        const { sound, status } = await Audio.Sound.createAsync(
-          {
-            uri: playableUri,
-          },
-          { progressUpdateIntervalMillis: 300 },
-          (status) => {
-            if (status.isLoaded && status.isPlaying) {
-              setIsPlaying(true);
-              setPositionSec((status.positionMillis ?? 0) / 1000);
-            } else setIsPlaying(false);
-          }
-        );
-        if (!status.isLoaded) return;
-        setSound(sound);
-        setTimeout(() => {
-          setDurationSec((status.durationMillis ?? 0) / 1000);
-        }, 100);
-      })();
-    }, [uri]);
-
-    const onTogglePlay = () => {
-      if (isPlaying) pauseSound();
-      else play();
-    };
-
-    // sound did load yet
-    if (durationSec === 0)
-      return isCompact ? (
-        <YStack w={width} h={40} bg="white" m="$2" borderRadius="$4" jc="center" ai="center">
-          <ActivityIndicator />
-          {downloadProgress != null && downloadProgress > 0 && <Text>{downloadProgress}%</Text>}
-        </YStack>
-      ) : (
-        <YStack jc="center" ai="center" p="$4">
-          <ActivityIndicator />
-          {downloadProgress != null && downloadProgress > 0 && <Text>{downloadProgress}%</Text>}
-        </YStack>
-      );
-
-    const updateValue = (value: number) => {
-      const valueSec = convertPresentToPosition(value, durationSec);
-
-      if (valueSec < 0 || valueSec > durationSec) return;
-      setPositionSec(valueSec);
-      sound?.getStatusAsync().then((status) => {
-        if (status.isLoaded && status.isPlaying) {
-          pauseSound();
-          wasPlaying.current = true;
-        }
-      });
-    };
-
-    return (
-      <XStack
-        bg="white"
-        borderRadius="$4"
-        p={isCompact ? "$2" : "$4"}
-        gap="$3"
-        h={isCompact ? 40 : undefined}
-      >
-        {isCompact && (
-          <Button bg="$colorTransparent" hitSlop={20} size={25} w={32} onPress={onTogglePlay}>
-            {isPlaying ? (
-              <RecordingPauseIcon fill={Colors.Gray[1]} size={16} />
-            ) : (
-              <PlayIcon size={12} />
-            )}
-          </Button>
-        )}
-        <YStack key={uri} pointerEvents="box-none" jc="center" alignItems="center" gap="$2">
-          {isVisible && (
-            <YStack w={width - 32} gap={isCompact ? "$1" : "$1.5"}>
-              <Slider
-                step={1}
-                max={100}
-                min={0}
-                onSlideMove={(_, value) => updateValue(value)}
-                onSlideStart={(_, value) => updateValue(value)}
-                onSlideEnd={(_, value) => {
-                  updateValue(value);
-                  sound?.setPositionAsync(convertPresentToPosition(value, durationSec) * 1000);
-                  if (wasPlaying.current) {
-                    playSound();
-                    wasPlaying.current = false;
-                  }
-                }}
-                value={[convertPositionToPresent(positionSec, durationSec)]}
-              >
-                <Slider.Track w="100%" f={1} maxHeight={3} hitSlop={20}>
-                  <Slider.TrackActive />
-                </Slider.Track>
-                <Slider.Thumb
-                  size={isCompact ? 8 : 12}
-                  bg="black"
-                  borderWidth={0}
-                  circular
-                  index={0}
-                />
-              </Slider>
-              <XStack gap="$3" jc="space-between" alignItems="center" w="100%">
-                <Text fontSize={9} style={{ color: Colors.Black[2] }}>
-                  {formatAudioDuration(Math.floor(positionSec))}
-                </Text>
-                <Text fontSize={9} style={{ color: Colors.Black[2] }}>
-                  {formatAudioDuration(Math.floor(durationSec))}
-                </Text>
-              </XStack>
-            </YStack>
-          )}
-          {!isCompact && (
-            <XStack
-              style={{
-                transform: [{ translateY: -12 }],
-              }}
-              gap="$3"
-            >
-              <IconButton
-                size="xs"
-                onPress={() => {
-                  const newPosition = Math.max(positionSec - 3, 0);
-                  sound?.setPositionAsync(newPosition * 1000);
-                  setPositionSec(newPosition);
-                }}
-                icon={<ForwardIcon backward />}
-              />
-              <IconButton
-                size="sm"
-                onPress={onTogglePlay}
-                icon={
-                  isPlaying ? (
-                    <RecordingPauseIcon fill={Colors.Gray[1]} size={40} />
-                  ) : (
-                    <PlayIcon size={35} />
-                  )
-                }
-              />
-              <IconButton
-                size="xs"
-                onPress={() => {
-                  const newPosition = Math.min(positionSec + 3, durationSec);
-                  sound?.setPositionAsync(newPosition * 1000);
-                  setPositionSec(newPosition);
-                }}
-                icon={<ForwardIcon />}
-              />
-            </XStack>
-          )}
-        </YStack>
-      </XStack>
+  const valueToTime = useDerivedValue(() => {
+    const totalMilliseconds = value.value;
+    const hours = Math.floor(totalMilliseconds / (60 * 60 * 1000));
+    const minutes = Math.floor(
+      (totalMilliseconds % (60 * 60 * 1000)) / (60 * 1000)
     );
-  }
-);
+    const seconds = Math.floor((totalMilliseconds % (60 * 1000)) / 1000);
+    const milliseconds = totalMilliseconds % 1000;
 
-const convertPresentToPosition = (present: number, duration: number) => {
-  return (present / 100) * duration;
-};
+    const minStr = minutes.toString().padStart(2, "0");
+    const secStr = seconds.toString().padStart(2, "0");
+    const msStr = `.${Math.floor(milliseconds / 10)
+      .toString()
+      .padStart(2, "0")}`;
 
-const convertPositionToPresent = (position: number, duration: number) => {
-  return (position / duration) * 100;
-};
+    return `${minStr}:${secStr}${msStr}`;
+  }, [value]);
 
-const recordingDir = `${FileSystem.cacheDirectory}recordings/`;
+  const remainingTime = useDerivedValue(() => {
+    const remainingMilliseconds = DURATION - value.value;
+    const minutes = Math.floor(remainingMilliseconds / (60 * 1000));
+    const seconds = Math.floor((remainingMilliseconds % (60 * 1000)) / 1000);
 
-// clean old files in recording dir
-const cleanAndCreateRecordingsDir = () =>
-  FileSystem.deleteAsync(recordingDir, { idempotent: true }).then(() => {
-    FileSystem.makeDirectoryAsync(recordingDir, { intermediates: true });
+    const minStr = minutes.toString().padStart(2, "0");
+    const secStr = seconds.toString().padStart(2, "0");
+
+    return `-${minStr}:${secStr}`;
+  }, [value]);
+
+  useAnimatedReaction(
+    () => ({ pressed: pressed.value, scrubbing: scrubbing.value }),
+    ({ pressed: p, scrubbing: s }, prev) => {
+      // Handle pressed changes
+      if (prev && p !== prev.pressed) {
+        if (p) {
+          expanded.value = true;
+          lastValueOnPress.value = value.value;
+          previousPlaying.value = playing.value;
+          playing.value = false;
+        } else {
+          if (
+            value.value === 0 ||
+            value.value === DURATION ||
+            value.value === lastValueOnPress.value
+          ) {
+            expanded.value = false;
+            playing.value = previousPlaying.value;
+          }
+        }
+      }
+      // Handle scrubbing changes
+      if (!s) {
+        playing.value = previousPlaying.value;
+      }
+      if (!s && !p && value.value !== 0 && value.value !== DURATION) {
+        expanded.value = false;
+      }
+    }
+  );
+
+  useAnimatedReaction(
+    () => value.value,
+    (v, prev) => {
+      if (pressed.value) return;
+
+      if (v === 0 || v === DURATION) {
+        if (delayTimeout.value) {
+          cancelAnimation(delayTimeout);
+          delayTimeout.value = 0;
+        }
+        expanded.value = false;
+      }
+    }
+  );
+
+  useAnimatedReaction(
+    () => ({ isPlaying: playing.value, v: value.value }),
+    ({ isPlaying, v }, prev) => {
+      const prevPlaying = prev?.isPlaying;
+
+      if (!isPlaying && prevPlaying) {
+        cancelAnimation(value);
+        internalAnimating.value = false;
+        return;
+      }
+
+      if (!isPlaying) return;
+
+      if (v >= DURATION) {
+        playing.value = false;
+        internalAnimating.value = false;
+        return;
+      }
+
+      if (internalAnimating.value) return;
+
+      internalAnimating.value = true;
+      const remaining = DURATION - v;
+
+      value.value = withTiming(
+        DURATION,
+        { duration: remaining, easing: Easing.linear },
+        (finished) => {
+          internalAnimating.value = false;
+          if (finished) playing.value = false;
+        }
+      );
+    }
+  );
+
+  const controlAnimatedStyle = useAnimatedStyle(() => {
+    const isExpanded = expanded.value;
+
+    return {
+      height: withSpring(isExpanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT),
+    };
   });
 
-// clean when app starts
-cleanAndCreateRecordingsDir();
+  const sliderAnimatedStyle = useAnimatedStyle(() => {
+    const isExpanded = expanded.value;
+    return {
+      width: withSpring(isExpanded ? EXPANDED_SLIDER_WIDTH : SLIDER_WIDTH),
+      transform: [
+        {
+          translateY: withSpring(isExpanded ? ADJUSTMENT : 0),
+        },
+      ],
+    };
+  });
 
-const downloadAudio = async (
-  uri: string,
-  componentId: string,
-  callback?: (data: FileSystem.DownloadProgressData) => void
-): Promise<string> => {
-  const filename = uri.split("/").pop()?.split("?")[0];
+  const topAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateY: withSpring(expanded.value ? -ADJUSTMENT : 0),
+        },
+      ],
+    };
+  });
 
-  const localFileUri = recordingDir + filename + ".mp3";
-  const fileInfo = await FileSystem.getInfoAsync(localFileUri);
+  const getOpacityStyle = (value: boolean, delay: number = 0, config = {}) => {
+    "worklet";
+    return {
+      opacity: withDelay(
+        delay,
+        withTiming(value ? 1 : 0, {
+          duration: 200,
+          easing: Easing.inOut(Easing.ease),
+          ...config,
+        })
+      ),
+    };
+  };
 
-  if (fileInfo.exists) {
-    return fileInfo.uri;
-  }
+  const buttonsAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      pointerEvents: expanded.value ? "none" : "auto",
+      ...getOpacityStyle(!expanded.value),
+    };
+  });
 
-  const downloadResumable = FileSystem.createDownloadResumable(uri, localFileUri, {}, callback);
+  const timeAnimatedStyle = useAnimatedStyle(() =>
+    getOpacityStyle(expanded.value, expanded.value ? 120 : 0, {})
+  );
 
-  onProgressFiles.push({ componentId, instance: downloadResumable });
+  const playAnimatedStyle = useAnimatedStyle(() =>
+    getOpacityStyle(!playing.value, pressed.value ? 500 : 0, { duration: 0 })
+  );
 
-  const file = await downloadResumable.downloadAsync();
+  const pauseAnimatedStyle = useAnimatedStyle(() =>
+    getOpacityStyle(playing.value, pressed.value ? 500 : 0, { duration: 0 })
+  );
 
-  if (!file) return "";
 
-  return file.uri;
-};
+
+  useEffect(() => {
+    playing.value = true;
+    return () => {
+      playing.value = false;
+    };
+  }, []);
+
+  const onPausePress = React.useCallback(() => {
+    playing.value = !playing.value;
+    if (value.value >= DURATION) {
+      value.value = 0;
+      playing.value = true;
+    }
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.wrapper,
+        {
+          // backgroundColor: "#00000020",
+        },
+        controlAnimatedStyle,
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.buttons,
+          styles.timeContainer,
+          timeAnimatedStyle,
+          topAnimatedStyle,
+        ]}
+      >
+        <Typography>
+          <AnimatedText text={valueToTime} style={styles.time} />
+        </Typography>
+        <Typography>
+          <AnimatedText
+            text={remainingTime}
+            style={[
+              styles.time,
+              {
+                textAlign: "right",
+              },
+            ]}
+          />
+        </Typography>
+      </Animated.View>
+      <Animated.View
+        style={[styles.buttons, buttonsAnimatedStyle, topAnimatedStyle]}
+      >
+        <TouchableOpacity
+          onPress={onPausePress}
+          style={styles.toggleButton}
+          activeOpacity={0.8}
+        >
+          <Animated.View style={[styles.toggleIcon, pauseAnimatedStyle]}>
+            <RecordingPauseIcon size={26} fill={Colors.Black[1]} />
+          </Animated.View>
+          <Animated.View style={[styles.toggleIcon, playAnimatedStyle]}>
+            <PlayIcon size={22} fill={Colors.Black[1]} />
+          </Animated.View>
+        </TouchableOpacity>
+
+      </Animated.View>
+      <Animated.View style={[styles.slider, sliderAnimatedStyle]}>
+        <Slider
+          value={value}
+          max={DURATION}
+          trackColor="#00000050"
+          thumbColor="#000000"
+          pressed={pressed}
+          scrubbing={scrubbing}
+        />
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrapper: {
+    // marginHorizontal: PADDING,
+    borderRadius: 24,
+    borderCurve: "continuous",
+    justifyContent: "center",
+    alignItems: "center",
+    width: WIDTH,
+  },
+  slider: {},
+  buttons: {
+    position: "absolute",
+    right: PADDING,
+    left: PADDING,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    // backgroundColor: "blue",
+    height: ICON_WIDTH,
+  },
+  timeContainer: {
+    paddingHorizontal: 6,
+    pointerEvents: "none",
+  },
+  time: {
+    fontVariant: ["tabular-nums"],
+    fontSize: 13.5,
+    maxWidth: 70,
+    color: Colors.Black[1],
+  },
+  toggleButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: ICON_WIDTH - 6,
+  },
+  toggleIcon: {
+    position: "absolute",
+  },
+});
+
+export default AudioPlayer;
