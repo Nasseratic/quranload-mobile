@@ -30,7 +30,9 @@ export const userInfo = {
 };
 
 export default defineSchema({
+  // Convex Auth tables (users, authAccounts, authSessions, etc.)
   ...authTables,
+
   featureFlags: defineTable({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment"), v.literal("supportChat")),
     enabled: v.boolean(),
@@ -52,19 +54,17 @@ export default defineSchema({
   contactSupportInfo: defineTable(contactSupportInfo),
   userInfo: defineTable(userInfo),
 
-  // ======= NEW TABLES FOR MIGRATION =======
+  // ======= APP-SPECIFIC TABLES =======
 
-  // Users table for authentication - managed by Convex Auth
-  // All app-specific profile data should go in userProfiles table
-  users: defineTable({
-    name: v.optional(v.string()),
-    image: v.optional(v.string()),
-    email: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.number()),
-    phone: v.optional(v.string()),
-    phoneVerificationTime: v.optional(v.number()),
-    isAnonymous: v.optional(v.boolean()),
-  }).index("email", ["email"]),
+  // User profiles - extended profile data (Convex Auth manages the base users table)
+  userProfiles: defineTable({
+    userId: v.id("users"),
+    fullName: v.string(),
+    phoneNumber: v.optional(v.string()),
+    gender: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
+    roles: v.array(v.union(v.literal("Student"), v.literal("Teacher"))),
+  }).index("by_userId", ["userId"]),
 
   // Organizations table
   organizations: defineTable({
@@ -202,15 +202,4 @@ export default defineSchema({
     uploadedBy: v.optional(v.id("users")),
     createdAt: v.number(),
   }).index("by_uploader", ["uploadedBy"]),
-
-  // User profiles table - extended profile data separate from auth users table
-  // This allows Convex Auth to manage the users table while we store app-specific profile data here
-  userProfiles: defineTable({
-    userId: v.id("users"),
-    fullName: v.string(),
-    phoneNumber: v.optional(v.string()),
-    gender: v.optional(v.string()),
-    dateOfBirth: v.optional(v.string()),
-    roles: v.array(v.union(v.literal("Student"), v.literal("Teacher"))),
-  }).index("by_userId", ["userId"]),
 });
