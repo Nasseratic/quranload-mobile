@@ -48,5 +48,5 @@ export default defineSchema({
     .index("by_participants", ["participant1", "participant2"])
     .index("by_participant2", ["participant2"]),
   contactSupportInfo: defineTable(contactSupportInfo),
-  userInfo: defineTable(userInfo),
+  userInfo: defineTable(userInfo).index("by_userId", ["userId"]),
 });
