@@ -10,8 +10,8 @@ import { IconButton } from "components/buttons/IconButton";
 import { Colors } from "constants/Colors";
 import PlusIcon from "components/icons/PlusIcon";
 import { useStudentsListInAllTeams } from "services/teamService";
-// import { useQuery } from "convex/react";
-// import { cvx } from "api/convex";
+import { useQuery } from "convex/react";
+import { cvx } from "api/convex";
 import { EmptyState } from "components/EmptyState";
 
 export const ChatListScreen = () => {
@@ -20,18 +20,10 @@ export const ChatListScreen = () => {
 
   const { studentsList } = useStudentsListInAllTeams();
 
-  // const conversations = useQuery(cvx.messages.allMyConversations, {
-  //   userId: user.id,
-  //   teamIds: user.teams.map(({ id }) => id),
-  // });
-  const conversations: Array<{
-    senderId?: string | null;
-    receiverId?: string | null;
-    receiverName?: string | null;
-    senderName?: string | null;
-    conversationId: string;
-    text?: string | null;
-  }> = [];
+  const conversations = useQuery(cvx.messages.allMyConversations, {
+    userId: user.id,
+    teamIds: user.teams.map(({ id }) => id),
+  });
 
   // TODO: allow starting a chat with a teacher
   const studentsUserHaveNoChatWith = (studentsList ?? []).filter(

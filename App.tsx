@@ -20,7 +20,7 @@ import { RootToastContainer } from "components/Toast";
 import "react-native-url-polyfill/auto";
 import { useEffect } from "react";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
-// import { ConvexProvider } from "api/convex";
+import { ConvexProvider } from "api/convex";
 import { queryClient } from "utils/reactQueryClient";
 import "api/apiClientInterceptors";
 
@@ -70,15 +70,15 @@ function App() {
       <SafeAreaProvider>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <BottomSheetModalProvider>
-            {/* <ConvexProvider> */}
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <RootToastContainer />
-                <Nav />
-              </AuthProvider>
-            </QueryClientProvider>
-            <RootActionSheetContainer />
-            {/* </ConvexProvider> */}
+            <ConvexProvider>
+              <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <RootToastContainer />
+                  <Nav />
+                </AuthProvider>
+              </QueryClientProvider>
+              <RootActionSheetContainer />
+            </ConvexProvider>
           </BottomSheetModalProvider>
         </TamaguiProvider>
       </SafeAreaProvider>
