@@ -17,9 +17,9 @@ import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { differenceInDays } from "date-fns";
 import Constants from "expo-constants";
+import { useMutation } from "convex/react";
 import { useMutation as useRQMutation } from "@tanstack/react-query";
-// import { useMutation } from "convex/react";
-// import { cvx } from "api/convex";
+import { cvx } from "api/convex";
 import request from "api/apiClient";
 
 const deviceName = Device.deviceName + ", " + Device.modelName;
@@ -28,7 +28,7 @@ export const NotificationsBottomSheet = () => {
   const { signed } = useAuth();
   const insets = useSafeAreaInsets();
   const { id } = useUser();
-  // const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
+  const registerToken = useMutation(cvx.pushNotifications.recordPushNotificationToken);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const { mutate: registerTokenToBackend } = useRQMutation({
@@ -66,9 +66,9 @@ export const NotificationsBottomSheet = () => {
         projectId: Constants.easConfig?.projectId,
       })
     ).data;
-    // registerToken({ pushToken: token, userId: id });
+    registerToken({ pushToken: token, userId: id });
     registerTokenToBackend({ token });
-  }, [id, registerTokenToBackend]);
+  }, [registerToken]);
 
   const handleEnableNotifications = async () => {
     const status = await Notifications.getPermissionsAsync();

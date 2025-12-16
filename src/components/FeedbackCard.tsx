@@ -2,14 +2,14 @@ import { Linking } from "react-native";
 import { Card, Button, XStack, YStack } from "tamagui";
 import Typography from "components/Typography";
 import { t } from "locales/config";
-// import { cvx, useCvxMutation } from "api/convex";
+import { cvx, useCvxMutation } from "api/convex";
 import { useUser } from "contexts/auth";
-// import { OTA_VERSION } from "components/Version";
-// import { Sentry } from "utils/sentry";
+import { OTA_VERSION } from "components/Version";
+import { Sentry } from "utils/sentry";
 
 const FeedbackCard = () => {
   const { emailAddress, fullName, phoneNumber } = useUser();
-  // const saveContactSupportInfo = useCvxMutation(cvx.support.saveContactSupportInfo);
+  const saveContactSupportInfo = useCvxMutation(cvx.support.saveContactSupportInfo);
 
   return (
     <Card padding={16} borderRadius={8} backgroundColor="#008080">
@@ -27,17 +27,17 @@ const FeedbackCard = () => {
           height={38}
           backgroundColor="white"
           onPress={async () => {
-            // try {
-            //   await saveContactSupportInfo({
-            //     email: emailAddress,
-            //     name: fullName,
-            //     phone: phoneNumber,
-            //     otaVersion: OTA_VERSION,
-            //   });
-            // } catch (e) {
-            //   console.error(e);
-            //   Sentry.captureException("Failed to save contact info");
-            // }
+            try {
+              await saveContactSupportInfo({
+                email: emailAddress,
+                name: fullName,
+                phone: phoneNumber,
+                otaVersion: OTA_VERSION,
+              });
+            } catch (e) {
+              console.error(e);
+              Sentry.captureException("Failed to save contact info");
+            }
             Linking.openURL(
               "https://copper-periwinkle-fd2.notion.site/1a93683870a381c0968cd712a2798ea4"
             );
