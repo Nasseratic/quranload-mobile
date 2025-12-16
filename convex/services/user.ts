@@ -46,3 +46,33 @@ export const updateUserInfo = mutation({
     await ctx.db.patch(existingUserInfo._id, args);
   },
 });
+
+export const exportUsersToCSV = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("userInfo").collect();
+
+    // CSV header
+    const headers = ["User ID", "Platform", "Current OTA Version", "Current App Version", "Last Seen", "Last Seen Date"];
+
+    // CSV rows
+    const rows = users.map((user) => {
+      const lastSeenDate = new Date(user.lastSeen).toISOString();
+      return [
+        user.userId,
+        user.platform,
+        user.currentOtaVersion,
+        user.currentAppVersion,
+        user.lastSeen.toString(),
+        lastSeenDate,
+      ];
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    return csvContent;
+  },
+});

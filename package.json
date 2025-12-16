@@ -11,6 +11,7 @@
     "lint-fix": "eslint ./src --fix",
     "check-types": "tsc --noEmit",
     "prettier-check": "prettier --check ./src",
+    "export-users": "tsx scripts/exportUsers.ts",
     "pull:api": "curl \"https://quranload-be-dev-app.azurewebsites.net/swagger/v1/swagger.json\" -o ./src/__generated/schema.json && npx replace --quiet \"QD.Application.\" \"\" ./src/__generated/schema.json && npx replace --quiet \"QD.Domain.\" \"\" ./src/__generated/schema.json && npx replace --quiet \"Enumerations\" \"Enum\" ./src/__generated/schema.json",
     "gen:client": "npx openapi-typescript-codegen -i ./src/__generated/schema.json -o ./src/__generated/apiTypes --exportCore false --exportServices false",
     "gen:api": "npm run pull:api && npm run gen:client",
@@ -115,6 +116,7 @@
     "prettier": "^2.8.7",
     "react-native-svg-transformer": "^1.0.0",
     "replace": "^1.2.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.3.3"
   },
   "private": true,
