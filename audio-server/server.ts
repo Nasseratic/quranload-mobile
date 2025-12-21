@@ -1,4 +1,4 @@
-import { serve } from "bun";
+import "bun";
 import { spawn } from "child_process";
 import { mkdir, rm, writeFile } from "fs/promises";
 import { existsSync } from "fs";
@@ -6,8 +6,11 @@ import { join } from "path";
 import axios from "axios";
 import FormData from "form-data";
 import { createReadStream } from "fs";
+import { ConvexClient } from "convex/browser";
+import { api } from "../convex/_generated/api";
+import "dotenv/config";
 
-const PORT = process.env.PORT || 3000;
+const CONVEX_URL = process.env.CONVEX_URL || "https://courteous-goat-120.convex.cloud";
 const AZURE_API_URL = process.env.AZURE_API_URL || "https://quranload-be-prod-app.azurewebsites.net/api/";
 const TEMP_DIR = join(import.meta.dir, "temp");
 
@@ -37,63 +40,49 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Generic retry wrapper with exponential backoff
-async function retryWithBackoff<T>(
-  operation: () => Promise<T>,
-  operationName: string,
-  maxAttempts: number = MAX_RETRY_ATTEMPTS,
-  delays: number[] = RETRY_DELAYS
-): Promise<T> {
-  let lastError: Error | unknown;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      log(`${operationName} - Attempt ${attempt}/${maxAttempts}`);
-      const result = await operation();
-      if (attempt > 1) {
-        log(`${operationName} - Succeeded on attempt ${attempt}`);
-      }
-      return result;
-    } catch (error) {
-      lastError = error;
-      logError(`${operationName} - Attempt ${attempt}/${maxAttempts} failed:`, error instanceof Error ? error.message : error);
-
-      if (attempt < maxAttempts) {
-        const delay = delays[attempt - 1] || delays[delays.length - 1] || 1000;
-        logWarn(`${operationName} - Retrying in ${delay}ms...`);
-        await sleep(delay);
-      }
-    }
-  }
-
-  logError(`${operationName} - All ${maxAttempts} attempts failed`);
-  throw lastError;
-}
-
-// Ensure temp directory exists
-enum UploadType {
-  MEDIA_ONLY = "media_only",
-  LESSON_SUBMISSION = "lesson_submission",
-  FEEDBACK_SUBMISSION = "feedback_submission",
-}
-
-// Session storage with upload type and submission parameters
-interface SessionData {
-  chunks: { buffer: Buffer; filename: string }[];
-  token?: string;
-  uploadType?: UploadType;
-  lessonId?: string;
-  studentId?: string;
-  duration?: number;
-  lessonState?: number;
-}
-
-const sessions = new Map<string, SessionData>();
-
 // Ensure temp directory exists
 if (!existsSync(TEMP_DIR)) {
   await mkdir(TEMP_DIR, { recursive: true });
 }
+
+// Create Convex client with robust connection handling
+let client: ConvexClient;
+let isConnected = false;
+let connectionAttempt = 0;
+
+async function initializeConvexClient(): Promise<ConvexClient> {
+  return new Promise((resolve) => {
+    const newClient = new ConvexClient(CONVEX_URL);
+    // Give the client time to establish initial connection and complete any internal reconnection
+    // The Convex client may log "WebSocket reconnected" during initialization - this is normal
+    setTimeout(() => {
+      resolve(newClient);
+    }, 3000);
+  });
+}
+
+async function connectWithRetry(): Promise<ConvexClient> {
+  while (connectionAttempt < MAX_RETRY_ATTEMPTS) {
+    try {
+      log(`Connecting to Convex (attempt ${connectionAttempt + 1}/${MAX_RETRY_ATTEMPTS})...`);
+      const newClient = await initializeConvexClient();
+      return newClient;
+    } catch (error) {
+      connectionAttempt++;
+      if (connectionAttempt < MAX_RETRY_ATTEMPTS) {
+        const delay = RETRY_DELAYS[connectionAttempt - 1] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
+        logWarn(`Connection failed, retrying in ${delay}ms...`);
+        await sleep(delay);
+      } else {
+        logError("Failed to connect to Convex after max retries");
+        throw error;
+      }
+    }
+  }
+  throw new Error("Failed to connect to Convex");
+}
+
+client = await connectWithRetry();
 
 // Helper to concatenate audio files using FFmpeg
 async function concatAudioFiles(files: string[], outputPath: string): Promise<void> {
@@ -135,37 +124,6 @@ async function concatAudioFiles(files: string[], outputPath: string): Promise<vo
   });
 }
 
-// Upload to Azure Media API
-async function uploadToAzure(filePath: string, token?: string): Promise<{ id: string; uri: string }> {
-  return retryWithBackoff(
-    async () => {
-      const form = new FormData();
-      form.append('File', createReadStream(filePath), {
-        filename: 'audio.mp3',
-        contentType: 'audio/mpeg'
-      });
-      form.append('MediaType', '2');
-
-      const headers: Record<string, string> = {
-        ...form.getHeaders(),
-      };
-      log('{{token}}:', token);
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await axios.post(`${AZURE_API_URL}Media`, form, {
-        headers,
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-      });
-
-      return response.data;
-    },
-    'Upload to Azure Media API'
-  );
-}
-
 // Submit lesson recording to backend
 async function submitLessonRecording({
   filePath,
@@ -178,32 +136,27 @@ async function submitLessonRecording({
   duration: number;
   token?: string;
 }): Promise<void> {
-  return retryWithBackoff(
-    async () => {
-      const form = new FormData();
-      form.append('Recording', createReadStream(filePath), {
-        filename: 'recording.mp3',
-        contentType: 'audio/mpeg'
-      });
-      form.append('LessonId', lessonId);
-      form.append('RecordingDuration', `${duration}`);
+  const form = new FormData();
+  form.append('Recording', createReadStream(filePath), {
+    filename: 'recording.mp3',
+    contentType: 'audio/mpeg'
+  });
+  form.append('LessonId', lessonId);
+  form.append('RecordingDuration', `${duration}`);
 
-      const headers: Record<string, string> = {
-        ...form.getHeaders(),
-      };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+  const headers: Record<string, string> = {
+    ...form.getHeaders(),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
-      await axios.post(`${AZURE_API_URL}LessonSubmission/recording`, form, {
-        headers,
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-      });
-    },
-    `Submit lesson recording (lessonId: ${lessonId})`
-  );
+  await axios.post(`${AZURE_API_URL}LessonSubmission/recording`, form, {
+    headers,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
+  });
 }
 
 // Submit feedback to backend
@@ -220,294 +173,145 @@ async function submitFeedback({
   lessonState: number;
   token?: string;
 }): Promise<void> {
-  return retryWithBackoff(
-    async () => {
-      const form = new FormData();
-      form.append('LessonId', lessonId);
-      form.append('StudentId', studentId);
-      form.append('Recording', createReadStream(filePath), {
-        filename: 'feedback.mp3',
-        contentType: 'audio/mpeg'
-      });
-      form.append('LessonState', `${lessonState}`);
+  const form = new FormData();
+  form.append('LessonId', lessonId);
+  form.append('StudentId', studentId);
+  form.append('Recording', createReadStream(filePath), {
+    filename: 'feedback.mp3',
+    contentType: 'audio/mpeg'
+  });
+  form.append('LessonState', `${lessonState}`);
 
-      const headers: Record<string, string> = {
-        ...form.getHeaders(),
-      };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+  const headers: Record<string, string> = {
+    ...form.getHeaders(),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
-      await axios.post(`${AZURE_API_URL}LessonSubmission/feedback`, form, {
-        headers,
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-      });
-    },
-    `Submit feedback (lessonId: ${lessonId}, studentId: ${studentId})`
-  );
+  await axios.post(`${AZURE_API_URL}LessonSubmission/feedback`, form, {
+    headers,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
+  });
 }
 
-// Clean up session
-async function cleanupSession(sessionId: string) {
-  sessions.delete(sessionId);
+async function processSession(session: any) {
+  const { sessionId, uploadType, lessonId, studentId, lessonState, totalDuration } = session;
   const sessionDir = join(TEMP_DIR, sessionId);
-  if (existsSync(sessionDir)) {
+  
+  try {
+    log(`Processing session ${sessionId}...`);
+    
+    // 1. Mark as processing to avoid duplicate work
+    const started = await client.mutation(api.services.recordings.startProcessingSession, { sessionId });
+    if (!started.success) {
+      logWarn(`Failed to start processing session ${sessionId}: ${started.reason}`);
+      return;
+    }
+
+    if (!existsSync(sessionDir)) {
+      await mkdir(sessionDir, { recursive: true });
+    }
+
+    // 2. Fetch fragment URLs
+    log(`Fetching fragment URLs for session ${sessionId}...`);
+    const fragments = await client.action(api.services.recordings.getFragmentUrls, { sessionId });
+    
+    // 3. Download fragments
+    log(`Downloading ${fragments.length} fragments for session ${sessionId}...`);
+    const fragmentPaths: string[] = [];
+    for (const fragment of fragments.sort((a: any, b: any) => a.index - b.index)) {
+      const fragmentPath = join(sessionDir, `fragment_${fragment.index}.m4a`);
+      const response = await axios.get(fragment.url, { responseType: 'arraybuffer' });
+      await writeFile(fragmentPath, Buffer.from(response.data));
+      fragmentPaths.push(fragmentPath);
+    }
+
+    // 4. Concatenate
+    const outputPath = join(sessionDir, 'output.mp3');
+    log(`Concatenating fragments for session ${sessionId}...`);
+    await concatAudioFiles(fragmentPaths, outputPath);
+
+    // 5. Upload final audio to R2 via Convex
+    log(`Uploading final audio for session ${sessionId} to R2...`);
+    const audioData = await Bun.file(outputPath).arrayBuffer();
+    await client.action(api.services.recordings.uploadFinalAudio, {
+      sessionId,
+      blob: audioData,
+    });
+
+    // 6. Optional: Submit to Azure API
+    if (uploadType === 'lesson_submission' && lessonId) {
+      log(`Submitting lesson recording for lessonId: ${lessonId}`);
+      await submitLessonRecording({
+        filePath: outputPath,
+        lessonId,
+        duration: Math.round(totalDuration / 1000),
+      });
+    } else if (uploadType === 'feedback_submission' && lessonId && studentId && lessonState !== undefined) {
+      log(`Submitting feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
+      await submitFeedback({
+        filePath: outputPath,
+        lessonId,
+        studentId,
+        lessonState,
+      });
+    }
+
+    log(`Successfully finalized session ${sessionId}`);
+
+    // Cleanup
     await rm(sessionDir, { recursive: true, force: true });
+
+  } catch (error) {
+    logError(`Error processing session ${sessionId}:`, error);
+    await client.mutation(api.services.recordings.failSession, {
+      sessionId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Partial cleanup
+    if (existsSync(sessionDir)) {
+      await rm(sessionDir, { recursive: true, force: true });
+    }
   }
 }
 
-const server = serve({
-  port: PORT,
-  async fetch(req) {
-    const url = new URL(req.url);
-    
-    // CORS headers
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    };
+// Subscribe to finalizing sessions with reconnection handling
+function setupSubscription() {
+  log(`🎙️  Audio server worker started. Monitoring Convex at ${CONVEX_URL}...`);
 
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+  const unsubscribe = client.onUpdate(api.services.recordings.getFinalizingSessions, {}, (sessions: any) => {
+    if (!isConnected) {
+      isConnected = true;
+      connectionAttempt = 0;
+      log("✅ Convex subscription active and receiving updates");
     }
 
-    // Health check
-    if (url.pathname === '/health') {
-      return new Response(JSON.stringify({ status: 'ok' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Upload chunk endpoint
-    if (url.pathname === '/upload-chunk' && req.method === 'POST') {
-      try {
-        const formData = await req.formData();
-        const sessionId = formData.get('sessionId') as string;
-        const chunkIndex = formData.get('chunkIndex') as string;
-        const file = formData.get('file') as File;
-        const token = formData.get('token') as string | null;
-
-        if (!sessionId || !file) {
-          return new Response(JSON.stringify({ error: 'Missing sessionId or file' }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        // Initialize session if not exists
-        if (!sessions.has(sessionId)) {
-          sessions.set(sessionId, { chunks: [], token: token || undefined });
-          await mkdir(join(TEMP_DIR, sessionId), { recursive: true });
-        }
-
-        // Save chunk to disk
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `chunk_${chunkIndex}_${Date.now()}.${file.name.split('.').pop()}`;
-        const chunkPath = join(TEMP_DIR, sessionId, filename);
-        await writeFile(chunkPath, buffer);
-
-        // Store chunk reference
-        const session = sessions.get(sessionId)!;
-        session.chunks.push({ buffer, filename });
-
-        log(`Received chunk ${chunkIndex} for session ${sessionId}`);
-
-        return new Response(JSON.stringify({ success: true, chunkIndex }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (error) {
-        logError('Error uploading chunk:', error);
-        return new Response(JSON.stringify({ error: 'Failed to upload chunk' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    if (sessions && sessions.length > 0) {
+      log(`Found ${sessions.length} sessions to finalize.`);
+      for (const session of sessions) {
+        // Process each session (non-blocking)
+        processSession(session);
       }
     }
+  });
 
-    // Finalize and upload endpoint
-    if (url.pathname === '/finalize' && req.method === 'POST') {
-      try {
-        const body = await req.json();
-        const { 
-          sessionId, 
-          uploadType = UploadType.MEDIA_ONLY,
-          lessonId,
-          studentId,
-          duration,
-          lessonState,
-        } = body;
+  return unsubscribe;
+}
 
-        if (!sessionId) {
-          return new Response(JSON.stringify({ error: 'Missing sessionId' }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        const session = sessions.get(sessionId);
-        if (!session || session.chunks.length === 0) {
-          return new Response(JSON.stringify({ error: 'No chunks found for session' }), {
-            status: 404,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        log(`Finalizing session ${sessionId} with ${session.chunks.length} chunks, uploadType: ${uploadType}`);
-
-        // Get chunk file paths
-        const sessionDir = join(TEMP_DIR, sessionId);
-        const chunkPaths = session.chunks.map(c => join(sessionDir, c.filename));
-
-        // Concatenate audio files
-        const outputPath = join(sessionDir, 'output.mp3');
-        await concatAudioFiles(chunkPaths, outputPath);
-
-        let uploadResult: { id: string; uri: string } | null = null;
-
-        // Perform action based on upload type
-        if (uploadType === UploadType.MEDIA_ONLY) {
-          // Only upload to Azure for media-only requests
-          uploadResult = await uploadToAzure(outputPath, session.token);
-          log(`Uploaded to Azure, mediaId: ${uploadResult.id}`);
-        } else if (uploadType === UploadType.LESSON_SUBMISSION) {
-          if (!lessonId || duration === undefined || !studentId) {
-            throw new Error('Missing lessonId, duration, or studentId for lesson submission');
-          }
-          // Upload directly to lesson submission endpoint
-          await submitLessonRecording({
-            filePath: outputPath,
-            lessonId,
-            duration,
-            token: session.token,
-          });
-          log(`Submitted lesson recording for lessonId: ${lessonId}`);
-        } else if (uploadType === UploadType.FEEDBACK_SUBMISSION) {
-          if (!lessonId || !studentId || lessonState === undefined) {
-            throw new Error('Missing lessonId, studentId, or lessonState for feedback submission');
-          }
-          // Upload directly to feedback submission endpoint
-          await submitFeedback({
-            filePath: outputPath,
-            lessonId,
-            studentId,
-            lessonState,
-            token: session.token,
-          });
-          log(`Submitted feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
-        }
-
-        // Poll for filename
-        let filename: string | null = null;
-        if (uploadType === UploadType.LESSON_SUBMISSION || uploadType === UploadType.FEEDBACK_SUBMISSION) {
-          log(`Starting polling for filename for session ${sessionId}...`);
-          const maxRetries = 5;
-          const delays = [500, 1000, 2000, 3000, 5000];
-
-          for (let i = 0; i < maxRetries; i++) {
-            log(`Polling attempt ${i + 1}/${maxRetries} (waiting ${delays[i]}ms)...`);
-            await sleep(delays[i] || 1000);
-
-            try {
-              const lessonDetails = await fetchLessonDetails(lessonId || "", session.token);
-              log(`[DEBUG] Full lesson details response:`, JSON.stringify(lessonDetails, null, 2));
-              
-              // Find the submission for this student
-              // For lesson submission, we need to find the student's submission
-              // For feedback submission, we need to find the submission for the student we are giving feedback to
-              
-              const targetStudentId = studentId; // This should be passed in the request
-              log(`Looking for submission for studentId: ${targetStudentId}`);
-
-              if (lessonDetails.lessonSubmissions && targetStudentId) {
-                const submission = lessonDetails.lessonSubmissions.find(
-                  (s: any) => s.student?.id === targetStudentId
-                );
-
-                if (submission) {
-                  if (uploadType === UploadType.LESSON_SUBMISSION) {
-                    filename = submission.recording?.uri;
-                    log(`Found submission, recording uri: ${filename}`);
-                  } else if (uploadType === UploadType.FEEDBACK_SUBMISSION) {
-                    filename = submission.feedback?.uri;
-                    log(`Found submission, feedback uri: ${filename}`);
-                  }
-                } else {
-                  log(`No submission found for studentId: ${targetStudentId}`);
-                }
-              } else {
-                 log(`Missing lessonSubmissions or targetStudentId`);
-              }
-
-              if (filename) {
-                log(`Found filename: ${filename}`);
-                break;
-              }
-            } catch (error) {
-              logError(`Error fetching lesson details during polling:`, error);
-            }
-          }
-
-          if (!filename) {
-            logWarn(`Failed to retrieve filename after ${maxRetries} attempts`);
-          }
-        }
-
-        // Cleanup (after submissions complete)
-        await cleanupSession(sessionId);
-
-        log(`Successfully processed session ${sessionId}`);
-
-        return new Response(JSON.stringify({ 
-          success: true, 
-          mediaId: uploadResult?.id,
-          mediaUri: uploadResult?.uri,
-          filename,
-          uploadType,
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (error) {
-        logError('Error finalizing:', error);
-        return new Response(JSON.stringify({ 
-          error: 'Failed to finalize recording',
-          details: error instanceof Error ? error.message : 'Unknown error',
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    return new Response('Not found', { status: 404, headers: corsHeaders });
-  },
+// Handle process signals for graceful shutdown
+process.on("SIGINT", () => {
+  log("Received SIGINT, shutting down gracefully...");
+  client.close();
+  process.exit(0);
 });
 
-log(`🎙️  Audio server running on http://localhost:${PORT}`);
-log(`📦 Azure API: ${AZURE_API_URL}`);
-log(`📁 Temp directory: ${TEMP_DIR}`);
+process.on("SIGTERM", () => {
+  log("Received SIGTERM, shutting down gracefully...");
+  client.close();
+  process.exit(0);
+});
 
-async function fetchLessonDetails(lessonId: string, token: string) {
-  return retryWithBackoff(
-    async () => {
-      log(`Fetching lesson details for lessonId: ${lessonId}`);
-      const response = await fetch(
-        `https://quranload-be-prod-app.azurewebsites.net/api/Lessons/${lessonId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch lesson details: ${response.status} ${response.statusText}`);
-      }
-      
-      return await response.json();
-    },
-    `Fetch lesson details (lessonId: ${lessonId})`
-  );
-}
+setupSubscription();

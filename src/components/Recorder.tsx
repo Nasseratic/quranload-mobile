@@ -31,12 +31,6 @@ import { IconButton } from "components/buttons/IconButton";
 
 import { Stack, Text, XStack } from "tamagui";
 import { sleep } from "utils/sleep";
-import {
-  eraseAudioRecordingsFromStorage,
-  getPersistentAudioRecordings,
-  persistAudioRecordings,
-} from "utils/persistAudioRecordings";
-import { concatAudioFragments } from "utils/concatAudioFragments";
 import { t } from "locales/config";
 import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import { IS_IOS } from "constants/GeneralConstants";
@@ -44,12 +38,9 @@ import { toast } from "./Toast";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 import { Sentry } from "utils/sentry";
 import { throttleTrack, track } from "utils/tracking";
-import { 
-  uploadChunkToServer, 
-  finalizeRecording, 
-  checkServerHealth,
-  UploadType 
-} from "services/audioServerClient";
+import { useCvxMutation, useCvxQuery } from "api/convex";
+import { api } from "../../convex/_generated/api";
+import { useUploadFile } from "@convex-dev/r2/react";
 import { useAuth } from "contexts/auth";
 import { AssignmentStatusEnum } from "types/Lessons";
 
@@ -58,10 +49,10 @@ let currentRecording: AudioRecorder | null = null;
 
 const throttledTrack = throttleTrack(2000);
 
-// Session management for server-based recording
+// Session management using Convex
 let recordingSessionId: string | null = null;
+let convexSessionDbId: string | null = null;
 let chunkCounter = 0;
-let useServerForRecording = false;
 
 // Generate a unique session ID
 const generateSessionId = () => {
@@ -76,20 +67,23 @@ const cleanCurrentRecording = async () => {
     await stopPromise;
   }
 };
-type Recording = {
-  uri: string;
-  durationInMs: number;
-};
-let recordings: Recording[] = [];
 
-const cleanRecordings = async ({ lessonId }: { lessonId?: string }) => {
-  recordings = [];
+// Track total duration locally for UI purposes  
+let totalRecordingDuration = 0;
+
+const cleanRecordings = async (deleteSessionMutation?: any) => {
+  if (recordingSessionId && deleteSessionMutation) {
+    try {
+      await deleteSessionMutation({ sessionId: recordingSessionId });
+    } catch (error) {
+      // Ignored
+    }
+  }
+  totalRecordingDuration = 0;
   recordingSessionId = null;
+  convexSessionDbId = null;
   chunkCounter = 0;
-  await Promise.all([
-    cleanCurrentRecording(),
-    lessonId ? eraseAudioRecordingsFromStorage({ lessonId }) : Promise.resolve(),
-  ]);
+  await cleanCurrentRecording();
 };
 
 const RECORDING_INTERVAL = 60 * 1000 * 2;
@@ -112,16 +106,47 @@ export const Recorder = ({
   onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
   onFinished?: (params: { uri: string; duration: number }) => void;
   onServerSubmitSuccess?: (filename?: string) => void | Promise<void>;
-  onStatusChange?: (status: RecordingState, recordings: Recording[]) => void;
-  uploadType?: UploadType;
+  onStatusChange?: (status: RecordingState, totalRecordingDuration: number) => void;
+  uploadType?: 'feedback' | 'submission';
   studentId?: string;
   lessonState?: AssignmentStatusEnum;
 }) => {
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const permissionStatusRef = useRef<PermissionStatus | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const statusUpdateListenerRef = useRef<any>(null);
+  
+  // Convex mutations
+  const createSession = useCvxMutation(api.services.recordings.createSession);
+  const updateSessionStatus = useCvxMutation(api.services.recordings.updateSessionStatus);
+  const addFragment = useCvxMutation(api.services.recordings.addFragment);
+  const deleteSession = useCvxMutation(api.services.recordings.deleteSession);
+
+  // Monitor session status
+  const sessionData = useCvxQuery(
+    api.services.recordings.getSession,
+    recordingSessionId ? { sessionId: recordingSessionId } : "skip" as any
+  );
+
+  // Effect to handle session completion/failure
+  useEffect(() => {
+    if (recordingState === "submitting" && sessionData) {
+      if (sessionData.status === "completed") {
+        handleStatusChange("idle");
+        cleanRecordings(); // Local cleanup
+        onServerSubmitSuccess?.(sessionData.finalAudioKey);
+      } else if (sessionData.status === "failed") {
+        toast.show({ 
+          title: "Processing failed", 
+          status: "Error" 
+        });
+        handleStatusChange("idle");
+      }
+    }
+  }, [sessionData, recordingState]);
+
+  // R2 upload hook
+  const uploadFile = useUploadFile(api.services.recordings);
 
   // Recording options configuration
   const recordingOptions: RecordingOptions = {
@@ -130,6 +155,7 @@ export const Recorder = ({
     numberOfChannels: 2,
     bitRate: IS_IOS ? 128000 : 108000,
     isMeteringEnabled: true,
+    web: {}, // Add web config to satisfy RecordingOptions type
     ios: {
       extension: ".m4a",
       outputFormat: IOSOutputFormat.MPEG4AAC,
@@ -148,24 +174,20 @@ export const Recorder = ({
   };
 
   // Create the audio recorder using the hook
-  const audioRecorder = useAudioRecorder(recordingOptions, (status) => {
-    if (status.hasError) {
-      console.error("Recording error:", status.error);
-    }
-  });
+  const audioRecorder = useAudioRecorder(recordingOptions);
 
   const recorderState = useAudioRecorderState(audioRecorder);
 
   const handleStatusChange = useCallback(
     (status: RecordingState) => {
       setRecordingState(status);
-      onStatusChange?.(status, recordings);
+      onStatusChange?.(status, totalRecordingDuration);
     },
     [onStatusChange]
   );
   async function startRecording() {
     let isDenied = permissionStatusRef.current === PermissionStatus.DENIED;
-    
+
     if (!permissionStatusRef.current || permissionStatusRef.current === PermissionStatus.UNDETERMINED) {
       const { status, granted } = await requestRecordingPermissionsAsync();
       permissionStatusRef.current = status;
@@ -189,22 +211,37 @@ export const Recorder = ({
     }
 
     try {
-      if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleStatusChange("recording");
 
       // Only create new session if we don't have one (fresh start)
       if (!recordingSessionId) {
-        const serverAvailable = await checkServerHealth();
-        if (serverAvailable) {
-          recordingSessionId = generateSessionId();
-          useServerForRecording = true;
-          console.log("Using server for recording, session:", recordingSessionId);
-        } else {
-          useServerForRecording = false;
-          console.log("Server not available, using local recording");
+        recordingSessionId = generateSessionId();
+
+        try {
+          // Create session in Convex
+          await createSession({
+            sessionId: recordingSessionId,
+            userId: user?.id || "unknown",
+            uploadType,
+            lessonId,
+            studentId,
+            lessonState,
+          });
+        } catch (error) {
+          toast.show({
+            title: "Failed to create recording session",
+            status: "Error"
+          });
+          handleStatusChange("idle");
+          return;
         }
       } else {
-        console.log("Resuming existing session:", recordingSessionId);
+        // Update session status to recording
+        await updateSessionStatus({
+          sessionId: recordingSessionId,
+          status: "recording",
+        });
       }
 
       await startRecordingWithAutoFragmenting();
@@ -231,32 +268,37 @@ export const Recorder = ({
     currentRecording = null;
     currentRecordingDurationMillis = 0;
     
-    if (uri) {
-      recordings.push({
-        uri,
-        durationInMs,
-      });
-      if (lessonId) persistAudioRecordings({ lessonId, recordings });
-      
-      // Upload chunk to server if using server mode
-      if (useServerForRecording && recordingSessionId) {
-        try {
-          await uploadChunkToServer({
-            sessionId: recordingSessionId,
-            chunkIndex: chunkCounter++,
-            fileUri: uri,
-            token: accessToken || undefined,
-          });
-          console.log(`Uploaded chunk ${chunkCounter - 1} to server`);
-        } catch (error) {
-          console.error("Failed to upload chunk to server:", error);
-          // If upload fails, we still have local copies as fallback
-          toast.show({ 
-            title: "Server upload failed, will use local processing", 
-            status: "Warning" 
-          });
-          useServerForRecording = false;
-        }
+    if (uri && recordingSessionId) {
+      // Update total duration for UI
+      totalRecordingDuration += durationInMs;
+
+      // Upload fragment to R2 via Convex useUploadFile hook
+      try {
+        // Fetch blob directly from local file URI
+        const response = await fetch(uri);
+        const blob = await response.blob();
+
+        // Create a File object from the blob with proper naming
+        const fileName = `fragment_${chunkCounter}.m4a`;
+        const file = new File([blob], fileName, { type: "audio/x-m4a" });
+
+        // Upload to R2 using the useUploadFile hook
+        const key = await uploadFile(file);
+
+        // Add fragment metadata to Convex database
+        await addFragment({
+          sessionId: recordingSessionId,
+          fragmentIndex: chunkCounter,
+          r2Key: key,
+          duration: durationInMs,
+        });
+
+        chunkCounter++;
+      } catch (error) {
+        toast.show({
+          title: "Fragment upload failed",
+          status: "Warning"
+        });
       }
     }
   };
@@ -265,17 +307,25 @@ export const Recorder = ({
     if (!audioRecorder) return;
     handleStatusChange("paused");
     await cutRecording();
+    
+    // Update Convex session status
+    if (recordingSessionId) {
+      await updateSessionStatus({
+        sessionId: recordingSessionId,
+        status: "paused",
+      });
+    }
   };
 
   const discardRecording = useCallback(async () => {
-    await cleanRecordings({ lessonId });
+    await cleanRecordings(deleteSession);
     handleStatusChange("idle");
     if (IS_IOS)
       await setAudioModeAsync({
         allowsRecording: false,
         playsInSilentMode: false,
       });
-  }, [lessonId]);
+  }, [deleteSession]);
 
   const submitRecording = async () => {
     if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -284,86 +334,39 @@ export const Recorder = ({
       handleStatusChange("submitting");
       await cutRecording();
 
-      let uri: string;
-      let durationInSec: number;
+      const durationInSec = Math.round(totalRecordingDuration / 1000) ?? 0;
 
-      // Always concatenate locally first to get a URI for the audio player
-      const concatenatedUri = await concatAudioFragments(
-        recordings.map(({ uri }) => uri)
-      );
-      
-      if (!concatenatedUri) {
-        throw new Error("Failed to concatenate audio fragments");
-      }
-      
-      uri = concatenatedUri;
-      durationInSec =
-        Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
-
-      // Try server-based finalization first
-      if (useServerForRecording && recordingSessionId) {
+      // Trigger audio server finalization with Convex session
+      if (recordingSessionId) {
         try {
-          console.log("Finalizing recording on server...");
-          
-          const result = await finalizeRecording({ 
+          // Update session status to finalizing
+          // The worker will pick it up from here
+          await updateSessionStatus({
             sessionId: recordingSessionId,
-            uploadType,
-            lessonId,
-            studentId,
-            duration: durationInSec,
-            lessonState,
+            status: "finalizing",
           });
-          console.log("Finalized recording on server, result:", result);
           
-          // Server handled the complete submission flow
-          await cleanRecordings({ lessonId });
-          handleStatusChange("idle");
-          
-          // Trigger callback to let RecordScreen know submission succeeded
-          await onServerSubmitSuccess?.(result.filename);
-          
-          return; // Exit early since server handled everything
+          // We don't call finalizeRecording anymore.
+          // The useEffect above will catch the status change to "completed"
         } catch (error) {
-          console.error("Server finalization failed, falling back to local:", error);
           toast.show({ 
-            title: "Server processing failed, using local processing", 
-            status: "Warning" 
+            title: "Submit trigger failed", 
+            status: "Error" 
           });
-          // Fall through to local submission
+          handleStatusChange("idle");
         }
-      }
-
-      // Fallback to local submission
-
-      try {
-        await cleanRecordings({ lessonId });
-
-        await onSubmit({
-          uri,
-          duration: durationInSec || 0,
+      } else {
+        toast.show({ 
+          title: "No recording session found", 
+          status: "Error" 
         });
-
         handleStatusChange("idle");
-      } catch {
-        if (lessonId) {
-          persistAudioRecordings({
-            lessonId,
-            recordings: [
-              {
-                uri,
-                durationInMs: durationInSec * 1000,
-              },
-            ],
-          });
-        }
-      } finally {
-        onFinished?.({ uri, duration: durationInSec });
       }
+
     } catch (error) {
-      console.error("Error submitting recording:", error);
       Sentry.captureException(error);
     } finally {
-      handleStatusChange("paused");
+      handleStatusChange("idle");
       if (IS_IOS)
         await setAudioModeAsync({
           allowsRecording: false,
@@ -373,11 +376,12 @@ export const Recorder = ({
   };
 
   async function startRecordingWithAutoFragmenting() {
-    if (IS_IOS)
+    if (IS_IOS) {
       await setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
       });
+    }
 
     if (currentRecording) {
       await cleanCurrentRecording();
@@ -412,9 +416,8 @@ export const Recorder = ({
           const status = currentRecording.getStatus();
           if (!status.isRecording) break;
           if (status.metering && status.metering < -40) {
-            console.log("Metering is too low, stopping recording");
             break;
-          } else console.log("Metering is", status.metering);
+          }
           await sleep(METERING_CHECK_INTERVAL);
         }
       })(),
@@ -454,39 +457,32 @@ export const Recorder = ({
   }, []);
 
   useEffect(() => {
-    if (lessonId) {
-      getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {
-        if (savedRecordings.length > 0) {
-          recordings = savedRecordings;
-          handleStatusChange("paused");
-          console.log("Restored recordings", savedRecordings);
-        }
-      });
-    }
+    // Session cleanup on unmount
     return () => {
       cutRecording().then(() => {
-        if (recordings.length === 0) return;
-        Alert.alert(
-          t("recordingScreen.discardRecording"),
-          t("recordingScreen.discardRecordingDescription"),
-          [
-            {
-              text: t("cancel"),
-              style: "cancel",
-              onPress: () => {
-                recordings = [];
+        if (recordingSessionId) {
+          Alert.alert(
+            t("recordingScreen.discardRecording"),
+            t("recordingScreen.discardRecordingDescription"),
+            [
+              {
+                text: t("cancel"),
+                style: "cancel",
+                onPress: () => {
+                  // Keep session active
+                },
               },
-            },
-            {
-              text: t("discard"),
-              style: "destructive",
-              onPress: discardRecording,
-            },
-          ]
-        );
+              {
+                text: t("discard"),
+                style: "destructive",
+                onPress: discardRecording,
+              },
+            ]
+          );
+        }
       });
     };
-  }, [lessonId]);
+  }, [discardRecording]);
 
   const handleDiscard = () => {
     pauseRecording();
@@ -590,7 +586,7 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
 
 const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
   const [seconds, setSeconds] = useState(
-    Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000)
+    Math.round(totalRecordingDuration / 1000)
   );
 
   useEffect(() => {
@@ -598,9 +594,7 @@ const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
       const interval = setInterval(() => {
         setSeconds(
           Math.round(
-            (recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) +
-              +currentRecordingDurationMillis) /
-              1000
+            (totalRecordingDuration + currentRecordingDurationMillis) / 1000
           )
         );
       }, 1000);

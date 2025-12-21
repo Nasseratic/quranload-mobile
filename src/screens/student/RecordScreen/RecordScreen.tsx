@@ -38,7 +38,6 @@ import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScre
 import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
-import { UploadType } from "services/audioServerClient";
 import { cvx, useCvxMutation } from "api/convex";
 import LottieView from "lottie-react-native";
 import UploadingLottie from "assets/lottie/uploading.json";
@@ -390,18 +389,18 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                     }}
                     uploadType={
                       isTeacher 
-                        ? UploadType.FEEDBACK_SUBMISSION 
-                        : UploadType.LESSON_SUBMISSION
+                        ? 'feedback'
+                        : 'submission'
                     }
                     studentId={studentId}
                     lessonState={isTeacher ? AssignmentStatusEnum.accepted : undefined}
-                    onStatusChange={(status, recordings) => {
+                    onStatusChange={(status, totalRecordingDuration) => {
                       match(status)
                         .with("paused", () => {
                           track("RecordingPaused");
                         })
                         .with("recording", () => {
-                          track(recordings.length > 0 ? "RecordingResumed" : "RecodingStarted");
+                          track(totalRecordingDuration > 0 ? "RecordingResumed" : "RecodingStarted");
                         })
                         .with("submitting", () => {
                           track("RecordingSubmitPressed", { screen: "RecordScreen" });
