@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, action, internalMutation } from "../_generated/server";
+import { mutation, query, action, internalMutation, internalQuery } from "../_generated/server";
 import { R2 } from "@convex-dev/r2";
 import { components } from "../_generated/api";
 import { internal } from "../_generated/api";
@@ -29,22 +29,37 @@ export const createSession = mutation({
   args: {
     sessionId: v.string(),
     userId: v.string(),
-    uploadType: v.optional(v.union(
-      v.literal("media_only"),
-      v.literal("lesson_submission"),
-      v.literal("feedback_submission")
-    )),
+    uploadType: v.optional(
+      v.union(
+        v.literal("media_only"),
+        v.literal("lesson_submission"),
+        v.literal("feedback_submission")
+      )
+    ),
     lessonId: v.optional(v.string()),
     studentId: v.optional(v.string()),
     lessonState: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
+    // Deactivate any existing active sessions for this user+lesson
+    const existingActiveSessions = await ctx.db
+      .query("recordingSessions")
+      .withIndex("by_userId_lessonId_active", (q) =>
+        q.eq("userId", args.userId).eq("lessonId", args.lessonId).eq("isActive", true)
+      )
+      .collect();
+
+    for (const session of existingActiveSessions) {
+      await ctx.db.patch(session._id, { isActive: false, updatedAt: now });
+    }
+
     const sessionDbId = await ctx.db.insert("recordingSessions", {
       sessionId: args.sessionId,
       userId: args.userId,
       status: "recording",
+      isActive: true,
       uploadType: args.uploadType,
       lessonId: args.lessonId,
       studentId: args.studentId,
@@ -83,8 +98,12 @@ export const updateSessionStatus = mutation({
       throw new Error(`Session not found: ${args.sessionId}`);
     }
 
+    // Terminal statuses deactivate the session
+    const isTerminalStatus = args.status === "completed" || args.status === "failed";
+
     await ctx.db.patch(session._id, {
       status: args.status,
+      ...(isTerminalStatus && { isActive: false }),
       updatedAt: Date.now(),
     });
 
@@ -152,6 +171,7 @@ export const finalizeSession = mutation({
 
     await ctx.db.patch(session._id, {
       status: "completed",
+      isActive: false,
       finalAudioKey: args.finalAudioKey,
       updatedAt: Date.now(),
     });
@@ -174,7 +194,8 @@ export const deleteSession = mutation({
       .first();
 
     if (!session) {
-      throw new Error(`Session not found: ${args.sessionId}`);
+      // Session already deleted or never existed - this is fine
+      return { success: true, deletedFragments: 0, alreadyDeleted: true };
     }
 
     // Delete all fragments
@@ -212,9 +233,48 @@ export const getSession = query({
 });
 
 /**
+ * Get active (recoverable) session for a specific user and lesson
+ */
+export const getActiveSessionForLesson = query({
+  args: {
+    userId: v.string(),
+    lessonId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("recordingSessions")
+      .withIndex("by_userId_lessonId_active", (q) =>
+        q.eq("userId", args.userId).eq("lessonId", args.lessonId).eq("isActive", true)
+      )
+      .first();
+
+    return session;
+  },
+});
+
+/**
  * List all fragments for a session (ordered by index)
  */
 export const listFragments = query({
+  args: {
+    sessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const fragments = await ctx.db
+      .query("audioFragments")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .collect();
+
+    // Sort by fragment index
+    return fragments.sort((a, b) => a.fragmentIndex - b.fragmentIndex);
+  },
+});
+
+/**
+ * Internal query to list all fragments for a session (ordered by index)
+ * Used by actions that need to access fragment data
+ */
+export const listFragmentsInternal = internalQuery({
   args: {
     sessionId: v.string(),
   },
@@ -243,9 +303,7 @@ export const getUserSessions = query({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .order("desc");
 
-    const sessions = args.limit
-      ? await query.take(args.limit)
-      : await query.collect();
+    const sessions = args.limit ? await query.take(args.limit) : await query.collect();
 
     return sessions;
   },
@@ -287,12 +345,15 @@ export const uploadFinalAudio = action({
  */
 export const getFragmentUrls = action({
   args: { sessionId: v.string() },
-  handler: async (ctx, args) => {
-    const fragments = await ctx.runQuery(internal.services.recordings.listFragmentsInternal, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: async (ctx, args): Promise<any> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fragments: any = await ctx.runQuery(internal.services.recordings.listFragmentsInternal, {
       sessionId: args.sessionId,
     });
 
     const urls = await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fragments.map(async (f: any) => ({
         index: f.fragmentIndex,
         url: await r2.getUrl(f.r2Key),
@@ -300,19 +361,6 @@ export const getFragmentUrls = action({
     );
 
     return urls;
-  },
-});
-
-/**
- * Internal query to list fragments
- */
-export const listFragmentsInternal = query({
-  args: { sessionId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("audioFragments")
-      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
-      .collect();
   },
 });
 
@@ -342,7 +390,8 @@ export const startProcessingSession = mutation({
       .first();
 
     if (!session) throw new Error("Session not found");
-    if (session.status !== "finalizing") return { success: false, reason: "Session not in finalizing state" };
+    if (session.status !== "finalizing")
+      return { success: false, reason: "Session not in finalizing state" };
 
     await ctx.db.patch(session._id, {
       status: "processing",
@@ -368,9 +417,10 @@ export const failSession = mutation({
 
     await ctx.db.patch(session._id, {
       status: "failed",
+      isActive: false,
       updatedAt: Date.now(),
     });
-    
+
     console.error(`Session ${args.sessionId} failed: ${args.error}`);
     return { success: true };
   },

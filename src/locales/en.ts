@@ -52,6 +52,9 @@ const english = {
     discard: "Discard",
     uploadFailed: "Upload failed",
     retryUpload: "Retry upload",
+    resumeRecording: "Resume Recording?",
+    resumeRecordingDescription:
+      "You have an unfinished recording for this lesson. Would you like to continue?",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",
@@ -210,6 +213,8 @@ const english = {
   image: "Image",
   audio: "Audio",
   audioRecordingPaused: "Audio recording paused",
+  uploadingFragments: "Uploading {{count}} fragment(s)...",
+  resume: "Resume",
   invalid: "Invalid",
   readFromTo: "Read from page {{from}} to {{to}}, inclusive",
   chatList: {

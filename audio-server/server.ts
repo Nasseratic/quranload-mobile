@@ -197,8 +197,25 @@ async function submitFeedback({
   });
 }
 
+// Fetch user's auth token from Convex
+async function getUserAuthToken(userId: string): Promise<string | null> {
+  try {
+    const result = await client.query(api.services.user.getUserAuthToken, { userId });
+    if (result?.token) {
+      log(`Auth token retrieved for user ${userId.substring(0, 8)}...`);
+      return result.token;
+    } else {
+      logWarn(`No auth token found for user ${userId}`);
+      return null;
+    }
+  } catch (error) {
+    logError(`Failed to fetch auth token for user ${userId}:`, error);
+    return null;
+  }
+}
+
 async function processSession(session: any) {
-  const { sessionId, uploadType, lessonId, studentId, lessonState, totalDuration } = session;
+  const { sessionId, userId, uploadType, lessonId, studentId, lessonState, totalDuration } = session;
   const sessionDir = join(TEMP_DIR, sessionId);
   
   try {
@@ -242,13 +259,20 @@ async function processSession(session: any) {
       blob: audioData,
     });
 
-    // 6. Optional: Submit to Azure API
+    // 6. Fetch user's auth token for Azure submission
+    const authToken = await getUserAuthToken(userId);
+    if (!authToken) {
+      logWarn(`Proceeding without auth token for session ${sessionId}`);
+    }
+
+    // 7. Optional: Submit to Azure API
     if (uploadType === 'lesson_submission' && lessonId) {
       log(`Submitting lesson recording for lessonId: ${lessonId}`);
       await submitLessonRecording({
         filePath: outputPath,
         lessonId,
         duration: Math.round(totalDuration / 1000),
+        token: authToken || undefined,
       });
     } else if (uploadType === 'feedback_submission' && lessonId && studentId && lessonState !== undefined) {
       log(`Submitting feedback for lessonId: ${lessonId}, studentId: ${studentId}`);
@@ -257,6 +281,7 @@ async function processSession(session: any) {
         lessonId,
         studentId,
         lessonState,
+        token: authToken || undefined,
       });
     }
 

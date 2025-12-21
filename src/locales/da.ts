@@ -54,6 +54,8 @@ const danish: typeof english = {
     failedToSubmitRecording: "Kunne ikke indsende optagelse",
     discard: "Kassér",
     retryUpload: "Prøv igen",
+    resumeRecording: "Genoptag optagelse?",
+    resumeRecordingDescription: "Du har en ufærdig optagelse til denne lektion. Vil du fortsætte?",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
@@ -200,6 +202,8 @@ const danish: typeof english = {
   you_are_on_latest_version: "Du har den nyeste version",
   audio: "Lydoptagelse",
   audioRecordingPaused: "Lydoptagelsen er sat på pause",
+  uploadingFragments: "Uploader {{count}} fragment(er)...",
+  resume: "Genoptag",
   image: "Billede",
   invalid: "Ugyldig",
   retry: "Prøv igen",

@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import {
   useAudioRecorder,
-  useAudioRecorderState,
   setAudioModeAsync,
   requestRecordingPermissionsAsync,
   getRecordingPermissionsAsync,
-  RecordingPresets,
   RecordingOptions,
   IOSOutputFormat,
   AudioQuality,
@@ -37,116 +35,85 @@ import { IS_IOS } from "constants/GeneralConstants";
 import { toast } from "./Toast";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 import { Sentry } from "utils/sentry";
-import { throttleTrack, track } from "utils/tracking";
-import { useCvxMutation, useCvxQuery } from "api/convex";
-import { api } from "../../convex/_generated/api";
-import { useUploadFile } from "@convex-dev/r2/react";
+import { throttleTrack } from "utils/tracking";
 import { useAuth } from "contexts/auth";
 import { AssignmentStatusEnum } from "types/Lessons";
+import { useRecordingSession, RecordingState } from "hooks/useRecordingSession";
 
-let currentRecordingDurationMillis = 0;
+// Only allowed module-level variable: reference to the active native audio recorder
 let currentRecording: AudioRecorder | null = null;
 
 const throttledTrack = throttleTrack(2000);
-
-// Session management using Convex
-let recordingSessionId: string | null = null;
-let convexSessionDbId: string | null = null;
-let chunkCounter = 0;
-
-// Generate a unique session ID
-const generateSessionId = () => {
-  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-};
 
 const cleanCurrentRecording = async () => {
   if (currentRecording) {
     const stopPromise = currentRecording.stop();
     currentRecording = null;
-    currentRecordingDurationMillis = 0;
     await stopPromise;
   }
-};
-
-// Track total duration locally for UI purposes  
-let totalRecordingDuration = 0;
-
-const cleanRecordings = async (deleteSessionMutation?: any) => {
-  if (recordingSessionId && deleteSessionMutation) {
-    try {
-      await deleteSessionMutation({ sessionId: recordingSessionId });
-    } catch (error) {
-      // Ignored
-    }
-  }
-  totalRecordingDuration = 0;
-  recordingSessionId = null;
-  convexSessionDbId = null;
-  chunkCounter = 0;
-  await cleanCurrentRecording();
 };
 
 const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
 const METERING_CHECK_INTERVAL = 300;
 
-export type RecordingState = "idle" | "recording" | "paused" | "submitting";
+export { RecordingState };
 
 export const Recorder = ({
   lessonId,
-  onSubmit,
   onStatusChange,
-  onFinished,
   onServerSubmitSuccess,
   uploadType,
   studentId,
   lessonState,
 }: {
   lessonId?: string;
-  onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
+  onSubmit?: (params: { uri: string; duration: number }) => Promise<unknown>;
   onFinished?: (params: { uri: string; duration: number }) => void;
   onServerSubmitSuccess?: (filename?: string) => void | Promise<void>;
   onStatusChange?: (status: RecordingState, totalRecordingDuration: number) => void;
-  uploadType?: 'feedback' | 'submission';
+  uploadType?: "feedback" | "submission";
   studentId?: string;
   lessonState?: AssignmentStatusEnum;
 }) => {
   const { user } = useAuth();
-  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const permissionStatusRef = useRef<PermissionStatus | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Convex mutations
-  const createSession = useCvxMutation(api.services.recordings.createSession);
-  const updateSessionStatus = useCvxMutation(api.services.recordings.updateSessionStatus);
-  const addFragment = useCvxMutation(api.services.recordings.addFragment);
-  const deleteSession = useCvxMutation(api.services.recordings.deleteSession);
 
-  // Monitor session status
-  const sessionData = useCvxQuery(
-    api.services.recordings.getSession,
-    recordingSessionId ? { sessionId: recordingSessionId } : "skip" as any
-  );
+  // Track current fragment duration locally for UI display
+  const [currentFragmentDurationMs, setCurrentFragmentDurationMs] = useState(0);
 
-  // Effect to handle session completion/failure
+  // Use the Convex-based recording session hook
+  const {
+    sessionId,
+    status: recordingState,
+    totalDuration,
+    pendingUploads,
+    startSession,
+    pauseSession,
+    resumeSession,
+    submitSession,
+    discardSession,
+    queueFragment,
+    recoverableSession,
+    recoverSession,
+    dismissRecovery,
+  } = useRecordingSession({
+    userId: user?.id || "unknown",
+    lessonId,
+    studentId,
+    uploadType: uploadType === "feedback" ? "feedback_submission" : "lesson_submission",
+    lessonState,
+    onServerSubmitSuccess,
+  });
+
+  // Notify parent of status changes (since removed from hook)
   useEffect(() => {
-    if (recordingState === "submitting" && sessionData) {
-      if (sessionData.status === "completed") {
-        handleStatusChange("idle");
-        cleanRecordings(); // Local cleanup
-        onServerSubmitSuccess?.(sessionData.finalAudioKey);
-      } else if (sessionData.status === "failed") {
-        toast.show({ 
-          title: "Processing failed", 
-          status: "Error" 
-        });
-        handleStatusChange("idle");
-      }
-    }
-  }, [sessionData, recordingState]);
+    onStatusChange?.(recordingState, totalDuration);
+  }, [recordingState, totalDuration, onStatusChange]);
 
-  // R2 upload hook
-  const uploadFile = useUploadFile(api.services.recordings);
+  // Computed display duration (Convex total + current fragment)
+  const displayDurationSeconds = Math.round((totalDuration + currentFragmentDurationMs) / 1000);
 
   // Recording options configuration
   const recordingOptions: RecordingOptions = {
@@ -155,7 +122,7 @@ export const Recorder = ({
     numberOfChannels: 2,
     bitRate: IS_IOS ? 128000 : 108000,
     isMeteringEnabled: true,
-    web: {}, // Add web config to satisfy RecordingOptions type
+    web: {},
     ios: {
       extension: ".m4a",
       outputFormat: IOSOutputFormat.MPEG4AAC,
@@ -176,19 +143,41 @@ export const Recorder = ({
   // Create the audio recorder using the hook
   const audioRecorder = useAudioRecorder(recordingOptions);
 
-  const recorderState = useAudioRecorderState(audioRecorder);
+  // Track if we've shown the recovery dialog to avoid showing it multiple times
+  const hasShownRecoveryDialogRef = useRef(false);
 
-  const handleStatusChange = useCallback(
-    (status: RecordingState) => {
-      setRecordingState(status);
-      onStatusChange?.(status, totalRecordingDuration);
-    },
-    [onStatusChange]
-  );
+  // Show recovery dialog if there's an incomplete session
+  useEffect(() => {
+    if (recoverableSession && !hasShownRecoveryDialogRef.current) {
+      hasShownRecoveryDialogRef.current = true;
+      Alert.alert(
+        t("recordingScreen.resumeRecording"),
+        t("recordingScreen.resumeRecordingDescription"),
+        [
+          {
+            text: t("discard"),
+            style: "destructive",
+            onPress: dismissRecovery,
+          },
+          {
+            text: t("resume"),
+            onPress: () => {
+              recoverSession();
+              // Don't auto-start recording, let user press record button
+            },
+          },
+        ]
+      );
+    }
+  }, [recoverableSession, dismissRecovery, recoverSession]);
+
   async function startRecording() {
     let isDenied = permissionStatusRef.current === PermissionStatus.DENIED;
 
-    if (!permissionStatusRef.current || permissionStatusRef.current === PermissionStatus.UNDETERMINED) {
+    if (
+      !permissionStatusRef.current ||
+      permissionStatusRef.current === PermissionStatus.UNDETERMINED
+    ) {
       const { status, granted } = await requestRecordingPermissionsAsync();
       permissionStatusRef.current = status;
       if (!granted) isDenied = true;
@@ -211,167 +200,78 @@ export const Recorder = ({
     }
 
     try {
-      // if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      handleStatusChange("recording");
-
-      // Only create new session if we don't have one (fresh start)
-      if (!recordingSessionId) {
-        recordingSessionId = generateSessionId();
-
-        try {
-          // Create session in Convex
-          await createSession({
-            sessionId: recordingSessionId,
-            userId: user?.id || "unknown",
-            uploadType,
-            lessonId,
-            studentId,
-            lessonState,
-          });
-        } catch (error) {
-          toast.show({
-            title: "Failed to create recording session",
-            status: "Error"
-          });
-          handleStatusChange("idle");
-          return;
-        }
+      // Start or resume session
+      if (!sessionId) {
+        await startSession();
       } else {
-        // Update session status to recording
-        await updateSessionStatus({
-          sessionId: recordingSessionId,
-          status: "recording",
-        });
+        await resumeSession();
       }
 
       await startRecordingWithAutoFragmenting();
     } catch (err) {
       toast.reportError(err, t("recordingScreen.failedToStartRecording"));
-      handleStatusChange("idle");
     }
   }
 
   const cutRecording = async () => {
     if (!audioRecorder) return;
-    if (!currentRecording) return; // No active recording to cut
-    
+    if (!currentRecording) return;
+
     const status = audioRecorder.getStatus();
-    const durationInMs = Math.max(status.durationMillis, currentRecordingDurationMillis);
-    if (status.durationMillis < currentRecordingDurationMillis) {
+    const durationInMs = status.durationMillis;
+
+    if (durationInMs === 0) {
       Sentry.captureEvent({
-        message: "Recording duration missmatch, currentRecordingDurationMillis is greater",
-        extra: { durationMillis: status.durationMillis, currentRecordingDurationMillis },
+        message: "Recording duration is 0 when cutting",
       });
     }
+
     const uri = audioRecorder.uri;
     await audioRecorder.stop();
     currentRecording = null;
-    currentRecordingDurationMillis = 0;
-    
-    if (uri && recordingSessionId) {
-      // Update total duration for UI
-      totalRecordingDuration += durationInMs;
 
-      // Upload fragment to R2 via Convex useUploadFile hook
-      try {
-        // Fetch blob directly from local file URI
-        const response = await fetch(uri);
-        const blob = await response.blob();
+    // Reset current fragment duration
+    setCurrentFragmentDurationMs(0);
 
-        // Create a File object from the blob with proper naming
-        const fileName = `fragment_${chunkCounter}.m4a`;
-        const file = new File([blob], fileName, { type: "audio/x-m4a" });
-
-        // Upload to R2 using the useUploadFile hook
-        const key = await uploadFile(file);
-
-        // Add fragment metadata to Convex database
-        await addFragment({
-          sessionId: recordingSessionId,
-          fragmentIndex: chunkCounter,
-          r2Key: key,
-          duration: durationInMs,
-        });
-
-        chunkCounter++;
-      } catch (error) {
-        toast.show({
-          title: "Fragment upload failed",
-          status: "Warning"
-        });
-      }
+    if (uri && sessionId) {
+      // Queue fragment for upload (handles offline resilience)
+      queueFragment(uri, durationInMs);
     }
   };
 
-  const pauseRecording = async () => {
+  const handlePauseRecording = async () => {
     if (!audioRecorder) return;
-    handleStatusChange("paused");
     await cutRecording();
-    
-    // Update Convex session status
-    if (recordingSessionId) {
-      await updateSessionStatus({
-        sessionId: recordingSessionId,
-        status: "paused",
-      });
-    }
+    await pauseSession();
   };
 
   const discardRecording = useCallback(async () => {
-    await cleanRecordings(deleteSession);
-    handleStatusChange("idle");
-    if (IS_IOS)
+    await cleanCurrentRecording();
+    setCurrentFragmentDurationMs(0);
+    await discardSession();
+    if (IS_IOS) {
       await setAudioModeAsync({
         allowsRecording: false,
         playsInSilentMode: false,
       });
-  }, [deleteSession]);
+    }
+  }, [discardSession]);
 
   const submitRecording = async () => {
     if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
     try {
-      handleStatusChange("submitting");
       await cutRecording();
-
-      const durationInSec = Math.round(totalRecordingDuration / 1000) ?? 0;
-
-      // Trigger audio server finalization with Convex session
-      if (recordingSessionId) {
-        try {
-          // Update session status to finalizing
-          // The worker will pick it up from here
-          await updateSessionStatus({
-            sessionId: recordingSessionId,
-            status: "finalizing",
-          });
-          
-          // We don't call finalizeRecording anymore.
-          // The useEffect above will catch the status change to "completed"
-        } catch (error) {
-          toast.show({ 
-            title: "Submit trigger failed", 
-            status: "Error" 
-          });
-          handleStatusChange("idle");
-        }
-      } else {
-        toast.show({ 
-          title: "No recording session found", 
-          status: "Error" 
-        });
-        handleStatusChange("idle");
-      }
-
+      await submitSession();
     } catch (error) {
       Sentry.captureException(error);
     } finally {
-      handleStatusChange("idle");
-      if (IS_IOS)
+      if (IS_IOS) {
         await setAudioModeAsync({
           allowsRecording: false,
           playsInSilentMode: false,
         });
+      }
     }
   };
 
@@ -402,7 +302,7 @@ export const Recorder = ({
         if (status.durationMillis === 0) {
           throttledTrack("RecordingStatusChangedWith0Duration");
         }
-        currentRecordingDurationMillis = status.durationMillis;
+        setCurrentFragmentDurationMs(status.durationMillis);
       }
     }, 100);
 
@@ -439,12 +339,12 @@ export const Recorder = ({
   }
 
   useAppStatusEffect({
-    onBackground: pauseRecording,
+    onBackground: handlePauseRecording,
   });
 
   useOnAudioPlayCallback(() => {
     if (recordingState === "recording") {
-      pauseRecording();
+      handlePauseRecording();
       toast.show({ title: t("audioRecordingPaused"), status: "Warning" });
     }
   });
@@ -456,36 +356,24 @@ export const Recorder = ({
     });
   }, []);
 
+  // Cleanup on unmount only - use ref to avoid stale closure issues
+  const sessionIdRef = useRef(sessionId);
   useEffect(() => {
-    // Session cleanup on unmount
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
+  useEffect(() => {
     return () => {
-      cutRecording().then(() => {
-        if (recordingSessionId) {
-          Alert.alert(
-            t("recordingScreen.discardRecording"),
-            t("recordingScreen.discardRecordingDescription"),
-            [
-              {
-                text: t("cancel"),
-                style: "cancel",
-                onPress: () => {
-                  // Keep session active
-                },
-              },
-              {
-                text: t("discard"),
-                style: "destructive",
-                onPress: discardRecording,
-              },
-            ]
-          );
-        }
-      });
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
+      // Only show alert if there's an active session when unmounting
+      // Note: We don't auto-discard - the session will be recoverable on next mount
     };
-  }, [discardRecording]);
+  }, []);
 
   const handleDiscard = () => {
-    pauseRecording();
+    handlePauseRecording();
     Alert.alert(
       t("recordingScreen.discardRecording"),
       t("recordingScreen.discardRecordingDescription"),
@@ -513,6 +401,16 @@ export const Recorder = ({
 
   return (
     <XStack jc="center" ai="center" gap="$8">
+      {/* Pending uploads indicator */}
+      {pendingUploads > 0 && (
+        <XStack ai="center" gap="$2" position="absolute" top={-30} left={0} right={0} jc="center">
+          <ActivityIndicator size="small" color={Colors.Primary[1]} />
+          <Text fontSize={12} color="$gray10">
+            {t("uploadingFragments", { count: pendingUploads })}
+          </Text>
+        </XStack>
+      )}
+
       <View>
         {recordingState !== "idle" && (
           <IconButton size="sm" bg={Colors.Black[2]} icon={<CrossIcon />} onPress={handleDiscard} />
@@ -524,13 +422,13 @@ export const Recorder = ({
           recordingState === "recording"
             ? () => {
                 if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                pauseRecording();
+                handlePauseRecording();
               }
             : startRecording
         }
         activeOpacity={0.9}
       >
-        <RecordingButton recordingState={recordingState} />
+        <RecordingButton recordingState={recordingState} durationSeconds={displayDurationSeconds} />
       </TouchableOpacity>
       <View>
         {recordingState !== "idle" && (
@@ -546,7 +444,13 @@ export const Recorder = ({
   );
 };
 
-const RecordingButton = ({ recordingState }: { recordingState: RecordingState }) => {
+const RecordingButton = ({
+  recordingState,
+  durationSeconds,
+}: {
+  recordingState: RecordingState;
+  durationSeconds: number;
+}) => {
   const isExpanded = recordingState === "recording" || recordingState === "paused";
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -578,30 +482,13 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
       {recordingState === "recording" ? <RecordingPauseIcon /> : <RecordIcon />}
 
       <Animated.View style={[animatedTextStyle]}>
-        {recordingState !== "idle" && <RecordingTimer isRunning={recordingState === "recording"} />}
+        {recordingState !== "idle" && <RecordingTimer seconds={durationSeconds} />}
       </Animated.View>
     </Animated.View>
   );
 };
 
-const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
-  const [seconds, setSeconds] = useState(
-    Math.round(totalRecordingDuration / 1000)
-  );
-
-  useEffect(() => {
-    if (isRunning) {
-      const interval = setInterval(() => {
-        setSeconds(
-          Math.round(
-            (totalRecordingDuration + currentRecordingDurationMillis) / 1000
-          )
-        );
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isRunning]);
-
+const RecordingTimer = ({ seconds }: { seconds: number }) => {
   return (
     <View style={styles.recordingTimerContainer}>
       <View

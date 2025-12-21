@@ -26,6 +26,7 @@ export const userInfo = {
   currentAppVersion: v.string(),
   platform: v.string(),
   lastSeen: v.number(),
+  authToken: v.optional(v.string()),
 };
 
 export default defineSchema({
@@ -49,7 +50,7 @@ export default defineSchema({
     .index("by_participant2", ["participant2"]),
   contactSupportInfo: defineTable(contactSupportInfo),
   userInfo: defineTable(userInfo),
-  
+
   // Recording sessions for audio fragment management with R2
   recordingSessions: defineTable({
     sessionId: v.string(),
@@ -62,11 +63,14 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("failed")
     ),
-    uploadType: v.optional(v.union(
-      v.literal("media_only"),
-      v.literal("lesson_submission"),
-      v.literal("feedback_submission")
-    )),
+    isActive: v.boolean(), // Whether this is an active/recoverable session
+    uploadType: v.optional(
+      v.union(
+        v.literal("media_only"),
+        v.literal("lesson_submission"),
+        v.literal("feedback_submission")
+      )
+    ),
     lessonId: v.optional(v.string()),
     studentId: v.optional(v.string()),
     lessonState: v.optional(v.number()),
@@ -78,8 +82,9 @@ export default defineSchema({
   })
     .index("by_sessionId", ["sessionId"])
     .index("by_userId", ["userId"])
-    .index("by_status", ["status"]),
-  
+    .index("by_status", ["status"])
+    .index("by_userId_lessonId_active", ["userId", "lessonId", "isActive"]),
+
   // Audio fragments stored in R2
   audioFragments: defineTable({
     sessionId: v.string(),

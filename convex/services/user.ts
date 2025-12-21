@@ -1,4 +1,4 @@
-import { mutation, query } from "../_generated/server";
+import { mutation, query, action } from "../_generated/server";
 import { v } from "convex/values";
 import { contactSupportInfo, userInfo } from "../schema";
 
@@ -33,5 +33,19 @@ export const updateUserInfo = mutation({
       return;
     }
     await ctx.db.patch(existingUserInfo._id, args);
+  },
+});
+
+export const getUserAuthToken = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const userInfoRecord = await ctx.db
+          .query("userInfo")
+          .filter((q) => q.eq(q.field("userId"), args.userId))
+          .unique();
+
+    return {
+      token: userInfoRecord?.authToken || null
+    };
   },
 });
