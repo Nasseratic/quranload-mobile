@@ -55,6 +55,10 @@ const danish: typeof english = {
     discard: "Kassér",
     retryUpload: "Prøv igen",
   },
+  feedbackNotification: {
+    title: "Ny feedback fra",
+    bodyPrefix: "Din underviser har givet feedback på",
+  },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
     hideInactive: "Skjul inaktive hold",

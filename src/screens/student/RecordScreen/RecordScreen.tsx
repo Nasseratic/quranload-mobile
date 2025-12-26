@@ -52,6 +52,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
   const celebrateSubmission = useCvxMutation(cvx.messages.celebrateSubmission);
+  const notifyFeedbackReceived = useCvxMutation(cvx.messages.notifyFeedbackReceived);
   const { role, isTeacher, isStudent } = useAuth();
   const user = useUser();
 
@@ -96,7 +97,20 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   });
 
   const teacherFeedback = useMutation(submitFeedback, {
-    onSuccess: () => {
+    onSuccess: async () => {
+      const lessonTitle =
+        assignment.startPage && assignment.endPage
+          ? t("pages") + ` ${assignment.startPage}-${assignment.endPage}`
+          : assignment.description ?? "";
+
+      await notifyFeedbackReceived({
+        studentId,
+        teacherName: user.fullName,
+        teacherId: user.id,
+        lessonId,
+        title: `${t("feedbackNotification.title")} ${user.fullName}`,
+        body: `${t("feedbackNotification.bodyPrefix")} ${lessonTitle}.`,
+      });
       queryClient.invalidateQueries(["assignments"]);
       queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
     },
