@@ -172,6 +172,33 @@ export const celebrateSubmission = mutation({
   },
 });
 
+export const notifyFeedbackReceived = mutation({
+  args: {
+    studentId: v.string(),
+    teacherName: v.string(),
+    teacherId: v.string(),
+    lessonId: v.string(),
+    title: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      await pushNotifications.sendPushNotification(ctx, {
+        userId: args.studentId,
+        notification: {
+          title: args.title,
+          body: args.body,
+          data: {
+            type: "feedback",
+            lessonId: args.lessonId,
+            teacherId: args.teacherId,
+          },
+        },
+      });
+    } catch {}
+  },
+});
+
 export const allMyConversations = query({
   args: {
     userId: v.string(),
