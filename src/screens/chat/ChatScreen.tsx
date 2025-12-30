@@ -13,7 +13,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Clipboard } from "react-native";
 import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
-import { useSupabaseMediaUploader } from "hooks/useMediaPicker";
+import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
 import ImageView from "react-native-image-viewing";
@@ -97,7 +97,7 @@ export const ChatScreen = () => {
   const [imagesModalIndex, setImagesModalIndex] = useState(0);
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
-  const { pickImage, images, removeImage, upload, isUploading } = useSupabaseMediaUploader();
+  const { pickImage, images, removeImage, upload, isUploading } = useChatMediaUploader();
 
   if (!teamId && !interlocutorId && !supportChat) {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
