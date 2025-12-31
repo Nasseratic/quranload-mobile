@@ -9,6 +9,8 @@ export const messageInitializer = {
   ),
   // R2 storage key for media - used to generate fresh signed URLs
   mediaKey: v.optional(v.string()),
+  // Legacy field - kept for existing messages in DB (ignored, media won't display)
+  mediaUrl: v.optional(v.string()),
   receiverName: v.optional(v.string()),
   senderName: v.optional(v.string()),
   text: v.optional(v.string()),
