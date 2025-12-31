@@ -1,10 +1,11 @@
 import { paginationOptsValidator, PaginationResult } from "convex/server";
-import { mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
+import { internalMutation, mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
 import { ConvexError, v } from "convex/values";
 import { messageInitializer } from "../schema";
 import { isNotNullish } from "utils/notNullish";
 import { pushNotifications } from "./pushNotifications";
 import { match } from "ts-pattern";
+import { internal } from "../_generated/api";
 
 export const paginate = query({
   args: {
@@ -270,5 +271,25 @@ export const allSupportConversations = query({
     return Array.from(conversationLatestMessages.values()).sort(
       (a, b) => b._creationTime - a._creationTime
     );
+  },
+});
+
+// Migration: Remove mediaUrl from all messages
+// Run this once from the Convex dashboard, then remove mediaUrl from schema
+export const removeMediaUrlFromAllMessages = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const messages = await ctx.db.query("messages").collect();
+
+    let updated = 0;
+    for (const message of messages) {
+      if (message.mediaUrl !== undefined) {
+        await ctx.db.patch(message._id, { mediaUrl: undefined });
+        updated++;
+      }
+    }
+
+    console.log(`Removed mediaUrl from ${updated} messages`);
+    return { updated, total: messages.length };
   },
 });
