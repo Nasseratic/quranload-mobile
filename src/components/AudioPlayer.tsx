@@ -1,8 +1,8 @@
-import { StyleSheet, TouchableOpacity } from "react-native";
-import React, { useEffect } from "react";
+import { ActivityIndicator, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect, useCallback, useRef } from "react";
 import Animated, {
-  cancelAnimation,
   Easing,
+  runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
@@ -11,41 +11,115 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import Typography from "./Typography";
 import { AnimatedText } from "./AnimatedText";
 import Slider from "./Slider";
 import { PlayIcon } from "./icons/PlayIcon";
 import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { Colors } from "constants/Colors";
-import PressableBounce from "./PressableBounce";
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from "constants/GeneralConstants";
+import { SCREEN_WIDTH } from "constants/GeneralConstants";
+import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 
-
-const DURATION = 30000;
+interface AudioPlayerProps {
+  uri: string;
+  isVisible?: boolean;
+  isCompact?: boolean;
+  width?: number;
+}
 const COLLAPSED_HEIGHT = 54;
 const EXPANDED_HEIGHT = 70;
 const PADDING = 16;
 const ICON_WIDTH = 36;
-const WIDTH = SCREEN_WIDTH;
+const DEFAULT_WIDTH = SCREEN_WIDTH;
 const ADJUSTMENT = 11;
-const EXPANDED_SLIDER_WIDTH = WIDTH - 2 * PADDING - ADJUSTMENT;
-const SLIDER_WIDTH = EXPANDED_SLIDER_WIDTH - 2 * ICON_WIDTH + ADJUSTMENT;
 
+export function AudioPlayer({
+  uri,
+  isVisible = true,
+  isCompact = false,
+  width = DEFAULT_WIDTH,
+}: AudioPlayerProps) {
+  const EXPANDED_SLIDER_WIDTH = width - 2 * PADDING - ADJUSTMENT;
+  const SLIDER_WIDTH = EXPANDED_SLIDER_WIDTH - 2 * ICON_WIDTH + ADJUSTMENT;
 
-export function AudioPlayer() {
+  // Audio player setup
+  const player = useAudioPlayer(uri);
+  const status = useAudioPlayerStatus(player);
+
+  // Duration in milliseconds (expo-audio uses seconds)
+  const durationMs = (status.duration || 0) * 1000;
+  const currentTimeMs = (status.currentTime || 0) * 1000;
+
+  // Shared values for UI animations
   const value = useSharedValue(0);
   const pressed = useSharedValue(false);
   const scrubbing = useSharedValue(false);
   const expanded = useSharedValue(false);
-  const delayTimeout = useSharedValue(0);
-  const lastValueOnPress = useSharedValue(value.value);
-  const playing = useSharedValue(true);
+  const lastValueOnPress = useSharedValue(0);
+  const playing = useSharedValue(false);
   const previousPlaying = useSharedValue(false);
-  const internalAnimating = useSharedValue(false);
+
+  // Ref to track if we're currently seeking to avoid feedback loops
+  const isSeekingRef = useRef(false);
+
+  // Wrapper functions for player methods (needed for runOnJS which loses 'this' context)
+  const pausePlayer = useCallback(() => {
+    player.pause();
+  }, [player]);
+
+  const playPlayer = useCallback(() => {
+    player.play();
+  }, [player]);
+
+  // Pause this player when another audio starts playing
+  useOnAudioPlayCallback(
+    useCallback(() => {
+      if (status.playing) {
+        player.pause();
+      }
+    }, [player, status.playing])
+  );
+
+  // Sync playing state with actual player status
+  useEffect(() => {
+    if (!isSeekingRef.current) {
+      playing.value = status.playing;
+    }
+  }, [status.playing, playing]);
+
+  // Sync slider value with audio position when not scrubbing
+  useEffect(() => {
+    if (!scrubbing.value && !pressed.value && !isSeekingRef.current) {
+      value.value = currentTimeMs;
+    }
+  }, [currentTimeMs, scrubbing, pressed, value]);
+
+  // Pause when component becomes invisible
+  useEffect(() => {
+    if (!isVisible && status.playing) {
+      player.pause();
+    }
+  }, [isVisible, status.playing, player]);
+
+  // Resume playback after seeking
+  const resumeAfterSeek = useCallback(
+    (shouldPlay: boolean, positionMs: number) => {
+      const positionSec = Math.max(0, Math.min(positionMs / 1000, status.duration || 0));
+      isSeekingRef.current = true;
+      player.seekTo(positionSec);
+      setTimeout(() => {
+        isSeekingRef.current = false;
+        if (shouldPlay) {
+          player.play();
+        }
+      }, 100);
+    },
+    [player, status.duration]
+  );
 
   const valueToTime = useDerivedValue(() => {
     const totalMilliseconds = value.value;
-    const hours = Math.floor(totalMilliseconds / (60 * 60 * 1000));
     const minutes = Math.floor(
       (totalMilliseconds % (60 * 60 * 1000)) / (60 * 1000)
     );
@@ -62,7 +136,7 @@ export function AudioPlayer() {
   }, [value]);
 
   const remainingTime = useDerivedValue(() => {
-    const remainingMilliseconds = DURATION - value.value;
+    const remainingMilliseconds = Math.max(0, durationMs - value.value);
     const minutes = Math.floor(remainingMilliseconds / (60 * 1000));
     const seconds = Math.floor((remainingMilliseconds % (60 * 1000)) / 1000);
 
@@ -70,86 +144,52 @@ export function AudioPlayer() {
     const secStr = seconds.toString().padStart(2, "0");
 
     return `-${minStr}:${secStr}`;
-  }, [value]);
+  }, [value, durationMs]);
 
+  // Handle user interaction with slider
   useAnimatedReaction(
     () => ({ pressed: pressed.value, scrubbing: scrubbing.value }),
     ({ pressed: p, scrubbing: s }, prev) => {
       // Handle pressed changes
       if (prev && p !== prev.pressed) {
         if (p) {
+          // User started pressing - expand and pause
           expanded.value = true;
           lastValueOnPress.value = value.value;
           previousPlaying.value = playing.value;
+          if (playing.value) {
+            runOnJS(pausePlayer)();
+          }
           playing.value = false;
         } else {
+          // User stopped pressing
           if (
             value.value === 0 ||
-            value.value === DURATION ||
+            value.value >= durationMs ||
             value.value === lastValueOnPress.value
           ) {
             expanded.value = false;
-            playing.value = previousPlaying.value;
           }
         }
       }
-      // Handle scrubbing changes
-      if (!s) {
-        playing.value = previousPlaying.value;
-      }
-      if (!s && !p && value.value !== 0 && value.value !== DURATION) {
-        expanded.value = false;
+      // Handle scrubbing end - seek to new position and optionally resume
+      if (prev && prev.scrubbing && !s) {
+        runOnJS(resumeAfterSeek)(previousPlaying.value, value.value);
+        if (!p && value.value !== 0 && value.value < durationMs) {
+          expanded.value = false;
+        }
       }
     }
   );
 
+  // Collapse when reaching boundaries
   useAnimatedReaction(
     () => value.value,
-    (v, prev) => {
+    (v) => {
       if (pressed.value) return;
-
-      if (v === 0 || v === DURATION) {
-        if (delayTimeout.value) {
-          cancelAnimation(delayTimeout);
-          delayTimeout.value = 0;
-        }
+      if (v === 0 || v >= durationMs) {
         expanded.value = false;
       }
-    }
-  );
-
-  useAnimatedReaction(
-    () => ({ isPlaying: playing.value, v: value.value }),
-    ({ isPlaying, v }, prev) => {
-      const prevPlaying = prev?.isPlaying;
-
-      if (!isPlaying && prevPlaying) {
-        cancelAnimation(value);
-        internalAnimating.value = false;
-        return;
-      }
-
-      if (!isPlaying) return;
-
-      if (v >= DURATION) {
-        playing.value = false;
-        internalAnimating.value = false;
-        return;
-      }
-
-      if (internalAnimating.value) return;
-
-      internalAnimating.value = true;
-      const remaining = DURATION - v;
-
-      value.value = withTiming(
-        DURATION,
-        { duration: remaining, easing: Easing.linear },
-        (finished) => {
-          internalAnimating.value = false;
-          if (finished) playing.value = false;
-        }
-      );
     }
   );
 
@@ -218,28 +258,39 @@ export function AudioPlayer() {
 
 
 
+  // Cleanup on unmount
   useEffect(() => {
-    playing.value = true;
     return () => {
-      playing.value = false;
+      player.pause();
     };
-  }, []);
+  }, [player]);
 
-  const onPausePress = React.useCallback(() => {
-    playing.value = !playing.value;
-    if (value.value >= DURATION) {
-      value.value = 0;
+  const onPausePress = useCallback(() => {
+    // Don't try to play if audio isn't loaded yet
+    if (!status.isLoaded) {
+      return;
+    }
+
+    if (status.playing) {
+      player.pause();
+      // Optimistic UI update
+      playing.value = false;
+    } else {
+      // If at the end, restart from beginning
+      if (status.currentTime >= (status.duration || 0) - 0.1) {
+        player.seekTo(0);
+      }
+      player.play();
+      // Optimistic UI update
       playing.value = true;
     }
-  }, []);
+  }, [player, status.playing, status.currentTime, status.duration, status.isLoaded, playing]);
 
   return (
     <Animated.View
       style={[
         styles.wrapper,
-        {
-          // backgroundColor: "#00000020",
-        },
+        { width },
         controlAnimatedStyle,
       ]}
     >
@@ -273,20 +324,27 @@ export function AudioPlayer() {
           onPress={onPausePress}
           style={styles.toggleButton}
           activeOpacity={0.8}
+          disabled={!status.isLoaded}
         >
-          <Animated.View style={[styles.toggleIcon, pauseAnimatedStyle]}>
-            <RecordingPauseIcon size={26} fill={Colors.Black[1]} />
-          </Animated.View>
-          <Animated.View style={[styles.toggleIcon, playAnimatedStyle]}>
-            <PlayIcon size={22} fill={Colors.Black[1]} />
-          </Animated.View>
+          {!status.isLoaded ? (
+            <ActivityIndicator size="small" color={Colors.Black[1]} />
+          ) : (
+            <>
+              <Animated.View style={[styles.toggleIcon, pauseAnimatedStyle]}>
+                <RecordingPauseIcon size={26} fill={Colors.Black[1]} />
+              </Animated.View>
+              <Animated.View style={[styles.toggleIcon, playAnimatedStyle]}>
+                <PlayIcon size={22} fill={Colors.Black[1]} />
+              </Animated.View>
+            </>
+          )}
         </TouchableOpacity>
 
       </Animated.View>
       <Animated.View style={[styles.slider, sliderAnimatedStyle]}>
         <Slider
           value={value}
-          max={DURATION}
+          max={durationMs || 1} // Avoid division by zero
           trackColor="#00000050"
           thumbColor="#000000"
           pressed={pressed}
@@ -299,12 +357,10 @@ export function AudioPlayer() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    // marginHorizontal: PADDING,
     borderRadius: 24,
     borderCurve: "continuous",
     justifyContent: "center",
     alignItems: "center",
-    width: WIDTH,
   },
   slider: {},
   buttons: {

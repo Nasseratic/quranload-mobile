@@ -52,9 +52,8 @@ export const getUserAuthToken = query({
   handler: async (ctx, args) => {
     const userInfoRecord = await ctx.db
           .query("userInfo")
-          .filter((q) => q.eq(q.field("userId"), args.userId))
+          .withIndex("by_userId", (q) => q.eq("userId", args.userId))
           .unique();
-
     return {
       token: userInfoRecord?.authToken || null
     };
