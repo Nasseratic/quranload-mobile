@@ -108,7 +108,7 @@ export const send = mutation({
     );
 
     const mediaBody =
-      messages?.[0]?.mediaUrl && messages?.[0]?.mediaType
+      messages?.[0]?.mediaKey && messages?.[0]?.mediaType
         ? messages[0].mediaType === "image"
           ? `📷 Image`
           : `🎙️ Audio`

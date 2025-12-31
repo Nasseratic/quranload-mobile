@@ -9,14 +9,14 @@ import { SendIcon } from "components/icons/SendIcon";
 import { Colors } from "constants/Colors";
 import { useUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Clipboard } from "react-native";
 import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
 import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
-import ImageView from "react-native-image-viewing";
+import { ImageViewer, ImageViewerRef } from "react-native-reanimated-viewer";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
@@ -28,6 +28,7 @@ import { match, P } from "ts-pattern";
 import { t } from "locales/config";
 import { isNotNullish } from "utils/notNullish";
 import { toast } from "components/Toast";
+import { resolveMediaKey } from "hooks/useMediaUrl";
 
 const QUERY_LIMIT = 20;
 
@@ -67,12 +68,46 @@ export const ChatScreen = () => {
     { initialNumItems: QUERY_LIMIT }
   );
 
-  // Add welcome message for support chat when there are no messages
-  const allMessages = useMemo(() => {
-    const fetchedMessages = results?.map(mapMessageToGiftedChatMessage) ?? [];
+  // State for messages with resolved media URLs
+  const [messagesWithUrls, setMessagesWithUrls] = useState<IMessage[]>([]);
 
+  // Resolve media URLs when results change
+  useEffect(() => {
+    const resolveUrls = async () => {
+      if (!results) {
+        setMessagesWithUrls([]);
+        return;
+      }
+
+      const resolved = await Promise.all(
+        results.map(async (message) => {
+          const baseMessage = mapMessageToGiftedChatMessage(message);
+
+          // If message has mediaKey, resolve it to a URL
+          if (message.mediaKey && message.mediaType) {
+            const url = await resolveMediaKey(message.mediaKey);
+            if (url) {
+              return {
+                ...baseMessage,
+                [message.mediaType]: url,
+              };
+            }
+          }
+
+          return baseMessage;
+        })
+      );
+
+      setMessagesWithUrls(resolved);
+    };
+
+    resolveUrls();
+  }, [results]);
+
+  // Add welcome message for support chat when there are no messages
+  const messages = useMemo(() => {
     // If it's a support chat and there are no messages, add a welcome message
-    if (isSupportChat && fetchedMessages.length === 0 && status !== "LoadingFirstPage") {
+    if (isSupportChat && messagesWithUrls.length === 0 && status !== "LoadingFirstPage") {
       const welcomeMessage: IMessage = {
         _id: "welcome-message",
         text: t("support.welcomeMessage"),
@@ -86,15 +121,13 @@ export const ChatScreen = () => {
       return [welcomeMessage];
     }
 
-    return fetchedMessages;
-  }, [results, isSupportChat, status]);
-
-  const messages = allMessages;
+    return messagesWithUrls;
+  }, [messagesWithUrls, isSupportChat, status]);
 
   const sendMessages = useMutation(cvx.messages.send);
 
-  const [imagesModalImages, setImagesModalImages] = useState<string[]>([]);
-  const [imagesModalIndex, setImagesModalIndex] = useState(0);
+  const imageViewerRef = useRef<ImageViewerRef>(null);
+  const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
   const { pickImage, images, removeImage, upload, isUploading } = useChatMediaUploader();
@@ -135,7 +168,8 @@ export const ChatScreen = () => {
           text,
           senderName: user.name,
           receiverName: params.title,
-          mediaUrl: image ?? audio,
+          // Store the R2 key - URLs are resolved when fetching messages
+          mediaKey: image ?? audio,
           mediaType: audio ? "audio" : image ? "image" : undefined,
           isSystem: false,
         })),
@@ -254,8 +288,8 @@ export const ChatScreen = () => {
               h={60}
               w={60}
               onPress={() => {
-                setImagesModalIndex(index);
-                setImagesModalImages(images);
+                setViewerImages(images);
+                setTimeout(() => imageViewerRef.current?.show({ index }), 0);
               }}
               pressStyle={{ opacity: 0.5 }}
             >
@@ -315,14 +349,12 @@ export const ChatScreen = () => {
         </Stack>
       ) : (
         <Fragment>
-          <ImageView
-            // Change the images type from string[] to ImageSource[]
-            images={images.map((image) => ({
-              uri: image,
+          <ImageViewer
+            ref={imageViewerRef}
+            data={viewerImages.map((image) => ({
+              key: image,
+              source: { uri: image },
             }))}
-            imageIndex={imagesModalIndex}
-            visible={imagesModalImages.length > 0}
-            onRequestClose={() => setImagesModalImages([])}
           />
 
           <GiftedChat
@@ -364,8 +396,11 @@ export const ChatScreen = () => {
                 borderRadius="$4"
                 pressStyle={{ opacity: 0.7 }}
                 onPress={() => {
-                  setImagesModalIndex(0);
-                  setImagesModalImages([props.currentMessage?.image ?? ""]);
+                  const imageUri = props.currentMessage?.image ?? "";
+                  if (imageUri) {
+                    setViewerImages([imageUri]);
+                    setTimeout(() => imageViewerRef.current?.show({ index: 0 }), 0);
+                  }
                 }}
                 source={{ uri: props.currentMessage?.image }}
               />
@@ -425,8 +460,5 @@ const mapMessageToGiftedChatMessage = (
       _id: message.senderId,
       name: message.senderName,
     },
-    ...(message.mediaType && {
-      [message.mediaType]: message.mediaUrl,
-    }),
     system: message.isSystem,
   } satisfies IMessage);

@@ -1,4 +1,4 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useRef, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Card, Circle, Form, Label, ScrollView, Stack, TextArea, View, XStack } from "tamagui";
 import ActionButton from "components/buttons/ActionBtn";
@@ -15,7 +15,7 @@ import { useMediaUploader } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";
-import ImageView from "react-native-image-viewing";
+import { ImageViewer, ImageViewerRef } from "react-native-reanimated-viewer";
 import { isNotNullish } from "utils/notNullish";
 import { useAuth } from "contexts/auth";
 import { ImageWithAuth } from "components/Image";
@@ -34,8 +34,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   const [description, setDescription] = useState<string>(
     route.params.assignment?.description ?? ""
   );
-  const [isImagesModalVisible, setIsImagesModalVisible] = useState(false);
-  const [imagesModalIndex, setImagesModalIndex] = useState(0);
+  const imageViewerRef = useRef<ImageViewerRef>(null);
   const { accessToken } = useAuth();
   const { pickImage, images, removeImage, uploadSelectedMedia, isUploading } = useMediaUploader({
     initialRemoteMedia: route.params.assignment?.attachments ?? undefined,
@@ -102,17 +101,17 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
   return (
     <SafeAreaView>
       <AppBar title={t("createHomework")} />
-      <ImageView
-        // Change the images type from string[] to ImageSource[]
-        images={images.map((image) => ({
-          uri: image,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
+      <ImageViewer
+        ref={imageViewerRef}
+        data={images.map((image) => ({
+          key: image,
+          source: {
+            uri: image,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
           },
         }))}
-        imageIndex={imagesModalIndex}
-        visible={isImagesModalVisible}
-        onRequestClose={() => setIsImagesModalVisible(false)}
       />
       <Form onSubmit={handleSubmit} gap="$3.5" marginHorizontal={16}>
         <View gap="$2">
@@ -176,8 +175,7 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
                     h={100}
                     w={100}
                     onPress={() => {
-                      setImagesModalIndex(index);
-                      setIsImagesModalVisible(true);
+                      imageViewerRef.current?.show({ index });
                     }}
                     pressStyle={{ opacity: 0.5 }}
                   >
