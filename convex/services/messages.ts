@@ -268,9 +268,98 @@ export const allSupportConversations = query({
       }
     }
 
-    return Array.from(conversationLatestMessages.values()).sort(
-      (a, b) => b._creationTime - a._creationTime
+    // Get archived status and user info for each conversation
+    const conversationsWithMetadata = await Promise.all(
+      Array.from(conversationLatestMessages.values()).map(async (message) => {
+        const supportConversation = await ctx.db
+          .query("supportConversations")
+          .withIndex("by_conversationId", (q) => q.eq("conversationId", message.conversationId))
+          .first();
+
+        // Extract userId from conversationId (format: "support_userId")
+        const userId = message.conversationId.replace("support_", "");
+
+        // Find the first message sent by the user (not by support admin)
+        // to get the user's actual name
+        const userMessage = await ctx.db
+          .query("messages")
+          .withIndex("conversation", (q) => q.eq("conversationId", message.conversationId))
+          .filter((q) => q.neq(q.field("senderId"), "support"))
+          .first();
+
+        return {
+          ...message,
+          archived: supportConversation?.archived ?? false,
+          // Add user metadata for display - use the name from the first user message
+          userName: userMessage?.senderName || `User ${userId}`,
+          userId,
+        };
+      })
     );
+
+    return conversationsWithMetadata.sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+export const archiveSupportConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { conversationId, userId }) => {
+    const existing = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { archived: true });
+    } else {
+      await ctx.db.insert("supportConversations", {
+        conversationId,
+        userId,
+        archived: true,
+      });
+    }
+  },
+});
+
+export const unarchiveSupportConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { conversationId, userId }) => {
+    const existing = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { archived: false });
+    } else {
+      await ctx.db.insert("supportConversations", {
+        conversationId,
+        userId,
+        archived: false,
+      });
+    }
+  },
+});
+
+export const getSupportConversationStatus = query({
+  args: {
+    conversationId: v.string(),
+  },
+  handler: async (ctx, { conversationId }) => {
+    const conversation = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    return {
+      archived: conversation?.archived ?? false,
+    };
   },
 });
 

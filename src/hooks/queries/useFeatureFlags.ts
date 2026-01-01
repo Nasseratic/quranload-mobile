@@ -6,12 +6,12 @@ type FF = keyof FunctionReturnType<typeof cvx.featureFlags.ffs>;
 const devFfs = {
   chat: true,
   inAppEnrolment: true,
-  supportChat: false,
+  supportChat: true,
 } satisfies Record<FF, boolean>;
 
 export const useFeatureFlags = () => {
   const ffs = useQuery(cvx.featureFlags.ffs);
   return {
-    ff: __DEV__ ? devFfs : ffs,
+    ff: devFfs,
   };
 };
