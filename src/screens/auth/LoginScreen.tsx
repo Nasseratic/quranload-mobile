@@ -9,6 +9,7 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FormikProvider, useFormik } from "formik";
 import MyTextInput from "components/forms/MyTextInput";
 import ActionBtn from "components/buttons/ActionBtn";
@@ -41,9 +42,12 @@ const LoginScreen: FunctionComponent<Props> = ({ navigation }) => {
 
       // Check for support credentials
       if (values.username.trim() === "support@ql.com" && values.password === "support") {
-        // Navigate directly to support chat list screen
-        navigation.navigate("SupportChatListScreen");
-        formik.setSubmitting(false);
+        // Store support admin session
+        AsyncStorage.setItem("supportAdminLoggedIn", "true").then(() => {
+          // Navigate directly to support chat list screen
+          navigation.navigate("SupportChatListScreen");
+          formik.setSubmitting(false);
+        });
         return;
       }
 
