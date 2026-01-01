@@ -26,6 +26,11 @@ jobs:
       - name: 📦 Install dependencies
         run: bun i
 
+      - name: 🔄 Setup Convex preview environment
+        run: bunx convex dev --once
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
       - name: 🚀 Create preview
         uses: expo/expo-github-action/preview@v8
         with:
