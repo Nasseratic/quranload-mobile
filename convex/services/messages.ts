@@ -268,9 +268,68 @@ export const allSupportConversations = query({
       }
     }
 
-    return Array.from(conversationLatestMessages.values()).sort(
-      (a, b) => b._creationTime - a._creationTime
+    // Get archived status for each conversation
+    const conversationsWithArchived = await Promise.all(
+      Array.from(conversationLatestMessages.values()).map(async (message) => {
+        const supportConversation = await ctx.db
+          .query("supportConversations")
+          .withIndex("by_conversationId", (q) => q.eq("conversationId", message.conversationId))
+          .first();
+
+        return {
+          ...message,
+          archived: supportConversation?.archived ?? false,
+        };
+      })
     );
+
+    return conversationsWithArchived.sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+export const archiveSupportConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { conversationId, userId }) => {
+    const existing = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { archived: true });
+    } else {
+      await ctx.db.insert("supportConversations", {
+        conversationId,
+        userId,
+        archived: true,
+      });
+    }
+  },
+});
+
+export const unarchiveSupportConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { conversationId, userId }) => {
+    const existing = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { archived: false });
+    } else {
+      await ctx.db.insert("supportConversations", {
+        conversationId,
+        userId,
+        archived: false,
+      });
+    }
   },
 });
 

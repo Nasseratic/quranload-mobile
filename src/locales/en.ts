@@ -25,6 +25,7 @@ const english = {
   read: "Read",
   cancel: "Cancel",
   delete: "Delete",
+  archive: "Archive",
   feedback: "Feedback",
   handedIn: "Handed in",
   notHandedIn: "Not handed in",
@@ -233,6 +234,7 @@ const english = {
     title: "Support",
     welcomeMessage: "Assalamu Alaikum! How can we help you today?",
     placeholder: "Type your message...",
+    archived: "Conversation archived",
     bottomSheet: {
       title: "🐛 New Support Chat",
       description:

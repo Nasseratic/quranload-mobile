@@ -1,4 +1,4 @@
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppBar } from "components/AppBar";
@@ -10,7 +10,7 @@ import { Colors } from "constants/Colors";
 import { useUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Clipboard } from "react-native";
+import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
 import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
 import { useChatMediaUploader } from "hooks/useMediaPicker";
@@ -22,12 +22,13 @@ import { RecordIcon } from "components/icons/RecordIcon";
 import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
 import { uploadChatMedia } from "utils/uploadChatMedia";
 import { AudioPlayer } from "components/AudioPlayer";
-import { useMutation, usePaginatedQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { cvx, Id } from "api/convex";
 import { match, P } from "ts-pattern";
 import { t } from "locales/config";
 import { isNotNullish } from "utils/notNullish";
 import { toast } from "components/Toast";
+import { OptionsIcon } from "components/icons/OptionsIcon";
 import { MediaImage } from "components/Image";
 
 // Extended message type that includes media key for lazy URL resolution
@@ -42,7 +43,9 @@ export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title, supportChat, supportUserId } = params;
   const user = useUser();
+  const navigation = useNavigation();
   const unsend = useMutation(cvx.messages.unsend);
+  const archiveSupportConversation = useMutation(cvx.messages.archiveSupportConversation);
   const userId = user.id;
 
   // Determine if this is a support chat (either from supportChat flag or supportUserId presence)
@@ -52,6 +55,8 @@ export const ChatScreen = () => {
   if (!teamId && !interlocutorId && !isSupportChat) {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
   }
+
+  const conversationId = isSupportChat ? `support_${actualSupportUserId}` : null;
 
   const { results, status, loadMore } = usePaginatedQuery(
     cvx.messages.paginate,
@@ -289,6 +294,43 @@ export const ChatScreen = () => {
     </View>
   );
 
+  const handleSupportChatOptions = () => {
+    if (!isSupportChat || !conversationId) return;
+
+    const options = [t("archive"), t("cancel")];
+    const cancelButtonIndex = 1;
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        async (buttonIndex: number) => {
+          if (buttonIndex === 0) {
+            // Archive
+            await archiveSupportConversation({
+              conversationId,
+              userId: actualSupportUserId,
+            });
+            toast.show({ status: "Success", title: t("support.archived") });
+            navigation.goBack();
+          }
+        }
+      );
+    } else {
+      // For Android, we'll need to use a different approach
+      // For now, directly archive
+      archiveSupportConversation({
+        conversationId,
+        userId: actualSupportUserId,
+      }).then(() => {
+        toast.show({ status: "Success", title: t("support.archived") });
+        navigation.goBack();
+      });
+    }
+  };
+
   return (
     // UX TODO: Identify which messages are from the teacher (can be done using the avatar or the message sender name)
     // UX TODO: This might need to be done in the ChatListScreen as well?
@@ -315,7 +357,16 @@ export const ChatScreen = () => {
           setIsRecorderVisible(false);
         }}
       />
-      <AppBar title={title} />
+      <AppBar
+        title={title}
+        rightComponent={
+          isSupportChat && supportUserId ? (
+            <TouchableOpacity onPress={handleSupportChatOptions} style={{ paddingHorizontal: 8 }}>
+              <OptionsIcon size={24} color={Colors.Primary[1]} />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
       <Separator />
       {status === "LoadingFirstPage" ? (
         <Stack f={1} jc="center">
