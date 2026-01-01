@@ -12,6 +12,6 @@ const devFfs = {
 export const useFeatureFlags = () => {
   const ffs = useQuery(cvx.featureFlags.ffs);
   return {
-    ff: __DEV__ ? devFfs : ffs,
+    ff: devFfs,
   };
 };
