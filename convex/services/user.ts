@@ -34,8 +34,8 @@ export const updateUserInfo = mutation({
       return;
     }
 
-    // Rate limiting: Only update if lastSeen is older than 5 minutes
-    const FIVE_MINUTES = 5 * 60 * 1000;
+    // Rate limiting: Only update if lastSeen is older 1 day
+    const FIVE_MINUTES = 24 * 60 * 60 * 1000;
     const timeSinceLastUpdate = args.lastSeen - existingUserInfo.lastSeen;
 
     if (timeSinceLastUpdate < FIVE_MINUTES) {
