@@ -35,3 +35,5 @@ jobs:
         uses: expo/expo-github-action/preview@v8
         with:
           command: eas update --auto --branch ${{ github.event.pull_request.head.ref }}
+        env:
+          EXPO_PUBLIC_CONVEX_URL: https://courteous-goat-120.convex.cloud
