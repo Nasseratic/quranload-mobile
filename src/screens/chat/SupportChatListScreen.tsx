@@ -11,11 +11,17 @@ import { Stack, Separator } from "tamagui";
 import { Colors } from "constants/Colors";
 import Typography from "components/Typography";
 import { useMemo } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const SupportChatListScreen = () => {
   const navigation = useNavigation();
 
   const supportConversations = useQuery(cvx.messages.allSupportConversations);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("supportAdminLoggedIn");
+    navigation.navigate("Login");
+  };
 
   const { activeConversations, archivedConversations } = useMemo(() => {
     if (!supportConversations) return { activeConversations: [], archivedConversations: [] };
@@ -32,10 +38,7 @@ export const SupportChatListScreen = () => {
         <AppBar
           title="Support Conversations"
           rightComponent={
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={{ paddingHorizontal: 8 }}
-            >
+            <TouchableOpacity onPress={handleLogout} style={{ paddingHorizontal: 8 }}>
               <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
                 Logout
               </Typography>
@@ -75,10 +78,7 @@ export const SupportChatListScreen = () => {
       <AppBar
         title="Support Conversations"
         rightComponent={
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Login")}
-            style={{ paddingHorizontal: 8 }}
-          >
+          <TouchableOpacity onPress={handleLogout} style={{ paddingHorizontal: 8 }}>
             <Typography type="CaptionHeavy" style={{ color: Colors.Primary[1] }}>
               Logout
             </Typography>

@@ -103,10 +103,19 @@ const AuthenticatedStack = () => {
 const Nav = () => {
   const { signed, user, handleSignIn, isLoadingUserData } = useAuth();
   const insets = useSafeAreaInsets();
+  const [supportAdminLoggedIn, setSupportAdminLoggedIn] = React.useState(false);
+
   useLayoutEffect(() => {
     async function initialize() {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      if (accessToken) {
+      const [accessToken, supportAdmin] = await Promise.all([
+        AsyncStorage.getItem("accessToken"),
+        AsyncStorage.getItem("supportAdminLoggedIn"),
+      ]);
+
+      if (supportAdmin === "true") {
+        setSupportAdminLoggedIn(true);
+        SplashScreen.hideAsync();
+      } else if (accessToken) {
         handleSignIn();
       } else {
         SplashScreen.hideAsync();
@@ -132,7 +141,7 @@ const Nav = () => {
           </Square>
         ) : (
           <Stack.Navigator
-            initialRouteName={"Login"}
+            initialRouteName={supportAdminLoggedIn ? "SupportChatListScreen" : "Login"}
             screenOptions={{
               headerShown: false,
               contentStyle: {
