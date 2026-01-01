@@ -34,6 +34,13 @@ export default defineSchema({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment"), v.literal("supportChat")),
     enabled: v.boolean(),
   }),
+  userTeam: defineTable({
+    userId: v.string(),
+    teamId: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_teamId", ["teamId"])
+    .index("by_userId_teamId", ["userId", "teamId"]),
   messages: defineTable({
     ...messageInitializer,
     senderId: v.string(),
