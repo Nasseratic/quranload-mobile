@@ -26,6 +26,7 @@ export const getUrl = action({
     key: v.string(),
   },
   handler: async (_, args) => {
-    return await r2.getUrl(args.key);
+    // 7 days = 604800 seconds (maximum allowed by R2)
+    return await r2.getUrl(args.key, { expiresIn: 604800 });
   },
 });

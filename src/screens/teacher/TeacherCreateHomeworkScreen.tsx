@@ -15,7 +15,7 @@ import { useMediaUploader } from "hooks/useMediaPicker";
 import { AppBar } from "components/AppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "components/Toast";
-import { ImageViewer, ImageViewerRef } from "react-native-reanimated-viewer";
+import { ImageViewer, ImageViewerRef, ImageWrapper } from "react-native-reanimated-viewer";
 import { isNotNullish } from "utils/notNullish";
 import { useAuth } from "contexts/auth";
 import { ImageWithAuth } from "components/Image";
@@ -165,29 +165,33 @@ export const TeacherCreateHomeworkScreen: FunctionComponent<Props> = ({ route, n
                   </Card>
                 )}
                 {images?.map((image, index) => (
-                  <Stack
-                    ov="visible"
-                    key={index}
-                    borderRadius="$2"
-                    borderStyle="solid"
-                    borderColor="$gray6Light"
-                    bw={1}
-                    h={100}
-                    w={100}
-                    onPress={() => {
-                      imageViewerRef.current?.show({ index });
-                    }}
-                    pressStyle={{ opacity: 0.5 }}
-                  >
-                    <ImageWithAuth
-                      key={image}
+                  <Stack ov="visible" key={index}>
+                    <ImageWrapper
+                      viewerRef={imageViewerRef}
+                      index={index}
                       source={{
                         uri: image,
+                        headers: {
+                          Authorization: `Bearer ${accessToken}`,
+                        },
                       }}
-                      borderRadius="$2"
-                      height="100%"
-                      width="100%"
-                    />
+                      style={{
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#e5e5e5",
+                        height: 100,
+                        width: 100,
+                      }}
+                    >
+                      <ImageWithAuth
+                        source={{
+                          uri: image,
+                        }}
+                        borderRadius="$2"
+                        height="100%"
+                        width="100%"
+                      />
+                    </ImageWrapper>
                     <Circle
                       position="absolute"
                       right={-5}

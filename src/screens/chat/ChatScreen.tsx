@@ -16,7 +16,7 @@ import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator }
 import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
-import { ImageViewer, ImageViewerRef } from "react-native-reanimated-viewer";
+import { ImageViewer, ImageViewerRef, ImageWrapper } from "react-native-reanimated-viewer";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
@@ -28,7 +28,13 @@ import { match, P } from "ts-pattern";
 import { t } from "locales/config";
 import { isNotNullish } from "utils/notNullish";
 import { toast } from "components/Toast";
-import { resolveMediaKey } from "hooks/useMediaUrl";
+import { MediaImage } from "components/Image";
+
+// Extended message type that includes media key for lazy URL resolution
+type ChatMessage = IMessage & {
+  mediaKey?: string;
+  mediaType?: "image" | "audio" | "video" | "file";
+};
 
 const QUERY_LIMIT = 20;
 
@@ -68,47 +74,17 @@ export const ChatScreen = () => {
     { initialNumItems: QUERY_LIMIT }
   );
 
-  // State for messages with resolved media URLs
-  const [messagesWithUrls, setMessagesWithUrls] = useState<IMessage[]>([]);
-
-  // Resolve media URLs when results change
-  useEffect(() => {
-    const resolveUrls = async () => {
-      if (!results) {
-        setMessagesWithUrls([]);
-        return;
-      }
-
-      const resolved = await Promise.all(
-        results.map(async (message) => {
-          const baseMessage = mapMessageToGiftedChatMessage(message);
-
-          // If message has mediaKey, resolve it to a URL
-          if (message.mediaKey && message.mediaType) {
-            const url = await resolveMediaKey(message.mediaKey);
-            if (url) {
-              return {
-                ...baseMessage,
-                [message.mediaType]: url,
-              };
-            }
-          }
-
-          return baseMessage;
-        })
-      );
-
-      setMessagesWithUrls(resolved);
-    };
-
-    resolveUrls();
+  // Map results to chat messages with media keys
+  const mappedMessages = useMemo<ChatMessage[]>(() => {
+    if (!results) return [];
+    return results.map(mapMessageToGiftedChatMessage);
   }, [results]);
 
   // Add welcome message for support chat when there are no messages
-  const messages = useMemo(() => {
+  const messages = useMemo<ChatMessage[]>(() => {
     // If it's a support chat and there are no messages, add a welcome message
-    if (isSupportChat && messagesWithUrls.length === 0 && status !== "LoadingFirstPage") {
-      const welcomeMessage: IMessage = {
+    if (isSupportChat && mappedMessages.length === 0 && status !== "LoadingFirstPage") {
+      const welcomeMessage: ChatMessage = {
         _id: "welcome-message",
         text: t("support.welcomeMessage"),
         createdAt: new Date(),
@@ -121,13 +97,12 @@ export const ChatScreen = () => {
       return [welcomeMessage];
     }
 
-    return messagesWithUrls;
-  }, [messagesWithUrls, isSupportChat, status]);
+    return mappedMessages;
+  }, [mappedMessages, isSupportChat, status]);
 
   const sendMessages = useMutation(cvx.messages.send);
 
   const imageViewerRef = useRef<ImageViewerRef>(null);
-  const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
   const { pickImage, images, removeImage, upload, isUploading } = useChatMediaUploader();
@@ -278,22 +253,21 @@ export const ChatScreen = () => {
       >
         <XStack gap="$2">
           {images?.map((image, index) => (
-            <Stack
-              ov="visible"
-              key={index}
-              borderRadius="$2"
-              borderStyle="solid"
-              borderColor="$gray6Light"
-              bw={1}
-              h={60}
-              w={60}
-              onPress={() => {
-                setViewerImages(images);
-                setTimeout(() => imageViewerRef.current?.show({ index }), 0);
-              }}
-              pressStyle={{ opacity: 0.5 }}
-            >
-              <Image key={image} height={60} width={60} borderRadius="$2" source={{ uri: image }} />
+            <Stack ov="visible" key={index}>
+              <ImageWrapper
+                viewerRef={imageViewerRef}
+                index={index}
+                source={{ uri: image }}
+                style={{
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: "#e5e5e5",
+                  height: 60,
+                  width: 60,
+                }}
+              >
+                <Image height={60} width={60} borderRadius="$2" source={{ uri: image }} />
+              </ImageWrapper>
               <Circle
                 position="absolute"
                 right={-5}
@@ -349,9 +323,10 @@ export const ChatScreen = () => {
         </Stack>
       ) : (
         <Fragment>
+          {/* ImageViewer for footer/upload images */}
           <ImageViewer
             ref={imageViewerRef}
-            data={viewerImages.map((image) => ({
+            data={images.map((image) => ({
               key: image,
               source: { uri: image },
             }))}
@@ -387,24 +362,23 @@ export const ChatScreen = () => {
                 </Text>
               </Card>
             )}
-            renderMessageImage={(props) => (
-              <Image
-                height={200}
-                width={200}
-                m={4}
-                borderCurve="continuous"
-                borderRadius="$4"
-                pressStyle={{ opacity: 0.7 }}
-                onPress={() => {
-                  const imageUri = props.currentMessage?.image ?? "";
-                  if (imageUri) {
-                    setViewerImages([imageUri]);
-                    setTimeout(() => imageViewerRef.current?.show({ index: 0 }), 0);
-                  }
-                }}
-                source={{ uri: props.currentMessage?.image }}
-              />
-            )}
+            renderMessageImage={(props) => {
+              const message = props.currentMessage as ChatMessage | undefined;
+              const mediaKey = message?.mediaKey;
+
+              return (
+                <Stack m={4}>
+                  <MediaImage
+                    mediaKey={mediaKey}
+                    height={200}
+                    width={200}
+                    borderCurve="continuous"
+                    borderRadius="$4"
+                    viewerEnabled
+                  />
+                </Stack>
+              );
+            }}
             onLongPress={(context, message) => {
               const options = [
                 ...match(message.user._id === userId)
@@ -451,14 +425,19 @@ export const ChatScreen = () => {
 
 const mapMessageToGiftedChatMessage = (
   message: (typeof cvx.messages.paginate)["_returnType"]["page"][number]
-) =>
-  ({
-    _id: message._id,
-    text: message.text ?? "",
-    createdAt: new Date(message._creationTime),
-    user: {
-      _id: message.senderId,
-      name: message.senderName,
-    },
-    system: message.isSystem,
-  } satisfies IMessage);
+): ChatMessage => ({
+  _id: message._id,
+  text: message.text ?? "",
+  createdAt: new Date(message._creationTime),
+  user: {
+    _id: message.senderId,
+    name: message.senderName,
+  },
+  system: message.isSystem,
+  // Include mediaKey for lazy URL resolution in render components
+  mediaKey: message.mediaKey ?? undefined,
+  mediaType: message.mediaType ?? undefined,
+  // Set image/audio to mediaKey so GiftedChat knows to render the media component
+  ...(message.mediaType === "image" && message.mediaKey ? { image: message.mediaKey } : {}),
+  ...(message.mediaType === "audio" && message.mediaKey ? { audio: message.mediaKey } : {}),
+});
