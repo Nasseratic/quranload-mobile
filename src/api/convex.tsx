@@ -5,10 +5,9 @@ import {
   useQuery,
 } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { isDevelopmentBuild } from "expo-dev-client";
 
 export const client = new ConvexReactClient(
-  isDevelopmentBuild()
+  __DEV__
     ? "https://courteous-goat-120.convex.cloud"
     : "https://gregarious-aardvark-817.convex.cloud"
 );

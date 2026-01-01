@@ -11,8 +11,7 @@ QuranLoad is a React Native mobile application built with Expo that serves as a 
 - **React Native** with **Expo SDK 52** for cross-platform mobile development
 - **TypeScript** for type safety and better development experience
 - **Tamagui** for UI components and styling system
-- **Convex** for real-time backend, database, and push notifications
-- **Supabase** for additional backend services
+- **Convex** for real-time backend, database, push notifications, and file storage (via Cloudflare R2)
 - **React Navigation** for navigation
 - **React Query (@tanstack/react-query)** for server state management
 - **React Hook Form** and **Formik** for form handling
@@ -51,7 +50,8 @@ QuranLoad is a React Native mobile application built with Expo that serves as a 
 ### Backend Architecture (Convex)
 
 - **convex/schema.ts**: Database schema with tables for messages, conversations, feature flags, user info
-- **convex/services/**: Backend functions organized by domain (messages, user, support, feature flags, push notifications)
+- **convex/services/**: Backend functions organized by domain (messages, user, support, feature flags, push notifications, storage)
+- **convex/services/storage.ts**: Cloudflare R2 file storage integration for chat media uploads
 - Real-time capabilities with Convex subscriptions
 - Feature flag system for gradual rollouts
 - Push notification integration with Expo

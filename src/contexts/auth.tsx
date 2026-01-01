@@ -67,7 +67,9 @@ export const AuthProvider = ({ children }: Props) => {
     refetch: fetchUser,
     data: user,
     isFetching,
-  } = useQuery([profileQueryKey], fetchUserProfile, {
+  } = useQuery({
+    queryKey: [profileQueryKey],
+    queryFn: fetchUserProfile,
     enabled: false,
   });
 

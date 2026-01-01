@@ -38,7 +38,7 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
   );
   const [weekDaysInput, setWeekDaysInput] = useState(weekDays ?? []);
 
-  const { mutate, isLoading } = useMutation({
+  const { mutate, isPending } = useMutation({
     // TODO: move this to a service
     mutationFn: async () => {
       const body = {
@@ -56,7 +56,7 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
             ...body,
           });
         else await apiClient.post("Assignments", body);
-        queryClient.refetchQueries(["auto-assignment"]);
+        queryClient.refetchQueries({ queryKey: ["auto-assignment"] });
         navigation.goBack();
         toast.show({
           status: "Success",
@@ -130,7 +130,7 @@ export const TeacherAutoHomeworkScreen: FunctionComponent<Props> = ({ route }) =
           </XGroup>
         </View>
         <Form.Trigger asChild disabled={!startFromPageInput || !pagesPerDayInput}>
-          <ActionButton title={i18n.t("save")} isLoading={isLoading} />
+          <ActionButton title={i18n.t("save")} isLoading={isPending} />
         </Form.Trigger>
       </Form>
     </SafeAreaView>

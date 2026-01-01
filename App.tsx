@@ -14,7 +14,7 @@ import { tamaguiConfig } from "./tamagui.config";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { Audio } from "expo-av";
+import { setAudioModeAsync } from "expo-audio";
 import { RootActionSheetContainer } from "components/ActionSheet";
 import { RootToastContainer } from "components/Toast";
 import "react-native-url-polyfill/auto";
@@ -23,11 +23,10 @@ import { AvoidSoftInput } from "react-native-avoid-softinput";
 import { ConvexProvider } from "api/convex";
 import { queryClient } from "utils/reactQueryClient";
 import "api/apiClientInterceptors";
+import "./src/locales/config";
 
-require("./src/locales/config");
-
-Audio.setAudioModeAsync({
-  playsInSilentModeIOS: true,
+setAudioModeAsync({
+  playsInSilentMode: true,
 });
 
 SplashScreen.preventAutoHideAsync();

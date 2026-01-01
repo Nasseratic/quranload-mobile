@@ -1,20 +1,64 @@
-import * as FileSystem from "expo-file-system";
-import { supabase } from "./supabase";
-import { decode } from "base64-arraybuffer";
+import { File } from "expo-file-system";
+import { client } from "api/convex";
+import { api } from "../../convex/_generated/api";
 
-// TODO: upload images to different folders based on teamId and userId
-export const uploadChatMedia = async (uri: string,type:'image'|'audio') => {
+/**
+ * Upload chat media (image or audio) to Cloudflare R2 via Convex
+ * @param uri - Local file URI to upload
+ * @param type - Media type: 'image' or 'audio'
+ * @returns The R2 storage key for the uploaded file, or undefined on error
+ */
+export const uploadChatMedia = async (
+  uri: string,
+  type: "image" | "audio"
+): Promise<string | undefined> => {
   try {
-    const base64 = await FileSystem.readAsStringAsync(uri, { encoding: "base64" });
-    const filePath = `${new Date().getTime()}.${type === 'image' ? 'png' : 'mp3'}`;
-    const contentType = type === 'image' ? 'image/png' : 'audio/mpeg';
-    const { data, error } = await supabase.storage
-      .from("chat-media-1")
-      .upload(filePath, decode(base64), { contentType });
-    if (error)
-      throw error;
-    return `https://onvbwwnhwmeckrxkjllj.supabase.co/storage/v1/object/public/chat-media-1/${data?.path}`;
+    const contentType = type === "image" ? "image/png" : "audio/mpeg";
+
+    console.log(`[uploadChatMedia] Starting upload for ${type}: ${uri}`);
+
+    // Generate upload URL from Convex R2 storage
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const storageApi = api.services.storage as any;
+    console.log("[uploadChatMedia] Requesting upload URL from Convex...");
+    const { url, key } = await client.mutation(storageApi.generateUploadUrl, {});
+    console.log(`[uploadChatMedia] Got upload URL, key: ${key}`);
+
+    // Use the new expo-file-system File API which implements Blob interface
+    const file = new File(uri);
+    console.log(`[uploadChatMedia] File exists: ${file.exists}, size: ${file.size}`);
+
+    // Read file as ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    console.log(`[uploadChatMedia] ArrayBuffer byteLength: ${arrayBuffer.byteLength}`);
+
+    // Upload to R2 using the signed URL
+    const uploadResponse = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": contentType,
+      },
+      body: arrayBuffer,
+    });
+
+    console.log(`[uploadChatMedia] Upload response: ${uploadResponse.status}`);
+
+    if (!uploadResponse.ok) {
+      const responseText = await uploadResponse.text();
+      throw new Error(`Upload failed: ${uploadResponse.status} - ${responseText}`);
+    }
+
+    // Sync metadata in background (non-blocking)
+    client.mutation(storageApi.syncMetadata, { key }).catch((e: Error) => {
+      console.warn("[uploadChatMedia] Metadata sync failed (non-critical):", e.message);
+    });
+
+    console.log(`[uploadChatMedia] Upload complete, returning key: ${key}`);
+
+    // Return the R2 key - signed URLs will be generated when fetching messages
+    return key;
   } catch (e) {
-    console.log(e);
+    console.error("[uploadChatMedia] Error:", e);
+    return undefined;
   }
 };

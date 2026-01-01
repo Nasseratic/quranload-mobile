@@ -18,10 +18,10 @@ QuranLoad is a React Native mobile application built with Expo and uses Tamagui 
 - **React Query (@tanstack/react-query)** for data fetching
 - **React Hook Form** with **Formik** for form handling
 - **Expo AV** for audio/video functionality
-- **Supabase** for additional backend services
 
 ### Backend
 - **Convex** for real-time database and backend functions
+- **Cloudflare R2** for file storage (via `@convex-dev/r2`)
 - **Push notifications** via Convex Expo integration
 - **Feature flags** system
 - **Real-time messaging** and chat functionality
@@ -62,7 +62,8 @@ convex/
 │   ├── user.ts         # User management
 │   ├── support.ts      # Support functionality
 │   ├── featureFlags.ts # Feature flag management
-│   └── pushNotifications.ts # Push notification handling
+│   ├── pushNotifications.ts # Push notification handling
+│   └── storage.ts      # R2 file storage
 └── _generated/         # Generated Convex files
 ```
 
@@ -89,7 +90,7 @@ convex/
 - `npm run lint` - Run ESLint
 - `npm run lint-fix` - Fix ESLint issues
 - `npm run gen:api` - Generate API client from OpenAPI spec
-- `npm run supagen` - Generate Supabase types
+- `npx convex dev` - Start Convex dev server and regenerate types
 
 ## Development Guidelines
 
