@@ -268,22 +268,36 @@ export const allSupportConversations = query({
       }
     }
 
-    // Get archived status for each conversation
-    const conversationsWithArchived = await Promise.all(
+    // Get archived status and user info for each conversation
+    const conversationsWithMetadata = await Promise.all(
       Array.from(conversationLatestMessages.values()).map(async (message) => {
         const supportConversation = await ctx.db
           .query("supportConversations")
           .withIndex("by_conversationId", (q) => q.eq("conversationId", message.conversationId))
           .first();
 
+        // Extract userId from conversationId (format: "support_userId")
+        const userId = message.conversationId.replace("support_", "");
+
+        // Find the first message sent by the user (not by support admin)
+        // to get the user's actual name
+        const userMessage = await ctx.db
+          .query("messages")
+          .withIndex("conversation", (q) => q.eq("conversationId", message.conversationId))
+          .filter((q) => q.neq(q.field("senderId"), "support"))
+          .first();
+
         return {
           ...message,
           archived: supportConversation?.archived ?? false,
+          // Add user metadata for display - use the name from the first user message
+          userName: userMessage?.senderName || `User ${userId}`,
+          userId,
         };
       })
     );
 
-    return conversationsWithArchived.sort((a, b) => b._creationTime - a._creationTime);
+    return conversationsWithMetadata.sort((a, b) => b._creationTime - a._creationTime);
   },
 });
 

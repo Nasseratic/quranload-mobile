@@ -50,9 +50,8 @@ export const SupportChatListScreen = () => {
   }
 
   const renderConversation = (conversation: any) => {
-    // Extract userId from conversationId (format: "support_userId")
-    const userId = conversation.conversationId.replace("support_", "");
-    const userName = conversation.senderName || `User ${userId}`;
+    // Use the userName from the backend which comes from contactSupportInfo
+    const userName = conversation.userName;
     const message = conversation.text || "Media";
 
     return (
@@ -64,7 +63,7 @@ export const SupportChatListScreen = () => {
           navigation.navigate("ChatScreen", {
             title: `Support - ${userName}`,
             supportChat: true,
-            supportUserId: userId,
+            supportUserId: conversation.userId,
           })
         }
       />
