@@ -7,7 +7,7 @@ import { IconButton } from "components/buttons/IconButton";
 import { PaperClipIcon } from "components/icons/PaperClipIcon";
 import { SendIcon } from "components/icons/SendIcon";
 import { Colors } from "constants/Colors";
-import { useUser } from "contexts/auth";
+import { useMaybeUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
@@ -42,11 +42,11 @@ const QUERY_LIMIT = 20;
 export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title, supportChat, supportUserId } = params;
-  const user = useUser();
+  const user = useMaybeUser();
   const navigation = useNavigation();
   const unsend = useMutation(cvx.messages.unsend);
   const archiveSupportConversation = useMutation(cvx.messages.archiveSupportConversation);
-  const userId = user.id;
+  const userId = user?.id;
 
   // Determine if this is a support chat (either from supportChat flag or supportUserId presence)
   const isSupportChat = supportChat || !!supportUserId;
@@ -340,7 +340,7 @@ export const ChatScreen = () => {
         onClose={() => setIsRecorderVisible(false)}
         onSend={async ({ uri }) => {
           const uploadedUri = await uploadChatMedia(uri, "audio");
-          if (uploadedUri) {
+          if (uploadedUri && user) {
             await onSend([
               {
                 _id: uploadedUri,
@@ -387,8 +387,8 @@ export const ChatScreen = () => {
             keyboardShouldPersistTaps="never" // For Android
             messages={messages}
             user={{
-              _id: isSupportChat && supportUserId ? "support" : user.id,
-              name: isSupportChat && supportUserId ? "Support" : user.fullName,
+              _id: isSupportChat && supportUserId ? "support" : user?.id ?? "unknown",
+              name: isSupportChat && supportUserId ? "Support" : user?.fullName ?? "User",
             }}
             onSend={onSend}
             renderSend={renderSend}
