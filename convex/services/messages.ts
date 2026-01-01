@@ -333,6 +333,22 @@ export const unarchiveSupportConversation = mutation({
   },
 });
 
+export const getSupportConversationStatus = query({
+  args: {
+    conversationId: v.string(),
+  },
+  handler: async (ctx, { conversationId }) => {
+    const conversation = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    return {
+      archived: conversation?.archived ?? false,
+    };
+  },
+});
+
 // Migration: Remove mediaUrl from all messages
 // Run this once from the Convex dashboard, then remove mediaUrl from schema
 export const removeMediaUrlFromAllMessages = internalMutation({

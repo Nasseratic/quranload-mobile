@@ -46,6 +46,7 @@ export const ChatScreen = () => {
   const navigation = useNavigation();
   const unsend = useMutation(cvx.messages.unsend);
   const archiveSupportConversation = useMutation(cvx.messages.archiveSupportConversation);
+  const unarchiveSupportConversation = useMutation(cvx.messages.unarchiveSupportConversation);
   const userId = user?.id;
 
   // Determine if this is a support chat (either from supportChat flag or supportUserId presence)
@@ -57,6 +58,13 @@ export const ChatScreen = () => {
   }
 
   const conversationId = isSupportChat ? `support_${actualSupportUserId}` : null;
+
+  // Get archived status for support chats
+  const conversationStatus = useQuery(
+    cvx.messages.getSupportConversationStatus,
+    conversationId ? { conversationId } : "skip"
+  );
+  const isArchived = conversationStatus?.archived ?? false;
 
   const { results, status, loadMore } = usePaginatedQuery(
     cvx.messages.paginate,
@@ -297,7 +305,8 @@ export const ChatScreen = () => {
   const handleSupportChatOptions = () => {
     if (!isSupportChat || !conversationId) return;
 
-    const options = [t("archive"), t("cancel")];
+    const actionText = isArchived ? t("unarchive") : t("archive");
+    const options = [actionText, t("cancel")];
     const cancelButtonIndex = 1;
 
     if (Platform.OS === "ios") {
@@ -308,26 +317,44 @@ export const ChatScreen = () => {
         },
         async (buttonIndex: number) => {
           if (buttonIndex === 0) {
-            // Archive
-            await archiveSupportConversation({
-              conversationId,
-              userId: actualSupportUserId,
-            });
-            toast.show({ status: "Success", title: t("support.archived") });
+            if (isArchived) {
+              // Unarchive
+              await unarchiveSupportConversation({
+                conversationId,
+                userId: actualSupportUserId,
+              });
+              toast.show({ status: "Success", title: t("support.unarchived") });
+            } else {
+              // Archive
+              await archiveSupportConversation({
+                conversationId,
+                userId: actualSupportUserId,
+              });
+              toast.show({ status: "Success", title: t("support.archived") });
+            }
             navigation.goBack();
           }
         }
       );
     } else {
-      // For Android, we'll need to use a different approach
-      // For now, directly archive
-      archiveSupportConversation({
-        conversationId,
-        userId: actualSupportUserId,
-      }).then(() => {
-        toast.show({ status: "Success", title: t("support.archived") });
-        navigation.goBack();
-      });
+      // For Android, directly archive/unarchive
+      if (isArchived) {
+        unarchiveSupportConversation({
+          conversationId,
+          userId: actualSupportUserId,
+        }).then(() => {
+          toast.show({ status: "Success", title: t("support.unarchived") });
+          navigation.goBack();
+        });
+      } else {
+        archiveSupportConversation({
+          conversationId,
+          userId: actualSupportUserId,
+        }).then(() => {
+          toast.show({ status: "Success", title: t("support.archived") });
+          navigation.goBack();
+        });
+      }
     }
   };
 
