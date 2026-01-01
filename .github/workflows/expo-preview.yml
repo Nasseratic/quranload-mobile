@@ -29,7 +29,7 @@ jobs:
       - name: 🔄 Setup Convex preview environment
         run: bunx convex dev --once
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          CONVEX_DEPLOY_KEY: dev:courteous-goat-120|eyJ2MiI6IjgzMzU3OWJlYTIwMjQ5MDNiNmZmMGI1OGQyYmUzNjIzIn0=
           CONVEX_URL: https://courteous-goat-120.convex.cloud
 
       - name: 🚀 Create preview
