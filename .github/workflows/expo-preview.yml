@@ -15,7 +15,8 @@ jobs:
         with:
           node-version: 18.x
           cache: npm
-
+      - name: 🏗 Setup Bun
+        uses: oven-sh/setup-bun@v2
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
