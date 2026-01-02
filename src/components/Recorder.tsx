@@ -89,6 +89,7 @@ export const Recorder = ({
     status: recordingState,
     totalDuration,
     pendingUploads,
+    isProcessingAudio,
     startSession,
     pauseSession,
     resumeSession,
@@ -392,12 +393,30 @@ export const Recorder = ({
     );
   };
 
-  if (recordingState === "submitting")
+  if (recordingState === "submitting") {
+    // Show success message when all uploads are done and audio is processing
+    if (isProcessingAudio) {
+      return (
+        <Stack ai="center" gap="$2" p="$2" px="$4">
+          <Text fontSize={16} fontWeight="600" color={Colors.Success[1]} textAlign="center">
+            {t("recordingScreen.audioProcessingTitle")}
+          </Text>
+          <Text fontSize={14} color="$gray10" textAlign="center">
+            {t("recordingScreen.audioProcessingSubtitle")}
+          </Text>
+        </Stack>
+      );
+    }
+    // Still uploading fragments
     return (
-      <Stack>
+      <Stack ai="center" gap="$3" p="$4">
         <ActivityIndicator />
+        <Text fontSize={12} color="$gray10">
+          {t("uploadingFragments", { count: pendingUploads })}
+        </Text>
       </Stack>
     );
+  }
 
   return (
     <XStack jc="center" ai="center" gap="$8">

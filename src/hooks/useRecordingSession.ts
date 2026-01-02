@@ -81,6 +81,9 @@ export interface UseRecordingSessionReturn {
   pendingUploads: number;
   isUploading: boolean;
 
+  // Processing state - true when all uploads done and audio is being processed
+  isProcessingAudio: boolean;
+
   // Actions
   startSession: () => Promise<string>;
   pauseSession: () => Promise<void>;
@@ -156,6 +159,10 @@ export function useRecordingSession(
   const committedDuration = sessionData?.totalDuration ?? 0;
   const fragmentsCount = sessionData?.fragmentsCount ?? 0;
 
+  // Check if audio is being processed (all uploads done, waiting for server processing)
+  const isProcessingAudio =
+    status === "submitting" && fragmentQueue.pendingCount === 0 && !fragmentQueue.isProcessing;
+
   // Sync local fragment index with server (only if server is ahead, to prevent collisions)
   useEffect(() => {
     if (sessionData?.fragmentsCount !== undefined) {
@@ -186,6 +193,19 @@ export function useRecordingSession(
       return activeSessionQuery as ConvexSession;
     }
     return null;
+  }, [activeSessionQuery, activeSessionId]);
+
+  // Auto-adopt processing sessions (finalizing/processing) so UI shows processing state
+  useEffect(() => {
+    if (activeSessionId) return; // Already have an active session
+    if (!activeSessionQuery) return;
+
+    const processingStatuses: ConvexSessionStatus[] = ["finalizing", "processing"];
+    if (processingStatuses.includes(activeSessionQuery.status)) {
+      // Automatically adopt this session to show processing state in UI
+      setActiveSessionId(activeSessionQuery.sessionId);
+      nextFragmentIndexRef.current = activeSessionQuery.fragmentsCount;
+    }
   }, [activeSessionQuery, activeSessionId]);
 
   // Handle session completion/failure reactively
@@ -354,6 +374,7 @@ export function useRecordingSession(
     fragmentsCount,
     pendingUploads: fragmentQueue.pendingCount,
     isUploading: fragmentQueue.isProcessing,
+    isProcessingAudio,
     startSession,
     pauseSession,
     resumeSession,

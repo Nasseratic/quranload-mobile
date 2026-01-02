@@ -57,6 +57,8 @@ const english = {
     resumeRecording: "Resume Recording?",
     resumeRecordingDescription:
       "You have an unfinished recording for this lesson. Would you like to continue?",
+    audioProcessingTitle: "Submission successful!",
+    audioProcessingSubtitle: "Your audio is being processed and will be available to play in a few minutes.",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",

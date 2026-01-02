@@ -56,6 +56,8 @@ const danish: typeof english = {
     retryUpload: "Prøv igen",
     resumeRecording: "Genoptag optagelse?",
     resumeRecordingDescription: "Du har en ufærdig optagelse til denne lektion. Vil du fortsætte?",
+    audioProcessingTitle: "Indsendelse gennemført!",
+    audioProcessingSubtitle: "Din lyd behandles og vil være tilgængelig om få minutter.",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
