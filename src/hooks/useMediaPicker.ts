@@ -5,12 +5,15 @@ import { uploadChatMedia } from "utils/uploadChatMedia";
 import { MediaResponse, getMediaUri, uploadFile } from "services/mediaService";
 import { isNotNullish } from "utils/notNullish";
 
-export const useSupabaseMediaUploader = ({
+/**
+ * Hook for uploading chat media (images) to R2 storage via Convex
+ */
+export const useChatMediaUploader = ({
   initialRemoteMedia,
 }: { initialRemoteMedia?: MediaResponse[] } = {}) => {
   const picker = useMediaPicker({ initialRemoteMedia });
 
-  const supabaseUploadChatImages = async () => {
+  const uploadChatImages = async () => {
     const uploadImages = await Promise.all(
       picker.images.map((uri) => uploadChatMedia(uri, "image"))
     );
@@ -23,10 +26,13 @@ export const useSupabaseMediaUploader = ({
     isPending,
     error,
   } = useMutation({
-    mutationKey: ["media"],
-    mutationFn: supabaseUploadChatImages,
+    mutationKey: ["chatMedia"],
+    mutationFn: uploadChatImages,
   });
-  console.log(error);
+
+  if (error) {
+    console.error("Chat media upload error:", error);
+  }
 
   return {
     ...picker,

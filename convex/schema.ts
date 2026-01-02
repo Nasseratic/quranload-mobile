@@ -7,7 +7,8 @@ export const messageInitializer = {
   mediaType: v.optional(
     v.union(v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file"))
   ),
-  mediaUrl: v.optional(v.string()),
+  // R2 storage key for media - used to generate fresh signed URLs
+  mediaKey: v.optional(v.string()),
   receiverName: v.optional(v.string()),
   senderName: v.optional(v.string()),
   text: v.optional(v.string()),

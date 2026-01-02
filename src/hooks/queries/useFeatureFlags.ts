@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 type FF = keyof FunctionReturnType<typeof cvx.featureFlags.ffs>;
 
 const devFfs = {
-  chat: false,
+  chat: true,
   inAppEnrolment: true,
   supportChat: false,
 } satisfies Record<FF, boolean>;
