@@ -35,6 +35,12 @@ export default defineSchema({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment"), v.literal("supportChat")),
     enabled: v.boolean(),
   }),
+  userTeam: defineTable({
+    userId: v.string(),
+    teamId: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_teamId", ["teamId"]),
   messages: defineTable({
     ...messageInitializer,
     senderId: v.string(),
@@ -49,6 +55,14 @@ export default defineSchema({
   })
     .index("by_participants", ["participant1", "participant2"])
     .index("by_participant2", ["participant2"]),
+  supportConversations: defineTable({
+    conversationId: v.string(),
+    userId: v.string(),
+    archived: v.boolean(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_userId", ["userId"])
+    .index("by_archived", ["archived"]),
   contactSupportInfo: defineTable(contactSupportInfo),
   userInfo: defineTable(userInfo).index("by_userId", ["userId"]),
 

@@ -141,6 +141,7 @@ export const AuthProvider = ({ children }: Props) => {
         platform: Platform.OS,
         lastSeen: Date.now(),
         authToken: accessToken,
+        teamIds: user.teams.filter((team) => team.isActive).map((team) => team.id),
       });
     } catch (err: any) {
       if (err?.status !== 401) {
