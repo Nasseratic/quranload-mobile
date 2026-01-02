@@ -48,19 +48,17 @@ export const updateUserInfo = mutation({
 
     // Populate userTeam for all teams (many-to-many: user can be in multiple teams)
     if (teamIds?.length) {
-      await Promise.all(
-        teamIds.map(async (teamId) => {
-          const existingUserTeam = await ctx.db
-            .query("userTeam")
-            .withIndex("by_userId_teamId", (q) =>
-              q.eq("userId", args.userId).eq("teamId", teamId)
-            )
-            .unique();
+      const existingUserTeams = await ctx.db
+        .query("userTeam")
+        .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+        .collect();
 
-          if (!existingUserTeam) {
-            await ctx.db.insert("userTeam", { userId: args.userId, teamId });
-          }
-        })
+      const existingTeamIds = new Set(existingUserTeams.map((ut) => ut.teamId));
+
+      await Promise.all(
+        teamIds
+          .filter((teamId) => !existingTeamIds.has(teamId))
+          .map((teamId) => ctx.db.insert("userTeam", { userId: args.userId, teamId }))
       );
     }
   },

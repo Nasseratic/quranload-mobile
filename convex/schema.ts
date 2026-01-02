@@ -39,8 +39,7 @@ export default defineSchema({
     teamId: v.string(),
   })
     .index("by_userId", ["userId"])
-    .index("by_teamId", ["teamId"])
-    .index("by_userId_teamId", ["userId", "teamId"]),
+    .index("by_teamId", ["teamId"]),
   messages: defineTable({
     ...messageInitializer,
     senderId: v.string(),
