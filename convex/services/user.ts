@@ -24,10 +24,11 @@ import { contactSupportInfo, userInfo } from "../schema";
 export const updateUserInfo = mutation({
   args: {
     ...userInfo,
-    teamId: v.optional(v.string()),
+    teamId: v.optional(v.string()), // Backward compatibility: single team
+    teamIds: v.optional(v.array(v.string())), // Multiple teams
   },
   handler: async (ctx, args) => {
-    const { teamId, ...userInfoArgs } = args;
+    const { teamId, teamIds, ...userInfoArgs } = args;
 
     const existingUserInfo = await ctx.db
       .query("userInfo")
@@ -46,18 +47,26 @@ export const updateUserInfo = mutation({
       }
     }
 
-    // Populate userTeam if teamId is provided (many-to-many: user can be in multiple teams)
-    if (teamId) {
-      const existingUserTeam = await ctx.db
-        .query("userTeam")
-        .withIndex("by_userId_teamId", (q) =>
-          q.eq("userId", args.userId).eq("teamId", teamId)
-        )
-        .unique();
+    // Combine teamId and teamIds into a single list (deduplicated)
+    const allTeamIds = [
+      ...(teamId ? [teamId] : []),
+      ...(teamIds ?? []),
+    ].filter((id, index, arr) => arr.indexOf(id) === index);
 
-      if (!existingUserTeam) {
-        await ctx.db.insert("userTeam", { userId: args.userId, teamId });
-      }
-    }
+    // Populate userTeam for all teams (many-to-many: user can be in multiple teams)
+    await Promise.all(
+      allTeamIds.map(async (tid) => {
+        const existingUserTeam = await ctx.db
+          .query("userTeam")
+          .withIndex("by_userId_teamId", (q) =>
+            q.eq("userId", args.userId).eq("teamId", tid)
+          )
+          .unique();
+
+        if (!existingUserTeam) {
+          await ctx.db.insert("userTeam", { userId: args.userId, teamId: tid });
+        }
+      })
+    );
   },
 });
