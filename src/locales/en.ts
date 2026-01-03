@@ -55,6 +55,10 @@ const english = {
     uploadFailed: "Upload failed",
     retryUpload: "Retry upload",
   },
+  feedbackNotification: {
+    title: "New feedback from",
+    bodyPrefix: "Your teacher has provided feedback on",
+  },
   homeScreen: {
     readingTime: "Reading time per page in minutes",
     showInactive: "Show inactive",
