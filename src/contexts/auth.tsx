@@ -67,7 +67,9 @@ export const AuthProvider = ({ children }: Props) => {
     refetch: fetchUser,
     data: user,
     isFetching,
-  } = useQuery([profileQueryKey], fetchUserProfile, {
+  } = useQuery({
+    queryKey: [profileQueryKey],
+    queryFn: fetchUserProfile,
     enabled: false,
   });
 
@@ -137,6 +139,7 @@ export const AuthProvider = ({ children }: Props) => {
         currentAppVersion: Application.nativeApplicationVersion ?? "Unknown",
         platform: Platform.OS,
         lastSeen: Date.now(),
+        teamIds: user.teams.filter((team) => team.isActive).map((team) => team.id),
       });
     } catch (err: any) {
       if (err?.status !== 401) {

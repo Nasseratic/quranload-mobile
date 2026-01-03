@@ -23,7 +23,8 @@ const validationSchema = z.object({
 });
 
 const ResetPasswordScreen: FunctionComponent<Props> = ({ navigation, route }) => {
-  const { mutate } = useMutation(resetPassword, {
+  const { mutate } = useMutation({
+    mutationFn: resetPassword,
     onSuccess: () => {
       toast.show({
         status: "Success",

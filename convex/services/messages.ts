@@ -1,10 +1,11 @@
 import { paginationOptsValidator, PaginationResult } from "convex/server";
-import { mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
+import { internalMutation, mutation, MutationCtx, query, QueryCtx } from "../_generated/server";
 import { ConvexError, v } from "convex/values";
 import { messageInitializer } from "../schema";
 import { isNotNullish } from "utils/notNullish";
 import { pushNotifications } from "./pushNotifications";
 import { match } from "ts-pattern";
+import { internal } from "../_generated/api";
 
 export const paginate = query({
   args: {
@@ -108,7 +109,7 @@ export const send = mutation({
     );
 
     const mediaBody =
-      messages?.[0]?.mediaUrl && messages?.[0]?.mediaType
+      messages?.[0]?.mediaKey && messages?.[0]?.mediaType
         ? messages[0].mediaType === "image"
           ? `📷 Image`
           : `🎙️ Audio`
@@ -134,6 +135,41 @@ export const send = mutation({
       } catch {
         // ignore as most likely the user doesn't have push token
       }
+    }
+
+    if (to.type === "team") {
+      // Get all users in the team
+      const teamMembers = await ctx.db
+        .query("userTeam")
+        .withIndex("by_teamId", (q) => q.eq("teamId", to.teamId))
+        .collect();
+
+      // Send notifications to all team members except the sender
+      await Promise.all(
+        teamMembers
+          .filter((member) => member.userId !== senderId)
+          .map(async (member) => {
+            try {
+              await pushNotifications.sendPushNotification(ctx, {
+                userId: member.userId,
+                notification: {
+                  title: `New message from ${messages[0]?.senderName || "Someone"}`,
+                  body: messages[0]?.text || mediaBody,
+                  data: {
+                    type: "team_message",
+                    message: {
+                      ...messages[0],
+                      ...to,
+                      senderId,
+                    },
+                  },
+                },
+              });
+            } catch {
+              // ignore as most likely the user doesn't have push token
+            }
+          })
+      );
     }
   },
 });
@@ -294,8 +330,117 @@ export const allSupportConversations = query({
       }
     }
 
-    return Array.from(conversationLatestMessages.values()).sort(
-      (a, b) => b._creationTime - a._creationTime
+    // Get archived status and user info for each conversation
+    const conversationsWithMetadata = await Promise.all(
+      Array.from(conversationLatestMessages.values()).map(async (message) => {
+        const supportConversation = await ctx.db
+          .query("supportConversations")
+          .withIndex("by_conversationId", (q) => q.eq("conversationId", message.conversationId))
+          .first();
+
+        // Extract userId from conversationId (format: "support_userId")
+        const userId = message.conversationId.replace("support_", "");
+
+        // Find the first message sent by the user (not by support admin)
+        // to get the user's actual name
+        const userMessage = await ctx.db
+          .query("messages")
+          .withIndex("conversation", (q) => q.eq("conversationId", message.conversationId))
+          .filter((q) => q.neq(q.field("senderId"), "support"))
+          .first();
+
+        return {
+          ...message,
+          archived: supportConversation?.archived ?? false,
+          // Add user metadata for display - use the name from the first user message
+          userName: userMessage?.senderName || `User ${userId}`,
+          userId,
+        };
+      })
     );
+
+    return conversationsWithMetadata.sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+export const archiveSupportConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { conversationId, userId }) => {
+    const existing = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { archived: true });
+    } else {
+      await ctx.db.insert("supportConversations", {
+        conversationId,
+        userId,
+        archived: true,
+      });
+    }
+  },
+});
+
+export const unarchiveSupportConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { conversationId, userId }) => {
+    const existing = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { archived: false });
+    } else {
+      await ctx.db.insert("supportConversations", {
+        conversationId,
+        userId,
+        archived: false,
+      });
+    }
+  },
+});
+
+export const getSupportConversationStatus = query({
+  args: {
+    conversationId: v.string(),
+  },
+  handler: async (ctx, { conversationId }) => {
+    const conversation = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+      .first();
+
+    return {
+      archived: conversation?.archived ?? false,
+    };
+  },
+});
+
+// Migration: Remove mediaUrl from all messages
+// Run this once from the Convex dashboard, then remove mediaUrl from schema
+export const removeMediaUrlFromAllMessages = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const messages = await ctx.db.query("messages").collect();
+
+    let updated = 0;
+    for (const message of messages) {
+      if (message.mediaUrl !== undefined) {
+        await ctx.db.patch(message._id, { mediaUrl: undefined });
+        updated++;
+      }
+    }
+
+    console.log(`Removed mediaUrl from ${updated} messages`);
+    return { updated, total: messages.length };
   },
 });

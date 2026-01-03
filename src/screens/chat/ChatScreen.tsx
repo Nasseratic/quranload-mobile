@@ -1,4 +1,4 @@
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppBar } from "components/AppBar";
@@ -7,36 +7,47 @@ import { IconButton } from "components/buttons/IconButton";
 import { PaperClipIcon } from "components/icons/PaperClipIcon";
 import { SendIcon } from "components/icons/SendIcon";
 import { Colors } from "constants/Colors";
-import { useUser } from "contexts/auth";
+import { useMaybeUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Clipboard } from "react-native";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
 import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
-import { useSupabaseMediaUploader } from "hooks/useMediaPicker";
+import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
-import ImageView from "react-native-image-viewing";
+import { ImageViewer, ImageViewerRef, ImageWrapper } from "react-native-reanimated-viewer";
 import { AvoidSoftInput } from "react-native-avoid-softinput";
 import { RecordIcon } from "components/icons/RecordIcon";
 import { ChatAudioRecorder } from "screens/chat/components/ChatAudioRecorder";
 import { uploadChatMedia } from "utils/uploadChatMedia";
 import { AudioPlayer } from "components/AudioPlayer";
-import { useMutation, usePaginatedQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { cvx, Id } from "api/convex";
 import { match, P } from "ts-pattern";
 import { t } from "locales/config";
 import { isNotNullish } from "utils/notNullish";
 import { toast } from "components/Toast";
+import { OptionsIcon } from "components/icons/OptionsIcon";
+import { MediaImage } from "components/Image";
+
+// Extended message type that includes media key for lazy URL resolution
+type ChatMessage = IMessage & {
+  mediaKey?: string;
+  mediaType?: "image" | "audio" | "video" | "file";
+};
 
 const QUERY_LIMIT = 20;
 
 export const ChatScreen = () => {
   const { params } = useRoute<NativeStackScreenProps<RootStackParamList, "ChatScreen">["route"]>();
   const { teamId, interlocutorId, title, supportChat, supportUserId } = params;
-  const user = useUser();
+  const user = useMaybeUser();
+  const navigation = useNavigation();
   const unsend = useMutation(cvx.messages.unsend);
-  const userId = user.id;
+  const archiveSupportConversation = useMutation(cvx.messages.archiveSupportConversation);
+  const unarchiveSupportConversation = useMutation(cvx.messages.unarchiveSupportConversation);
+  const userId = user?.id;
 
   // Determine if this is a support chat (either from supportChat flag or supportUserId presence)
   const isSupportChat = supportChat || !!supportUserId;
@@ -45,6 +56,15 @@ export const ChatScreen = () => {
   if (!teamId && !interlocutorId && !isSupportChat) {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
   }
+
+  const conversationId = isSupportChat ? `support_${actualSupportUserId}` : null;
+
+  // Get archived status for support chats
+  const conversationStatus = useQuery(
+    cvx.messages.getSupportConversationStatus,
+    conversationId ? { conversationId } : "skip"
+  );
+  const isArchived = conversationStatus?.archived ?? false;
 
   const { results, status, loadMore } = usePaginatedQuery(
     cvx.messages.paginate,
@@ -67,13 +87,17 @@ export const ChatScreen = () => {
     { initialNumItems: QUERY_LIMIT }
   );
 
-  // Add welcome message for support chat when there are no messages
-  const allMessages = useMemo(() => {
-    const fetchedMessages = results?.map(mapMessageToGiftedChatMessage) ?? [];
+  // Map results to chat messages with media keys
+  const mappedMessages = useMemo<ChatMessage[]>(() => {
+    if (!results) return [];
+    return results.map(mapMessageToGiftedChatMessage);
+  }, [results]);
 
+  // Add welcome message for support chat when there are no messages
+  const messages = useMemo<ChatMessage[]>(() => {
     // If it's a support chat and there are no messages, add a welcome message
-    if (isSupportChat && fetchedMessages.length === 0 && status !== "LoadingFirstPage") {
-      const welcomeMessage: IMessage = {
+    if (isSupportChat && mappedMessages.length === 0 && status !== "LoadingFirstPage") {
+      const welcomeMessage: ChatMessage = {
         _id: "welcome-message",
         text: t("support.welcomeMessage"),
         createdAt: new Date(),
@@ -86,18 +110,15 @@ export const ChatScreen = () => {
       return [welcomeMessage];
     }
 
-    return fetchedMessages;
-  }, [results, isSupportChat, status]);
-
-  const messages = allMessages;
+    return mappedMessages;
+  }, [mappedMessages, isSupportChat, status]);
 
   const sendMessages = useMutation(cvx.messages.send);
 
-  const [imagesModalImages, setImagesModalImages] = useState<string[]>([]);
-  const [imagesModalIndex, setImagesModalIndex] = useState(0);
+  const imageViewerRef = useRef<ImageViewerRef>(null);
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
-  const { pickImage, images, removeImage, upload, isUploading } = useSupabaseMediaUploader();
+  const { pickImage, images, removeImage, upload, isUploading } = useChatMediaUploader();
 
   if (!teamId && !interlocutorId && !supportChat) {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
@@ -135,7 +156,8 @@ export const ChatScreen = () => {
           text,
           senderName: user.name,
           receiverName: params.title,
-          mediaUrl: image ?? audio,
+          // Store the R2 key - URLs are resolved when fetching messages
+          mediaKey: image ?? audio,
           mediaType: audio ? "audio" : image ? "image" : undefined,
           isSystem: false,
         })),
@@ -244,22 +266,21 @@ export const ChatScreen = () => {
       >
         <XStack gap="$2">
           {images?.map((image, index) => (
-            <Stack
-              ov="visible"
-              key={index}
-              borderRadius="$2"
-              borderStyle="solid"
-              borderColor="$gray6Light"
-              bw={1}
-              h={60}
-              w={60}
-              onPress={() => {
-                setImagesModalIndex(index);
-                setImagesModalImages(images);
-              }}
-              pressStyle={{ opacity: 0.5 }}
-            >
-              <Image key={image} height={60} width={60} borderRadius="$2" source={{ uri: image }} />
+            <Stack ov="visible" key={index}>
+              <ImageWrapper
+                viewerRef={imageViewerRef}
+                index={index}
+                source={{ uri: image }}
+                style={{
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: "#e5e5e5",
+                  height: 60,
+                  width: 60,
+                }}
+              >
+                <Image height={60} width={60} borderRadius="$2" source={{ uri: image }} />
+              </ImageWrapper>
               <Circle
                 position="absolute"
                 right={-5}
@@ -281,6 +302,62 @@ export const ChatScreen = () => {
     </View>
   );
 
+  const handleSupportChatOptions = () => {
+    if (!isSupportChat || !conversationId) return;
+
+    const actionText = isArchived ? t("unarchive") : t("archive");
+    const options = [actionText, t("cancel")];
+    const cancelButtonIndex = 1;
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        async (buttonIndex: number) => {
+          if (buttonIndex === 0) {
+            if (isArchived) {
+              // Unarchive
+              await unarchiveSupportConversation({
+                conversationId,
+                userId: actualSupportUserId,
+              });
+              toast.show({ status: "Success", title: t("support.unarchived") });
+            } else {
+              // Archive
+              await archiveSupportConversation({
+                conversationId,
+                userId: actualSupportUserId,
+              });
+              toast.show({ status: "Success", title: t("support.archived") });
+            }
+            navigation.goBack();
+          }
+        }
+      );
+    } else {
+      // For Android, directly archive/unarchive
+      if (isArchived) {
+        unarchiveSupportConversation({
+          conversationId,
+          userId: actualSupportUserId,
+        }).then(() => {
+          toast.show({ status: "Success", title: t("support.unarchived") });
+          navigation.goBack();
+        });
+      } else {
+        archiveSupportConversation({
+          conversationId,
+          userId: actualSupportUserId,
+        }).then(() => {
+          toast.show({ status: "Success", title: t("support.archived") });
+          navigation.goBack();
+        });
+      }
+    }
+  };
+
   return (
     // UX TODO: Identify which messages are from the teacher (can be done using the avatar or the message sender name)
     // UX TODO: This might need to be done in the ChatListScreen as well?
@@ -290,7 +367,7 @@ export const ChatScreen = () => {
         onClose={() => setIsRecorderVisible(false)}
         onSend={async ({ uri }) => {
           const uploadedUri = await uploadChatMedia(uri, "audio");
-          if (uploadedUri) {
+          if (uploadedUri && user) {
             await onSend([
               {
                 _id: uploadedUri,
@@ -307,7 +384,16 @@ export const ChatScreen = () => {
           setIsRecorderVisible(false);
         }}
       />
-      <AppBar title={title} />
+      <AppBar
+        title={title}
+        rightComponent={
+          isSupportChat && supportUserId ? (
+            <TouchableOpacity onPress={handleSupportChatOptions} style={{ paddingHorizontal: 8 }}>
+              <OptionsIcon size={24} color={Colors.Primary[1]} />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
       <Separator />
       {status === "LoadingFirstPage" ? (
         <Stack f={1} jc="center">
@@ -315,22 +401,21 @@ export const ChatScreen = () => {
         </Stack>
       ) : (
         <Fragment>
-          <ImageView
-            // Change the images type from string[] to ImageSource[]
-            images={images.map((image) => ({
-              uri: image,
+          {/* ImageViewer for footer/upload images */}
+          <ImageViewer
+            ref={imageViewerRef}
+            data={images.map((image) => ({
+              key: image,
+              source: { uri: image },
             }))}
-            imageIndex={imagesModalIndex}
-            visible={imagesModalImages.length > 0}
-            onRequestClose={() => setImagesModalImages([])}
           />
 
           <GiftedChat
             keyboardShouldPersistTaps="never" // For Android
             messages={messages}
             user={{
-              _id: isSupportChat && supportUserId ? "support" : user.id,
-              name: isSupportChat && supportUserId ? "Support" : user.fullName,
+              _id: isSupportChat && supportUserId ? "support" : user?.id ?? "unknown",
+              name: isSupportChat && supportUserId ? "Support" : user?.fullName ?? "User",
             }}
             onSend={onSend}
             renderSend={renderSend}
@@ -355,21 +440,23 @@ export const ChatScreen = () => {
                 </Text>
               </Card>
             )}
-            renderMessageImage={(props) => (
-              <Image
-                height={200}
-                width={200}
-                m={4}
-                borderCurve="continuous"
-                borderRadius="$4"
-                pressStyle={{ opacity: 0.7 }}
-                onPress={() => {
-                  setImagesModalIndex(0);
-                  setImagesModalImages([props.currentMessage?.image ?? ""]);
-                }}
-                source={{ uri: props.currentMessage?.image }}
-              />
-            )}
+            renderMessageImage={(props) => {
+              const message = props.currentMessage as ChatMessage | undefined;
+              const mediaKey = message?.mediaKey;
+
+              return (
+                <Stack m={4}>
+                  <MediaImage
+                    mediaKey={mediaKey}
+                    height={200}
+                    width={200}
+                    borderCurve="continuous"
+                    borderRadius="$4"
+                    viewerEnabled
+                  />
+                </Stack>
+              );
+            }}
             onLongPress={(context, message) => {
               const options = [
                 ...match(message.user._id === userId)
@@ -416,17 +503,19 @@ export const ChatScreen = () => {
 
 const mapMessageToGiftedChatMessage = (
   message: (typeof cvx.messages.paginate)["_returnType"]["page"][number]
-) =>
-  ({
-    _id: message._id,
-    text: message.text ?? "",
-    createdAt: new Date(message._creationTime),
-    user: {
-      _id: message.senderId,
-      name: message.senderName,
-    },
-    ...(message.mediaType && {
-      [message.mediaType]: message.mediaUrl,
-    }),
-    system: message.isSystem,
-  } satisfies IMessage);
+): ChatMessage => ({
+  _id: message._id,
+  text: message.text ?? "",
+  createdAt: new Date(message._creationTime),
+  user: {
+    _id: message.senderId,
+    name: message.senderName,
+  },
+  system: message.isSystem,
+  // Include mediaKey for lazy URL resolution in render components
+  mediaKey: message.mediaKey ?? undefined,
+  mediaType: message.mediaType ?? undefined,
+  // Set image/audio to mediaKey so GiftedChat knows to render the media component
+  ...(message.mediaType === "image" && message.mediaKey ? { image: message.mediaKey } : {}),
+  ...(message.mediaType === "audio" && message.mediaKey ? { audio: message.mediaKey } : {}),
+});

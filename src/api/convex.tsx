@@ -5,13 +5,18 @@ import {
   useQuery,
 } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { isDevelopmentBuild } from "expo-dev-client";
 
-export const client = new ConvexReactClient(
-  isDevelopmentBuild()
+// Use environment variable if available, otherwise fallback to hardcoded URLs
+const getConvexUrl = () => {
+  if (process.env.EXPO_PUBLIC_CONVEX_URL) {
+    return process.env.EXPO_PUBLIC_CONVEX_URL;
+  }
+  return __DEV__
     ? "https://courteous-goat-120.convex.cloud"
-    : "https://gregarious-aardvark-817.convex.cloud"
-);
+    : "https://gregarious-aardvark-817.convex.cloud";
+};
+
+export const client = new ConvexReactClient(getConvexUrl());
 
 export type { FunctionReturnType } from "convex/server";
 

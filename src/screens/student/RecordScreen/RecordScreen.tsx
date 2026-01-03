@@ -38,11 +38,13 @@ import { LESSON_DETAILS_QUERY_KEY } from "screens/teacher/TeacherSubmissionsScre
 import { ImageWithAuth } from "components/Image";
 import { useKeepAwake } from "expo-keep-awake";
 import { CrossIcon } from "components/icons/CrossIcon";
+import { UploadType } from "services/audioServerClient";
 import { cvx, useCvxMutation } from "api/convex";
 import LottieView from "lottie-react-native";
 import UploadingLottie from "assets/lottie/uploading.json";
 import { Sentry } from "utils/sentry";
 import { track } from "utils/tracking";
+import { sleep } from "utils/sleep";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -63,17 +65,17 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const recordingId = assignment.recordingUrl ?? undefined;
   const feedbackId = assignment.feedbackUrl ?? undefined;
 
-  const { data: submissionUrl, isLoading: isLoadingSubmissionUrl } = useQuery(
-    ["recordingUrl", recordingId],
-    () => recordingId && fetchRecordingUrl({ lessonId, recordingId, studentId }),
-    { enabled: !!recordingId }
-  );
+  const { data: submissionUrl, isLoading: isLoadingSubmissionUrl } = useQuery({
+    queryKey: ["recordingUrl", recordingId],
+    queryFn: () => recordingId && fetchRecordingUrl({ lessonId, recordingId, studentId }),
+    enabled: !!recordingId,
+  });
 
-  const { data: feedbackUrl, isLoading: isLoadingFeedbackUrl } = useQuery(
-    ["feedbackUrl", feedbackId],
-    () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
-    { enabled: !!feedbackId }
-  );
+  const { data: feedbackUrl, isLoading: isLoadingFeedbackUrl } = useQuery({
+    queryKey: ["feedbackUrl", feedbackId],
+    queryFn: () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
+    enabled: !!feedbackId,
+  });
 
   const attachments = useMemo(
     () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
@@ -90,13 +92,17 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     uri: string;
     duration: number;
   } | null>(null);
-  const studentSubmission = useMutation(submitLessonRecording, {
+  const studentSubmission = useMutation({
+    mutationFn: submitLessonRecording,
     onSuccess: () => {
-      queryClient.invalidateQueries(["assignments"]);
+      // Only invalidate - this is for local fallback submissions
+      // Server submissions use onServerSubmitSuccess callback
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
     },
   });
 
-  const teacherFeedback = useMutation(submitFeedback, {
+  const teacherFeedback = useMutation({
+    mutationFn: submitFeedback,
     onSuccess: async () => {
       const lessonTitle =
         assignment.startPage && assignment.endPage
@@ -111,19 +117,18 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
         title: `${t("feedbackNotification.title")} ${user.fullName}`,
         body: `${t("feedbackNotification.bodyPrefix")} ${lessonTitle}.`,
       });
-      queryClient.invalidateQueries(["assignments"]);
-      queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: [LESSON_DETAILS_QUERY_KEY, lessonId] });
     },
   });
 
   const onDelete = () => {
     match(role)
-      .with("Teacher", () => deleteFeedback({ lessonId, studentId }))
       .with("Student", () => deleteSubmission({ lessonId, studentId }))
       .exhaustive()
       .then(() => {
-        queryClient.invalidateQueries(["assignments"]);
-        queryClient.invalidateQueries([LESSON_DETAILS_QUERY_KEY, lessonId]);
+        queryClient.invalidateQueries({ queryKey: ["assignments"] });
+        queryClient.invalidateQueries({ queryKey: [LESSON_DETAILS_QUERY_KEY, lessonId] });
       });
     navigation.setParams({
       assignment: {
@@ -378,6 +383,32 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                     lessonId={lessonId}
                     onFinished={(audio) => setAudio(audio)}
                     onSubmit={handleRecordingSubmit}
+                    onServerSubmitSuccess={async (filename) => {
+                      if (filename) {
+                        // Server returned filename, update params immediately
+                        navigation.setParams({
+                          assignment: {
+                            ...assignment,
+                            [isTeacher ? "feedbackUrl" : "recordingUrl"]: filename,
+                          },
+                        });
+                        console.log(
+                          `Got ${isTeacher ? "feedback" : "recording"} filename from server:`,
+                          filename
+                        );
+                      } else {
+                        // Fallback: Server didn't return filename, refetch queries
+                        console.warn(
+                          "Server didn't return filename, falling back to query refetch"
+                        );
+                        await queryClient.invalidateQueries({ queryKey: ["assignments"] });
+                      }
+                    }}
+                    uploadType={
+                      isTeacher ? UploadType.FEEDBACK_SUBMISSION : UploadType.LESSON_SUBMISSION
+                    }
+                    studentId={studentId}
+                    lessonState={isTeacher ? AssignmentStatusEnum.accepted : undefined}
                     onStatusChange={(status, recordings) => {
                       match(status)
                         .with("paused", () => {
@@ -456,7 +487,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
           </Stack>
         </Stack>
       )}
-      {(studentSubmission.isLoading || teacherFeedback.isLoading) && (
+      {(studentSubmission.isPending || teacherFeedback.isPending) && (
         <Modal visible transparent>
           <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
             <LottieView

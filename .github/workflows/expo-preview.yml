@@ -15,7 +15,8 @@ jobs:
         with:
           node-version: 18.x
           cache: npm
-
+      - name: 🏗 Setup Bun
+        uses: oven-sh/setup-bun@v2
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
@@ -23,9 +24,17 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
-        run: npm ci
+        run: bun i
+
+      - name: 🔄 Setup Convex preview environment
+        run: bunx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: dev:courteous-goat-120|eyJ2MiI6IjgzMzU3OWJlYTIwMjQ5MDNiNmZmMGI1OGQyYmUzNjIzIn0=
+          CONVEX_URL: https://courteous-goat-120.convex.cloud
 
       - name: 🚀 Create preview
         uses: expo/expo-github-action/preview@v8
         with:
           command: eas update --auto --branch ${{ github.event.pull_request.head.ref }}
+        env:
+          EXPO_PUBLIC_CONVEX_URL: https://courteous-goat-120.convex.cloud

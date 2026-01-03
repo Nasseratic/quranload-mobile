@@ -17,9 +17,9 @@ export const useAssignments = ({
 }) => {
   const user = useUser();
 
-  const { data: assignments, isLoading: isAssignmentsLoading } = useQuery(
-    ["assignments", status, teamId],
-    async () => {
+  const { data: assignments, isLoading: isAssignmentsLoading } = useQuery({
+    queryKey: ["assignments", status, teamId],
+    queryFn: async () => {
       if (!user) return null;
       return (
         await fetchUserLessons({
@@ -28,28 +28,24 @@ export const useAssignments = ({
         })
       ).list as unknown as Assignment[];
     },
-    {
-      enabled: !!user,
-    }
-  );
+    enabled: !!user,
+  });
 
   return { assignments, isAssignmentsLoading };
 };
 
 export const useLatestAssignmentForTeam = (teamId: string) => {
-  const { data } = useQuery(
-    ["latest-assignment", null, teamId],
-    async () =>
+  const { data } = useQuery({
+    queryKey: ["latest-assignment", null, teamId],
+    queryFn: async () =>
       fetchUserLessons({
         teamId,
         lessonState: AssignmentStatusEnum.pending,
         pageSize: 1,
         pageNumber: 1,
       }),
-    {
-      enabled: !!teamId,
-    }
-  );
+    enabled: !!teamId,
+  });
 
   return data?.list[0] as Assignment | undefined;
 };

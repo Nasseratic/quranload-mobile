@@ -7,14 +7,24 @@ import { useQuery } from "convex/react";
 import { cvx } from "api/convex";
 import { EmptyState } from "components/EmptyState";
 import { ActivityIndicator, TouchableOpacity } from "react-native";
-import { Stack } from "tamagui";
+import { Stack, Separator } from "tamagui";
 import { Colors } from "constants/Colors";
 import Typography from "components/Typography";
+import { useMemo } from "react";
 
 export const SupportChatListScreen = () => {
   const navigation = useNavigation();
 
   const supportConversations = useQuery(cvx.messages.allSupportConversations);
+
+  const { activeConversations, archivedConversations } = useMemo(() => {
+    if (!supportConversations) return { activeConversations: [], archivedConversations: [] };
+
+    return {
+      activeConversations: supportConversations.filter((conv) => !conv.archived),
+      archivedConversations: supportConversations.filter((conv) => conv.archived),
+    };
+  }, [supportConversations]);
 
   if (supportConversations === undefined) {
     return (
@@ -39,6 +49,27 @@ export const SupportChatListScreen = () => {
     );
   }
 
+  const renderConversation = (conversation: any) => {
+    // Use the userName from the backend which comes from contactSupportInfo
+    const userName = conversation.userName;
+    const message = conversation.text || "Media";
+
+    return (
+      <ChatItem
+        key={conversation.conversationId}
+        name={userName}
+        message={message}
+        onPress={() =>
+          navigation.navigate("ChatScreen", {
+            title: `Support - ${userName}`,
+            supportChat: true,
+            supportUserId: conversation.userId,
+          })
+        }
+      />
+    );
+  };
+
   return (
     <SafeView gap={8} px={16}>
       <AppBar
@@ -61,27 +92,28 @@ export const SupportChatListScreen = () => {
           description="No users have contacted support yet."
         />
       ) : (
-        supportConversations.map((conversation) => {
-          // Extract userId from conversationId (format: "support_userId")
-          const userId = conversation.conversationId.replace("support_", "");
-          const userName = conversation.senderName || `User ${userId}`;
-          const message = conversation.text || "Media";
+        <Stack gap={16}>
+          {/* Active Conversations Section */}
+          {activeConversations.length > 0 && (
+            <Stack gap={8}>
+              <Typography type="SubHeaderHeavy" style={{ color: Colors.Black[1], paddingTop: 8 }}>
+                Active
+              </Typography>
+              {activeConversations.map(renderConversation)}
+            </Stack>
+          )}
 
-          return (
-            <ChatItem
-              key={conversation.conversationId}
-              name={userName}
-              message={message}
-              onPress={() =>
-                navigation.navigate("ChatScreen", {
-                  title: `Support - ${userName}`,
-                  supportChat: true,
-                  supportUserId: userId,
-                })
-              }
-            />
-          );
-        })
+          {/* Archived Conversations Section */}
+          {archivedConversations.length > 0 && (
+            <Stack gap={8}>
+              {activeConversations.length > 0 && <Separator marginVertical={8} />}
+              <Typography type="SubHeaderHeavy" style={{ color: Colors.Black[2] }}>
+                Archived
+              </Typography>
+              {archivedConversations.map(renderConversation)}
+            </Stack>
+          )}
+        </Stack>
       )}
     </SafeView>
   );

@@ -5,12 +5,15 @@ import { uploadChatMedia } from "utils/uploadChatMedia";
 import { MediaResponse, getMediaUri, uploadFile } from "services/mediaService";
 import { isNotNullish } from "utils/notNullish";
 
-export const useSupabaseMediaUploader = ({
+/**
+ * Hook for uploading chat media (images) to R2 storage via Convex
+ */
+export const useChatMediaUploader = ({
   initialRemoteMedia,
 }: { initialRemoteMedia?: MediaResponse[] } = {}) => {
   const picker = useMediaPicker({ initialRemoteMedia });
 
-  const supabaseUploadChatImages = async () => {
+  const uploadChatImages = async () => {
     const uploadImages = await Promise.all(
       picker.images.map((uri) => uploadChatMedia(uri, "image"))
     );
@@ -20,17 +23,20 @@ export const useSupabaseMediaUploader = ({
 
   const {
     mutateAsync: upload,
-    isLoading,
+    isPending,
     error,
   } = useMutation({
-    mutationKey: ["media"],
-    mutationFn: supabaseUploadChatImages,
+    mutationKey: ["chatMedia"],
+    mutationFn: uploadChatImages,
   });
-  console.log(error);
+
+  if (error) {
+    console.error("Chat media upload error:", error);
+  }
 
   return {
     ...picker,
-    isUploading: isLoading,
+    isUploading: isPending,
     upload,
   };
 };
@@ -39,7 +45,7 @@ export const useMediaUploader = ({
   initialRemoteMedia,
 }: { initialRemoteMedia?: MediaResponse[] } = {}) => {
   const picker = useMediaPicker({ initialRemoteMedia });
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationKey: ["media"],
     mutationFn: uploadFile,
   });
@@ -59,7 +65,7 @@ export const useMediaUploader = ({
   return {
     ...picker,
     uploadSelectedMedia,
-    isUploading: isLoading,
+    isUploading: isPending,
   };
 };
 
