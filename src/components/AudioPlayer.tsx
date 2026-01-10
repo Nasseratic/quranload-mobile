@@ -11,7 +11,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from "expo-audio";
 import Typography from "./Typography";
 import { AnimatedText } from "./AnimatedText";
 import Slider from "./Slider";
@@ -20,13 +20,18 @@ import { RecordingPauseIcon } from "./icons/RecordingPauseIcon";
 import { Colors } from "constants/Colors";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
+import { useMediaUrl } from "hooks/useMediaUrl";
 
 interface AudioPlayerProps {
-  uri: string;
+  /** Direct audio URL - use this for local files or already-resolved URLs */
+  uri?: string;
+  /** R2 media key - will be resolved to a signed URL automatically */
+  mediaKey?: string;
   isVisible?: boolean;
   isCompact?: boolean;
   width?: number;
 }
+
 const COLLAPSED_HEIGHT = 54;
 const EXPANDED_HEIGHT = 70;
 const PADDING = 16;
@@ -35,19 +40,27 @@ const DEFAULT_WIDTH = SCREEN_WIDTH;
 const ADJUSTMENT = 11;
 
 export function AudioPlayer({
-  uri,
+  uri: directUri,
+  mediaKey,
   isVisible = true,
   isCompact = false,
   width = DEFAULT_WIDTH,
 }: AudioPlayerProps) {
+  // Resolve mediaKey to URL if provided, otherwise use direct URI
+  const { url: resolvedUrl, isLoading: isResolvingUrl } = useMediaUrl(mediaKey);
+  const audioSource = directUri || resolvedUrl || null;
+
   const EXPANDED_SLIDER_WIDTH = width - 2 * PADDING - ADJUSTMENT;
   const SLIDER_WIDTH = EXPANDED_SLIDER_WIDTH - 2 * ICON_WIDTH + ADJUSTMENT;
 
-  // Audio player setup
-  const player = useAudioPlayer(uri);
+  // Track if audio mode has been set
+  const audioModeSetRef = useRef(false);
+
+  // Create audio player - will be null until we have a valid URL
+  const player = useAudioPlayer(audioSource);
   const status = useAudioPlayerStatus(player);
 
-  // Duration in milliseconds (expo-audio uses seconds)
+  // Convert duration and currentTime from seconds to milliseconds
   const durationMs = (status.duration || 0) * 1000;
   const currentTimeMs = (status.currentTime || 0) * 1000;
 
@@ -60,15 +73,23 @@ export function AudioPlayer({
   const playing = useSharedValue(false);
   const previousPlaying = useSharedValue(false);
 
-  // Ref to track if we're currently seeking to avoid feedback loops
+  // Ref to track if we're currently seeking
   const isSeekingRef = useRef(false);
 
-  // Wrapper functions for player methods (needed for runOnJS which loses 'this' context)
+  // Wrapper functions for player methods (needed for runOnJS)
   const pausePlayer = useCallback(() => {
     player.pause();
   }, [player]);
 
-  const playPlayer = useCallback(() => {
+  const playPlayer = useCallback(async () => {
+    // Ensure audio mode is set before playing
+    if (!audioModeSetRef.current) {
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
+      audioModeSetRef.current = true;
+    }
     player.play();
   }, [player]);
 
@@ -90,10 +111,10 @@ export function AudioPlayer({
 
   // Sync slider value with audio position when not scrubbing
   useEffect(() => {
-    if (!scrubbing.value && !pressed.value && !isSeekingRef.current) {
+    if (!scrubbing.value && !pressed.value && !isSeekingRef.current && durationMs > 0) {
       value.value = currentTimeMs;
     }
-  }, [currentTimeMs, scrubbing, pressed, value]);
+  }, [currentTimeMs, scrubbing, pressed, value, durationMs]);
 
   // Pause when component becomes invisible
   useEffect(() => {
@@ -105,17 +126,18 @@ export function AudioPlayer({
   // Resume playback after seeking
   const resumeAfterSeek = useCallback(
     (shouldPlay: boolean, positionMs: number) => {
-      const positionSec = Math.max(0, Math.min(positionMs / 1000, status.duration || 0));
+      const duration = status.duration || 0;
+      const positionSec = Math.max(0, Math.min(positionMs / 1000, duration));
       isSeekingRef.current = true;
       player.seekTo(positionSec);
       setTimeout(() => {
         isSeekingRef.current = false;
         if (shouldPlay) {
-          player.play();
+          playPlayer();
         }
       }, 100);
     },
-    [player, status.duration]
+    [player, status.duration, playPlayer]
   );
 
   const valueToTime = useDerivedValue(() => {
@@ -256,8 +278,6 @@ export function AudioPlayer({
     getOpacityStyle(playing.value, pressed.value ? 500 : 0, { duration: 0 })
   );
 
-
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -265,7 +285,7 @@ export function AudioPlayer({
     };
   }, [player]);
 
-  const onPausePress = useCallback(() => {
+  const onPausePress = useCallback(async () => {
     // Don't try to play if audio isn't loaded yet
     if (!status.isLoaded) {
       return;
@@ -276,6 +296,15 @@ export function AudioPlayer({
       // Optimistic UI update
       playing.value = false;
     } else {
+      // Ensure audio mode is set before playing
+      if (!audioModeSetRef.current) {
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+        });
+        audioModeSetRef.current = true;
+      }
+
       // If at the end, restart from beginning
       if (status.currentTime >= (status.duration || 0) - 0.1) {
         player.seekTo(0);
@@ -285,6 +314,9 @@ export function AudioPlayer({
       playing.value = true;
     }
   }, [player, status.playing, status.currentTime, status.duration, status.isLoaded, playing]);
+
+  // Show loading state while resolving URL or loading audio
+  const isLoading = isResolvingUrl || (!status.isLoaded && audioSource !== null);
 
   return (
     <Animated.View
@@ -324,9 +356,9 @@ export function AudioPlayer({
           onPress={onPausePress}
           style={styles.toggleButton}
           activeOpacity={0.8}
-          disabled={!status.isLoaded}
+          disabled={isLoading}
         >
-          {!status.isLoaded ? (
+          {isLoading ? (
             <ActivityIndicator size="small" color={Colors.Black[1]} />
           ) : (
             <>
@@ -339,12 +371,11 @@ export function AudioPlayer({
             </>
           )}
         </TouchableOpacity>
-
       </Animated.View>
       <Animated.View style={[styles.slider, sliderAnimatedStyle]}>
         <Slider
           value={value}
-          max={durationMs || 1} // Avoid division by zero
+          max={durationMs || 1}
           trackColor="#00000050"
           thumbColor="#000000"
           pressed={pressed}
@@ -370,7 +401,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    // backgroundColor: "blue",
     height: ICON_WIDTH,
   },
   timeContainer: {

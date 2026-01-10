@@ -248,7 +248,8 @@ export const ChatScreen = () => {
 
   const renderMessageAudio = (props: { currentMessage: IMessage }) => {
     if (!props.currentMessage.audio) return null;
-    return <AudioPlayer uri={props.currentMessage.audio} isVisible={true} isCompact width={250} />;
+    // audio field contains mediaKey from R2 storage, not a direct URL
+    return <AudioPlayer mediaKey={props.currentMessage.audio} isVisible={true} isCompact width={250} />;
   };
 
   // Render attached images
