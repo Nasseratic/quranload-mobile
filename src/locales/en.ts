@@ -261,5 +261,9 @@ const english = {
   chat: {
     imageUploadFailed: "Image upload failed. Please try again.",
   },
+  feedbackNotification: {
+    title: "New feedback from your teacher",
+    bodyPrefix: "Your teacher has provided feedback on",
+  },
 };
 export default english;

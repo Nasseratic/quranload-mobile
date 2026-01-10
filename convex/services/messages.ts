@@ -398,6 +398,32 @@ export const getSupportConversationStatus = query({
   },
 });
 
+export const notifyFeedbackReceived = mutation({
+  args: {
+    studentId: v.string(),
+    lessonId: v.string(),
+    title: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      await pushNotifications.sendPushNotification(ctx, {
+        userId: args.studentId,
+        notification: {
+          title: args.title,
+          body: args.body,
+          data: {
+            type: "feedback",
+            lessonId: args.lessonId,
+          },
+        },
+      });
+    } catch {
+      // ignore as most likely the user doesn't have push token
+    }
+  },
+});
+
 // Migration: Remove mediaUrl from all messages
 // Run this once from the Convex dashboard, then remove mediaUrl from schema
 export const removeMediaUrlFromAllMessages = internalMutation({

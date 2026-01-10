@@ -54,6 +54,7 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const carouselRef = useRef<ICarouselInstance>(null);
   const insets = useSafeAreaInsets();
   const celebrateSubmission = useCvxMutation(cvx.messages.celebrateSubmission);
+  const notifyFeedbackReceived = useCvxMutation(cvx.messages.notifyFeedbackReceived);
   const { role, isTeacher, isStudent } = useAuth();
   const user = useUser();
 
@@ -102,7 +103,25 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
 
   const teacherFeedback = useMutation({
     mutationFn: submitFeedback,
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Construct lesson title context for notification
+      const lessonContext =
+        assignment.startPage && assignment.endPage
+          ? `${t("pages")} ${assignment.startPage}-${assignment.endPage}`
+          : assignment.description || "";
+
+      // Send push notification to student
+      try {
+        await notifyFeedbackReceived({
+          studentId,
+          lessonId,
+          title: t("feedbackNotification.title"),
+          body: `${t("feedbackNotification.bodyPrefix")} ${lessonContext}`,
+        });
+      } catch {
+        // Notification is not critical, continue even if it fails
+      }
+
       // Only invalidate - this is for local fallback submissions
       // Server submissions use onServerSubmitSuccess callback
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
