@@ -213,6 +213,8 @@ const danish: typeof english = {
   uploadingFragments: "Uploader {{count}} fragment(er)...",
   uploadingProgress: "Uploader {{uploaded}}/{{total}} ({{percentage}}%)",
   pleaseDoNotCloseApp: "Luk ikke appen",
+  recordingUploaded: "Optagelse uploadet",
+  youMayCloseApp: "Du kan lukke appen nu",
   resume: "Genoptag",
   image: "Billede",
   invalid: "Ugyldig",

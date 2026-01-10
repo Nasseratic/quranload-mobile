@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import LottieView from "lottie-react-native";
 import UploadingLottie from "assets/lottie/uploading.json";
+import ConfirmedLottie from "assets/lottie/confirmed.json";
 import {
   useAudioRecorder,
   setAudioModeAsync,
@@ -31,6 +32,10 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
+  withDelay,
+  Easing,
+  FadeIn,
+  FadeOut,
 } from "react-native-reanimated";
 import { Colors } from "constants/Colors";
 import { Checkmark } from "components/icons/CheckmarkIcon";
@@ -152,30 +157,57 @@ export const Recorder = ({
     }
   }, [showModal, targetPercentage]);
 
-  // Track when uploads complete (hit 100%) and add 0.5s delay before closing
-  const [delayingClose, setDelayingClose] = useState(false);
+  // Track completion phase: 'uploading' | 'completed'
+  const [completionPhase, setCompletionPhase] = useState<"uploading" | "completed">("uploading");
+
+  // Animated values for completion state transition
+  const completionTextOpacity = useSharedValue(0);
+  const completionTextTranslateY = useSharedValue(20);
 
   useEffect(() => {
-    // When uploads complete but modal is still showing, start the 100% hang delay
-    if (showModal && pendingUploads === 0 && !delayingClose) {
-      setDelayingClose(true);
-      // Animate to 100% and then wait 0.5s
+    // When uploads complete but modal is still showing, transition to completion phase
+    if (showModal && pendingUploads === 0 && completionPhase === "uploading") {
+      // First animate to 100%
       animatedPercentage.value = withTiming(100, { duration: 500 });
+
+      // Then transition to completion phase after a short delay
+      const timer = setTimeout(() => {
+        setCompletionPhase("completed");
+        // Animate in the completion text
+        completionTextOpacity.value = withDelay(
+          300,
+          withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) })
+        );
+        completionTextTranslateY.value = withDelay(
+          300,
+          withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) })
+        );
+      }, 600);
+
+      return () => clearTimeout(timer);
     }
 
     // Reset when modal closes
     if (!showModal) {
-      setDelayingClose(false);
+      setCompletionPhase("uploading");
+      completionTextOpacity.value = 0;
+      completionTextTranslateY.value = 20;
     }
-  }, [showModal, pendingUploads, delayingClose]);
+  }, [showModal, pendingUploads, completionPhase]);
 
-  // Manage modal visibility with minimum display time of 2.5 seconds
+  // Animated styles for completion text
+  const completionTextStyle = useAnimatedStyle(() => ({
+    opacity: completionTextOpacity.value,
+    transform: [{ translateY: completionTextTranslateY.value }],
+  }));
+
+  // Manage modal visibility with minimum display time
   // Modal only shows when submitting AND has pending uploads
   const shouldShowModal = recordingState === "submitting" && pendingUploads > 0;
 
   useEffect(() => {
     const MINIMUM_MODAL_DISPLAY_TIME = 2500; // 2.5 seconds
-    const HANG_AT_100_DURATION = 500; // 0.5 seconds to hang at 100%
+    const COMPLETION_DISPLAY_TIME = 4000; // 4 seconds to show completion state (Lottie ~3s + read time)
 
     if (shouldShowModal) {
       // Start showing modal
@@ -188,8 +220,8 @@ export const Recorder = ({
       const timeShown = modalShowTimeRef.current ? Date.now() - modalShowTimeRef.current : 0;
       const remainingMinTime = Math.max(0, MINIMUM_MODAL_DISPLAY_TIME - timeShown);
 
-      // Add extra time to hang at 100% (animation duration 500ms + hang time 500ms)
-      const totalRemainingTime = Math.max(remainingMinTime, 500 + HANG_AT_100_DURATION);
+      // Add time for completion animation and reading (600ms transition + 4s completion display)
+      const totalRemainingTime = Math.max(remainingMinTime, 600 + COMPLETION_DISPLAY_TIME);
 
       const timer = setTimeout(() => {
         setShowModal(false);
@@ -496,36 +528,57 @@ export const Recorder = ({
     );
   };
 
-  // Upload Progress Modal Component - extracted for reuse
+  // Upload Progress Modal Component - with uploading and completion states
   const uploadModal = showModal ? (
     <Modal visible transparent>
       <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
-        <LottieView
-          source={UploadingLottie}
-          autoPlay
-          loop={true}
-          style={{ width: 180, height: 180 }}
-        />
-        <Stack gap={16} ai="center">
-          <AnimatedTextInput
-            animatedProps={animatedProps}
-            editable={false}
-            defaultValue="0%"
-            style={{
-              color: "whitesmoke",
-              fontSize: 32,
-              fontWeight: "bold",
-              textAlign: "center",
-              width: 120,
-            }}
-          />
-          <Text fontSize={12} color="$gray9Light">
-            Uploading {fragmentsCount}/{fragmentsCount + pendingUploads} audio fragments
-          </Text>
-          <Text fontSize={16} color="$gray8Light">
-            {t("pleaseDoNotCloseApp")}
-          </Text>
-        </Stack>
+        {completionPhase === "uploading" ? (
+          <>
+            <LottieView
+              source={UploadingLottie}
+              autoPlay
+              loop={true}
+              style={{ width: 180, height: 180 }}
+            />
+            <Stack gap={16} ai="center">
+              <AnimatedTextInput
+                animatedProps={animatedProps}
+                editable={false}
+                defaultValue="0%"
+                style={{
+                  color: "whitesmoke",
+                  fontSize: 32,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  width: 120,
+                }}
+              />
+              <Text fontSize={12} color="$gray9Light">
+                Uploading {fragmentsCount}/{fragmentsCount + pendingUploads} audio fragments
+              </Text>
+              <Text fontSize={16} color="$gray8Light">
+                {t("pleaseDoNotCloseApp")}
+              </Text>
+            </Stack>
+          </>
+        ) : (
+          <>
+            <LottieView
+              source={ConfirmedLottie}
+              autoPlay
+              loop={false}
+              style={{ width: 200, height: 200 }}
+            />
+            <Animated.View style={[{ alignItems: "center", gap: 12 }, completionTextStyle]}>
+              <Text fontSize={24} fontWeight="600" color="white" textAlign="center">
+                {t("recordingUploaded")}
+              </Text>
+              <Text fontSize={16} color="$gray8Light" textAlign="center">
+                {t("youMayCloseApp")}
+              </Text>
+            </Animated.View>
+          </>
+        )}
       </Stack>
     </Modal>
   ) : null;
