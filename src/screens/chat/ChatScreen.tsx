@@ -12,7 +12,7 @@ import * as Linking from "expo-linking";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform, TextStyle } from "react-native";
-import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps, MessageTextProps } from "react-native-gifted-chat";
+import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps, MessageText } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
 import { ChatLinkPreview, extractFirstUrl } from "screens/chat/components/ChatLinkPreview";
 import { useChatMediaUploader } from "hooks/useMediaPicker";
@@ -482,26 +482,27 @@ export const ChatScreen = () => {
                 }
               );
             }}
-            renderBubble={(props) => {
+            renderBubble={(props) => (
+              <Bubble
+                {...props}
+                wrapperStyle={{
+                  right: {
+                    backgroundColor: Colors.Success[1],
+                  },
+                }}
+              />
+            )}
+            renderMessageText={(props) => {
               const message = props.currentMessage;
               const hasUrl = message?.text ? extractFirstUrl(message.text) : null;
               const isCurrentUser = message?.user?._id === userId || (isSupportChat && !!supportUserId && message?.user?._id === "support");
 
               return (
                 <Stack>
-                  <Bubble
-                    {...props}
-                    wrapperStyle={{
-                      right: {
-                        backgroundColor: Colors.Success[1],
-                      },
-                    }}
-                  />
+                  <MessageText {...props} />
                   {hasUrl && message?.text && (
-                    <Stack paddingHorizontal={isCurrentUser ? 0 : 44} alignItems={isCurrentUser ? "flex-end" : "flex-start"}>
-                      <Stack maxWidth={280}>
-                        <ChatLinkPreview text={message.text} isCurrentUser={isCurrentUser} />
-                      </Stack>
+                    <Stack paddingHorizontal={10} paddingBottom={6}>
+                      <ChatLinkPreview text={message.text} isCurrentUser={isCurrentUser} />
                     </Stack>
                   )}
                 </Stack>

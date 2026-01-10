@@ -2,7 +2,6 @@ import { LinkPreview, PreviewData } from "@flyerhq/react-native-link-preview";
 import { Colors } from "constants/Colors";
 import * as Linking from "expo-linking";
 import { useCallback, useState } from "react";
-import { StyleSheet } from "react-native";
 import { Image, Stack, Text } from "tamagui";
 
 interface ChatLinkPreviewProps {
@@ -23,10 +22,11 @@ export const extractFirstUrl = (text: string): string | null => {
 };
 
 /**
- * A component that renders a link preview card for URLs in chat messages
+ * A component that renders a link preview card for URLs in chat messages.
+ * Designed to be rendered inside the message bubble.
  */
 export const ChatLinkPreview = ({ text, isCurrentUser }: ChatLinkPreviewProps) => {
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [, setPreviewData] = useState<PreviewData | null>(null);
   const url = extractFirstUrl(text);
 
   const handlePreviewDataFetched = useCallback((data: PreviewData) => {
@@ -43,9 +43,10 @@ export const ChatLinkPreview = ({ text, isCurrentUser }: ChatLinkPreviewProps) =
     return null;
   }
 
-  const backgroundColor = isCurrentUser ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)";
+  const backgroundColor = isCurrentUser ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.08)";
   const textColor = isCurrentUser ? Colors.White[1] : Colors.Black[1];
   const descriptionColor = isCurrentUser ? Colors.White[2] : Colors.Black[2];
+  const linkColor = isCurrentUser ? Colors.White[3] : Colors.Primary[4];
 
   return (
     <LinkPreview
@@ -59,9 +60,8 @@ export const ChatLinkPreview = ({ text, isCurrentUser }: ChatLinkPreviewProps) =
         return (
           <Stack
             backgroundColor={backgroundColor}
-            borderRadius={8}
-            marginTop={8}
-            marginHorizontal={4}
+            borderRadius={6}
+            marginTop={6}
             overflow="hidden"
             pressStyle={{ opacity: 0.8 }}
             onPress={handlePress}
@@ -70,7 +70,7 @@ export const ChatLinkPreview = ({ text, isCurrentUser }: ChatLinkPreviewProps) =
               <Image
                 source={{ uri: data.image.url }}
                 width="100%"
-                height={120}
+                height={140}
                 resizeMode="cover"
               />
             )}
@@ -95,7 +95,7 @@ export const ChatLinkPreview = ({ text, isCurrentUser }: ChatLinkPreviewProps) =
                 </Text>
               )}
               <Text
-                color={Colors.Primary[4]}
+                color={linkColor}
                 fontSize={11}
                 numberOfLines={1}
               >
