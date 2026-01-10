@@ -8,11 +8,13 @@ import { PaperClipIcon } from "components/icons/PaperClipIcon";
 import { SendIcon } from "components/icons/SendIcon";
 import { Colors } from "constants/Colors";
 import { useMaybeUser } from "contexts/auth";
+import * as Linking from "expo-linking";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
-import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
+import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform, TextStyle } from "react-native";
+import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps, MessageTextProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
+import { ChatLinkPreview, extractFirstUrl } from "screens/chat/components/ChatLinkPreview";
 import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
@@ -480,16 +482,48 @@ export const ChatScreen = () => {
                 }
               );
             }}
-            renderBubble={(props) => (
-              <Bubble
-                {...props}
-                wrapperStyle={{
-                  right: {
-                    backgroundColor: Colors.Success[1],
-                  },
-                }}
-              />
-            )}
+            renderBubble={(props) => {
+              const message = props.currentMessage;
+              const hasUrl = message?.text ? extractFirstUrl(message.text) : null;
+              const isCurrentUser = message?.user?._id === userId || (isSupportChat && !!supportUserId && message?.user?._id === "support");
+
+              return (
+                <Stack>
+                  <Bubble
+                    {...props}
+                    wrapperStyle={{
+                      right: {
+                        backgroundColor: Colors.Success[1],
+                      },
+                    }}
+                  />
+                  {hasUrl && message?.text && (
+                    <Stack paddingHorizontal={isCurrentUser ? 0 : 44} alignItems={isCurrentUser ? "flex-end" : "flex-start"}>
+                      <Stack maxWidth={280}>
+                        <ChatLinkPreview text={message.text} isCurrentUser={isCurrentUser} />
+                      </Stack>
+                    </Stack>
+                  )}
+                </Stack>
+              );
+            }}
+            parsePatterns={(linkStyle: TextStyle) => [
+              {
+                type: "url",
+                style: { ...linkStyle, textDecorationLine: "underline" },
+                onPress: (url: string) => Linking.openURL(url),
+              },
+              {
+                type: "email",
+                style: { ...linkStyle, textDecorationLine: "underline" },
+                onPress: (email: string) => Linking.openURL(`mailto:${email}`),
+              },
+              {
+                type: "phone",
+                style: { ...linkStyle, textDecorationLine: "underline" },
+                onPress: (phone: string) => Linking.openURL(`tel:${phone}`),
+              },
+            ]}
             loadEarlier={status === "CanLoadMore"}
             onLoadEarlier={() => loadMore(QUERY_LIMIT)}
             isLoadingEarlier={status === "LoadingMore"}
