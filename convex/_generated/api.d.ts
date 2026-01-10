@@ -11,6 +11,7 @@
 import type * as services_featureFlags from "../services/featureFlags.js";
 import type * as services_messages from "../services/messages.js";
 import type * as services_pushNotifications from "../services/pushNotifications.js";
+import type * as services_recordings from "../services/recordings.js";
 import type * as services_storage from "../services/storage.js";
 import type * as services_support from "../services/support.js";
 import type * as services_user from "../services/user.js";
@@ -20,30 +21,40 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+
+declare const fullApi: ApiFromModules<{
+  "services/featureFlags": typeof services_featureFlags;
+  "services/messages": typeof services_messages;
+  "services/pushNotifications": typeof services_pushNotifications;
+  "services/recordings": typeof services_recordings;
+  "services/storage": typeof services_storage;
+  "services/support": typeof services_support;
+  "services/user": typeof services_user;
+}>;
+
 /**
- * A utility for referencing Convex functions in your app's API.
+ * A utility for referencing Convex functions in your app's public API.
  *
  * Usage:
  * ```js
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-declare const fullApi: ApiFromModules<{
-  "services/featureFlags": typeof services_featureFlags;
-  "services/messages": typeof services_messages;
-  "services/pushNotifications": typeof services_pushNotifications;
-  "services/storage": typeof services_storage;
-  "services/support": typeof services_support;
-  "services/user": typeof services_user;
-}>;
-declare const fullApiWithMounts: typeof fullApi;
-
 export declare const api: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "public">
 >;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
 export declare const internal: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "internal">
 >;
 

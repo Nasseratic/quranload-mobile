@@ -1,4 +1,4 @@
-import { CheckmarkIcon, RejectedCrossIcon } from "assets/icons";
+import { CheckmarkIcon, RejectedCrossIcon, ClockIcon } from "assets/icons";
 import { Colors } from "constants/Colors";
 import GeneralConstants from "constants/GeneralConstants";
 import { StyleSheet, TouchableOpacity } from "react-native";
@@ -7,9 +7,14 @@ import { AssignmentStatusEnum, lessonStatusFromEnumToType } from "types/Lessons"
 interface Props {
   status: AssignmentStatusEnum;
   isDue?: boolean;
+  processingStatus?: "finalizing" | "processing";
 }
 
-const AssignmentStatusCheckbox = ({ status, isDue = false }: Props) => {
+const AssignmentStatusCheckbox = ({ status, isDue = false, processingStatus }: Props) => {
+  if (processingStatus) {
+    return <ClockIcon color={Colors.Warning[1]} width={18.5} height={18.5} />;
+  }
+
   return (
     <TouchableOpacity
       style={[

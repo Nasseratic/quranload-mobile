@@ -37,6 +37,7 @@ const english = {
   enableNotifications: "Enable Notifications",
   enableNotificationsDescription:
     "Get notified when you have new assignments or when your teacher sends you a feedback",
+  processing: "Processing...",
   recordingScreen: {
     deleteRecording: "Delete recording",
     deleteRecordingDescription: "Are you sure you want to delete this recording?",
@@ -54,6 +55,13 @@ const english = {
     discard: "Discard",
     uploadFailed: "Upload failed",
     retryUpload: "Retry upload",
+    resumeRecording: "Resume Recording?",
+    resumeRecordingDescription:
+      "You have an unfinished recording for this lesson. Would you like to continue?",
+    audioProcessingTitle: "Submission successful",
+    audioProcessingSubtitle: "Your audio is being processed.",
+    cancelSubmission: "Cancel Submission",
+    submissionCanceled: "Submission canceled - you can continue recording or submit again",
   },
   homeScreen: {
     readingTime: "Reading time per page in minutes",
@@ -212,6 +220,10 @@ const english = {
   image: "Image",
   audio: "Audio",
   audioRecordingPaused: "Audio recording paused",
+  uploadingFragments: "Uploading {{count}} fragment(s)...",
+  uploadingProgress: "Uploading {{uploaded}}/{{total}} ({{percentage}}%)",
+  pleaseDoNotCloseApp: "Please do not close the app",
+  resume: "Resume",
   invalid: "Invalid",
   readFromTo: "Read from page {{from}} to {{to}}, inclusive",
   chatList: {

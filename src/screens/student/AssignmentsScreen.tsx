@@ -4,7 +4,7 @@ import AssignmentItem from "components/AssignmentItem";
 import { FlatList } from "react-native";
 import { t } from "locales/config";
 import { AssignmentStatusEnum, lessonStatusFromEnumToType } from "types/Lessons";
-import { useAssignments } from "hooks/queries/assignments";
+import { useAssignmentsWithProcessingStatus } from "hooks/queries/useAssignmentsWithProcessingStatus";
 import { RootStackParamList } from "navigation/navigation";
 import { SafeView } from "components/SafeView";
 import { AppBar } from "components/AppBar";
@@ -40,7 +40,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Assignments">;
 const AssignmentsScreen = ({ route, navigation }: Props) => {
   const [selectedFilter, setSelectedFilter] = useState<AssignmentStatusEnum | null>(null);
 
-  const { assignments, isAssignmentsLoading } = useAssignments({
+  const { assignments, isAssignmentsLoading } = useAssignmentsWithProcessingStatus({
     status: selectedFilter,
     teamId: route.params.teamId,
   });
