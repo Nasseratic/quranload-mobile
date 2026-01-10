@@ -11,7 +11,7 @@ import { useMaybeUser } from "contexts/auth";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
-import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
+import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps, InputToolbar, InputToolbarProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
 import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
@@ -359,32 +359,40 @@ export const ChatScreen = () => {
     }
   };
 
+  const renderInputToolbar = (props: InputToolbarProps<IMessage>) => {
+    if (isRecorderVisible) {
+      return (
+        <ChatAudioRecorder
+          isVisible={isRecorderVisible}
+          onClose={() => setIsRecorderVisible(false)}
+          onSend={async ({ uri }) => {
+            const uploadedUri = await uploadChatMedia(uri, "audio");
+            if (uploadedUri && user) {
+              await onSend([
+                {
+                  _id: uploadedUri,
+                  user: {
+                    _id: user.id,
+                    name: user.fullName,
+                  },
+                  createdAt: new Date(),
+                  text: "",
+                  audio: uploadedUri,
+                },
+              ]);
+            }
+            setIsRecorderVisible(false);
+          }}
+        />
+      );
+    }
+    return <InputToolbar {...props} />;
+  };
+
   return (
     // UX TODO: Identify which messages are from the teacher (can be done using the avatar or the message sender name)
     // UX TODO: This might need to be done in the ChatListScreen as well?
     <SafeView f={1}>
-      <ChatAudioRecorder
-        isOpen={isRecorderVisible}
-        onClose={() => setIsRecorderVisible(false)}
-        onSend={async ({ uri }) => {
-          const uploadedUri = await uploadChatMedia(uri, "audio");
-          if (uploadedUri && user) {
-            await onSend([
-              {
-                _id: uploadedUri,
-                user: {
-                  _id: user.id,
-                  name: user.fullName,
-                },
-                createdAt: new Date(),
-                text: "",
-                audio: uploadedUri,
-              },
-            ]);
-          }
-          setIsRecorderVisible(false);
-        }}
-      />
       <AppBar
         title={title}
         rightComponent={
@@ -424,6 +432,7 @@ export const ChatScreen = () => {
             alwaysShowSend
             renderActions={renderActions}
             renderComposer={renderComposer}
+            renderInputToolbar={renderInputToolbar}
             renderChatFooter={renderChatFooter}
             renderMessageAudio={renderMessageAudio}
             renderUsernameOnMessage={!interlocutorId} // Show sender name only in team chats
