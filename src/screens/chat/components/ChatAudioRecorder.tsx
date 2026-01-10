@@ -65,7 +65,9 @@ export const ChatAudioRecorder = ({
           backgroundColor="white"
           gap="$4"
         >
-          {isOpen ? <Recorder onSubmit={onSend} onStatusChange={setRecordingState} /> : null}
+          {/* TODO: Rebuild ChatAudioRecorder from scratch */}
+          {/* {isOpen ? <Recorder onSubmit={onSend} onStatusChange={setRecordingState} /> : null} */}
+          {isOpen ? <Recorder onStatusChange={setRecordingState} /> : null}
         </Stack>
       </BottomSheetView>
     </BottomSheetModal>

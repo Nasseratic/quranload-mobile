@@ -1,12 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+} from "react-native";
+import LottieView from "lottie-react-native";
+import UploadingLottie from "assets/lottie/uploading.json";
+import ConfirmedLottie from "assets/lottie/confirmed.json";
 import {
   useAudioRecorder,
-  useAudioRecorderState,
   setAudioModeAsync,
   requestRecordingPermissionsAsync,
   getRecordingPermissionsAsync,
-  RecordingPresets,
   RecordingOptions,
   IOSOutputFormat,
   AudioQuality,
@@ -18,9 +27,15 @@ import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
 import * as Linking from "expo-linking";
 import Animated, {
   useAnimatedStyle,
+  useAnimatedProps,
+  useSharedValue,
   withSequence,
   withSpring,
   withTiming,
+  withDelay,
+  Easing,
+  FadeIn,
+  FadeOut,
 } from "react-native-reanimated";
 import { Colors } from "constants/Colors";
 import { Checkmark } from "components/icons/CheckmarkIcon";
@@ -28,100 +43,201 @@ import { CrossIcon } from "components/icons/CrossIcon";
 import * as Haptics from "expo-haptics";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { IconButton } from "components/buttons/IconButton";
+import { actionSheet } from "components/ActionSheet";
+import { OptionsIcon } from "components/icons/OptionsIcon";
 
-import { Stack, Text, XStack } from "tamagui";
+import { Stack, Text, XStack, Button } from "tamagui";
 import { sleep } from "utils/sleep";
-import {
-  eraseAudioRecordingsFromStorage,
-  getPersistentAudioRecordings,
-  persistAudioRecordings,
-} from "utils/persistAudioRecordings";
-import { concatAudioFragments } from "utils/concatAudioFragments";
 import { t } from "locales/config";
 import { useAppStatusEffect } from "hooks/useAppStatusEffect";
 import { IS_IOS } from "constants/GeneralConstants";
 import { toast } from "./Toast";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 import { Sentry } from "utils/sentry";
-import { throttleTrack, track } from "utils/tracking";
-import { 
-  uploadChunkToServer, 
-  finalizeRecording, 
-  checkServerHealth,
-  UploadType 
-} from "services/audioServerClient";
+import { throttleTrack } from "utils/tracking";
 import { useAuth } from "contexts/auth";
 import { AssignmentStatusEnum } from "types/Lessons";
+import { useRecordingSession, RecordingState } from "hooks/useRecordingSession";
 
-let currentRecordingDurationMillis = 0;
+// Only allowed module-level variable: reference to the active native audio recorder
 let currentRecording: AudioRecorder | null = null;
 
 const throttledTrack = throttleTrack(2000);
-
-// Session management for server-based recording
-let recordingSessionId: string | null = null;
-let chunkCounter = 0;
-let useServerForRecording = false;
-
-// Generate a unique session ID
-const generateSessionId = () => {
-  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-};
 
 const cleanCurrentRecording = async () => {
   if (currentRecording) {
     const stopPromise = currentRecording.stop();
     currentRecording = null;
-    currentRecordingDurationMillis = 0;
     await stopPromise;
   }
-};
-type Recording = {
-  uri: string;
-  durationInMs: number;
-};
-let recordings: Recording[] = [];
-
-const cleanRecordings = async ({ lessonId }: { lessonId?: string }) => {
-  recordings = [];
-  recordingSessionId = null;
-  chunkCounter = 0;
-  await Promise.all([
-    cleanCurrentRecording(),
-    lessonId ? eraseAudioRecordingsFromStorage({ lessonId }) : Promise.resolve(),
-  ]);
 };
 
 const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
+
+// Animated TextInput for percentage display
+// Must whitelist 'text' prop for Reanimated to animate it
+Animated.addWhitelistedNativeProps({ text: true });
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const METERING_CHECK_INTERVAL = 300;
 
-export type RecordingState = "idle" | "recording" | "paused" | "submitting";
+export { RecordingState };
 
 export const Recorder = ({
   lessonId,
-  onSubmit,
   onStatusChange,
-  onFinished,
   onServerSubmitSuccess,
   uploadType,
   studentId,
   lessonState,
 }: {
   lessonId?: string;
-  onSubmit: (params: { uri: string; duration: number }) => Promise<any>;
-  onFinished?: (params: { uri: string; duration: number }) => void;
   onServerSubmitSuccess?: (filename?: string) => void | Promise<void>;
-  onStatusChange?: (status: RecordingState, recordings: Recording[]) => void;
-  uploadType?: UploadType;
+  onStatusChange?: (status: RecordingState, totalRecordingDuration: number) => void;
+  uploadType?: "feedback" | "submission";
   studentId?: string;
   lessonState?: AssignmentStatusEnum;
 }) => {
-  const { accessToken } = useAuth();
-  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const { user } = useAuth();
   const permissionStatusRef = useRef<PermissionStatus | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const statusUpdateListenerRef = useRef<any>(null);
+
+  // Track current fragment duration locally for UI display
+  const [currentFragmentDurationMs, setCurrentFragmentDurationMs] = useState(0);
+
+  // Modal visibility with minimum display time
+  const [showModal, setShowModal] = useState(false);
+  const modalShowTimeRef = useRef<number | null>(null);
+
+  // Animated percentage display using Reanimated
+  const animatedPercentage = useSharedValue(0);
+
+  // Use the Convex-based recording session hook
+  const {
+    sessionId,
+    status: recordingState,
+    totalDuration,
+    fragmentsCount,
+    pendingUploads,
+    isProcessingAudio,
+    startSession,
+    pauseSession,
+    resumeSession,
+    submitSession,
+    cancelSubmission,
+    discardSession,
+    queueFragment,
+    recoverableSession,
+    recoverSession,
+    dismissRecovery,
+  } = useRecordingSession({
+    userId: user?.id || "unknown",
+    lessonId,
+    studentId,
+    uploadType: uploadType === "feedback" ? "feedback_submission" : "lesson_submission",
+    lessonState,
+    onServerSubmitSuccess,
+  });
+
+  // Calculate target percentage for animation
+  const targetPercentage = Math.round(
+    (fragmentsCount / (fragmentsCount + pendingUploads || 1)) * 100
+  );
+
+  const animatedProps = useAnimatedProps(() => ({
+    text: `${Math.round(animatedPercentage.value)}%`,
+  }));
+
+  // Drive the animation when modal shows or target changes
+  useEffect(() => {
+    if (showModal) {
+      animatedPercentage.value = withTiming(targetPercentage, { duration: 2000 });
+    } else {
+      animatedPercentage.value = 0;
+    }
+  }, [showModal, targetPercentage]);
+
+  // Track completion phase: 'uploading' | 'completed'
+  const [completionPhase, setCompletionPhase] = useState<"uploading" | "completed">("uploading");
+
+  // Animated values for completion state transition
+  const completionTextOpacity = useSharedValue(0);
+  const completionTextTranslateY = useSharedValue(20);
+
+  useEffect(() => {
+    // When uploads complete but modal is still showing, transition to completion phase
+    if (showModal && pendingUploads === 0 && completionPhase === "uploading") {
+      // First animate to 100%
+      animatedPercentage.value = withTiming(100, { duration: 500 });
+
+      // Then transition to completion phase after a short delay
+      const timer = setTimeout(() => {
+        setCompletionPhase("completed");
+        // Animate in the completion text
+        completionTextOpacity.value = withDelay(
+          300,
+          withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) })
+        );
+        completionTextTranslateY.value = withDelay(
+          300,
+          withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) })
+        );
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+
+    // Reset when modal closes
+    if (!showModal) {
+      setCompletionPhase("uploading");
+      completionTextOpacity.value = 0;
+      completionTextTranslateY.value = 20;
+    }
+  }, [showModal, pendingUploads, completionPhase]);
+
+  // Animated styles for completion text
+  const completionTextStyle = useAnimatedStyle(() => ({
+    opacity: completionTextOpacity.value,
+    transform: [{ translateY: completionTextTranslateY.value }],
+  }));
+
+  // Manage modal visibility with minimum display time
+  // Modal only shows when submitting AND has pending uploads
+  const shouldShowModal = recordingState === "submitting" && pendingUploads > 0;
+
+  useEffect(() => {
+    const MINIMUM_MODAL_DISPLAY_TIME = 2500; // 2.5 seconds
+    const COMPLETION_DISPLAY_TIME = 4000; // 4 seconds to show completion state (Lottie ~3s + read time)
+
+    if (shouldShowModal) {
+      // Start showing modal
+      if (!showModal) {
+        setShowModal(true);
+        modalShowTimeRef.current = Date.now();
+      }
+    } else if (showModal) {
+      // Condition no longer met, check if we should hide modal
+      const timeShown = modalShowTimeRef.current ? Date.now() - modalShowTimeRef.current : 0;
+      const remainingMinTime = Math.max(0, MINIMUM_MODAL_DISPLAY_TIME - timeShown);
+
+      // Add time for completion animation and reading (600ms transition + 4s completion display)
+      const totalRemainingTime = Math.max(remainingMinTime, 600 + COMPLETION_DISPLAY_TIME);
+
+      const timer = setTimeout(() => {
+        setShowModal(false);
+        modalShowTimeRef.current = null;
+      }, totalRemainingTime);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowModal, showModal]);
+
+  // Notify parent of status changes (since removed from hook)
+  useEffect(() => {
+    onStatusChange?.(recordingState, totalDuration);
+  }, [recordingState, totalDuration, onStatusChange]);
+
+  // Computed display duration (Convex total + current fragment)
+  const displayDurationSeconds = Math.round((totalDuration + currentFragmentDurationMs) / 1000);
 
   // Recording options configuration
   const recordingOptions: RecordingOptions = {
@@ -130,6 +246,7 @@ export const Recorder = ({
     numberOfChannels: 2,
     bitRate: IS_IOS ? 128000 : 108000,
     isMeteringEnabled: true,
+    web: {},
     ios: {
       extension: ".m4a",
       outputFormat: IOSOutputFormat.MPEG4AAC,
@@ -148,25 +265,43 @@ export const Recorder = ({
   };
 
   // Create the audio recorder using the hook
-  const audioRecorder = useAudioRecorder(recordingOptions, (status) => {
-    if (status.hasError) {
-      console.error("Recording error:", status.error);
+  const audioRecorder = useAudioRecorder(recordingOptions);
+
+  // Track if we've shown the recovery dialog to avoid showing it multiple times
+  const hasShownRecoveryDialogRef = useRef(false);
+
+  // Show recovery dialog if there's an incomplete session
+  useEffect(() => {
+    if (recoverableSession && !hasShownRecoveryDialogRef.current) {
+      hasShownRecoveryDialogRef.current = true;
+      Alert.alert(
+        t("recordingScreen.resumeRecording"),
+        t("recordingScreen.resumeRecordingDescription"),
+        [
+          {
+            text: t("discard"),
+            style: "destructive",
+            onPress: dismissRecovery,
+          },
+          {
+            text: t("resume"),
+            onPress: () => {
+              recoverSession();
+              // Don't auto-start recording, let user press record button
+            },
+          },
+        ]
+      );
     }
-  });
+  }, [recoverableSession, dismissRecovery, recoverSession]);
 
-  const recorderState = useAudioRecorderState(audioRecorder);
-
-  const handleStatusChange = useCallback(
-    (status: RecordingState) => {
-      setRecordingState(status);
-      onStatusChange?.(status, recordings);
-    },
-    [onStatusChange]
-  );
   async function startRecording() {
     let isDenied = permissionStatusRef.current === PermissionStatus.DENIED;
-    
-    if (!permissionStatusRef.current || permissionStatusRef.current === PermissionStatus.UNDETERMINED) {
+
+    if (
+      !permissionStatusRef.current ||
+      permissionStatusRef.current === PermissionStatus.UNDETERMINED
+    ) {
       const { status, granted } = await requestRecordingPermissionsAsync();
       permissionStatusRef.current = status;
       if (!granted) isDenied = true;
@@ -189,195 +324,100 @@ export const Recorder = ({
     }
 
     try {
-      if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      handleStatusChange("recording");
-
-      // Only create new session if we don't have one (fresh start)
-      if (!recordingSessionId) {
-        const serverAvailable = await checkServerHealth();
-        if (serverAvailable) {
-          recordingSessionId = generateSessionId();
-          useServerForRecording = true;
-          console.log("Using server for recording, session:", recordingSessionId);
-        } else {
-          useServerForRecording = false;
-          console.log("Server not available, using local recording");
-        }
+      // Start or resume session
+      if (!sessionId) {
+        await startSession();
       } else {
-        console.log("Resuming existing session:", recordingSessionId);
+        await resumeSession();
       }
 
       await startRecordingWithAutoFragmenting();
     } catch (err) {
       toast.reportError(err, t("recordingScreen.failedToStartRecording"));
-      handleStatusChange("idle");
     }
   }
 
   const cutRecording = async () => {
     if (!audioRecorder) return;
-    if (!currentRecording) return; // No active recording to cut
-    
+    if (!currentRecording) return;
+
     const status = audioRecorder.getStatus();
-    const durationInMs = Math.max(status.durationMillis, currentRecordingDurationMillis);
-    if (status.durationMillis < currentRecordingDurationMillis) {
+    const durationInMs = status.durationMillis;
+
+    if (durationInMs === 0) {
       Sentry.captureEvent({
-        message: "Recording duration missmatch, currentRecordingDurationMillis is greater",
-        extra: { durationMillis: status.durationMillis, currentRecordingDurationMillis },
+        message: "Recording duration is 0 when cutting",
       });
     }
+
     const uri = audioRecorder.uri;
     await audioRecorder.stop();
     currentRecording = null;
-    currentRecordingDurationMillis = 0;
-    
-    if (uri) {
-      recordings.push({
-        uri,
-        durationInMs,
-      });
-      if (lessonId) persistAudioRecordings({ lessonId, recordings });
-      
-      // Upload chunk to server if using server mode
-      if (useServerForRecording && recordingSessionId) {
-        try {
-          await uploadChunkToServer({
-            sessionId: recordingSessionId,
-            chunkIndex: chunkCounter++,
-            fileUri: uri,
-            token: accessToken || undefined,
-          });
-          console.log(`Uploaded chunk ${chunkCounter - 1} to server`);
-        } catch (error) {
-          console.error("Failed to upload chunk to server:", error);
-          // If upload fails, we still have local copies as fallback
-          toast.show({ 
-            title: "Server upload failed, will use local processing", 
-            status: "Warning" 
-          });
-          useServerForRecording = false;
-        }
-      }
+
+    // Reset current fragment duration
+    setCurrentFragmentDurationMs(0);
+
+    if (uri && sessionId) {
+      // Queue fragment for upload (handles offline resilience)
+      queueFragment(uri, durationInMs);
     }
   };
 
-  const pauseRecording = async () => {
+  const handlePauseRecording = async () => {
     if (!audioRecorder) return;
-    handleStatusChange("paused");
     await cutRecording();
+    await pauseSession();
   };
 
   const discardRecording = useCallback(async () => {
-    await cleanRecordings({ lessonId });
-    handleStatusChange("idle");
-    if (IS_IOS)
+    await cleanCurrentRecording();
+    setCurrentFragmentDurationMs(0);
+    await discardSession();
+    if (IS_IOS) {
       await setAudioModeAsync({
         allowsRecording: false,
         playsInSilentMode: false,
       });
-  }, [lessonId]);
+    }
+  }, [discardSession]);
 
   const submitRecording = async () => {
     if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
     try {
-      handleStatusChange("submitting");
       await cutRecording();
-
-      let uri: string;
-      let durationInSec: number;
-
-      // Always concatenate locally first to get a URI for the audio player
-      const concatenatedUri = await concatAudioFragments(
-        recordings.map(({ uri }) => uri)
-      );
-      
-      if (!concatenatedUri) {
-        throw new Error("Failed to concatenate audio fragments");
-      }
-      
-      uri = concatenatedUri;
-      durationInSec =
-        Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000) ?? 0;
-
-      // Try server-based finalization first
-      if (useServerForRecording && recordingSessionId) {
-        try {
-          console.log("Finalizing recording on server...");
-          
-          const result = await finalizeRecording({ 
-            sessionId: recordingSessionId,
-            uploadType,
-            lessonId,
-            studentId,
-            duration: durationInSec,
-            lessonState,
-          });
-          console.log("Finalized recording on server, result:", result);
-          
-          // Server handled the complete submission flow
-          await cleanRecordings({ lessonId });
-          handleStatusChange("idle");
-          
-          // Trigger callback to let RecordScreen know submission succeeded
-          await onServerSubmitSuccess?.(result.filename);
-          
-          return; // Exit early since server handled everything
-        } catch (error) {
-          console.error("Server finalization failed, falling back to local:", error);
-          toast.show({ 
-            title: "Server processing failed, using local processing", 
-            status: "Warning" 
-          });
-          // Fall through to local submission
-        }
-      }
-
-      // Fallback to local submission
-
-      try {
-        await cleanRecordings({ lessonId });
-
-        await onSubmit({
-          uri,
-          duration: durationInSec || 0,
-        });
-
-        handleStatusChange("idle");
-      } catch {
-        if (lessonId) {
-          persistAudioRecordings({
-            lessonId,
-            recordings: [
-              {
-                uri,
-                durationInMs: durationInSec * 1000,
-              },
-            ],
-          });
-        }
-      } finally {
-        onFinished?.({ uri, duration: durationInSec });
-      }
+      await submitSession();
     } catch (error) {
-      console.error("Error submitting recording:", error);
       Sentry.captureException(error);
     } finally {
-      handleStatusChange("paused");
-      if (IS_IOS)
+      if (IS_IOS) {
         await setAudioModeAsync({
           allowsRecording: false,
           playsInSilentMode: false,
         });
+      }
+    }
+  };
+
+  const handleCancelSubmission = async () => {
+    try {
+      await cancelSubmission();
+      toast.show({
+        title: t("recordingScreen.submissionCanceled"),
+        status: "Success",
+      });
+    } catch (error) {
+      Sentry.captureException(error);
     }
   };
 
   async function startRecordingWithAutoFragmenting() {
-    if (IS_IOS)
+    if (IS_IOS) {
       await setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
       });
+    }
 
     if (currentRecording) {
       await cleanCurrentRecording();
@@ -398,7 +438,7 @@ export const Recorder = ({
         if (status.durationMillis === 0) {
           throttledTrack("RecordingStatusChangedWith0Duration");
         }
-        currentRecordingDurationMillis = status.durationMillis;
+        setCurrentFragmentDurationMs(status.durationMillis);
       }
     }, 100);
 
@@ -412,9 +452,8 @@ export const Recorder = ({
           const status = currentRecording.getStatus();
           if (!status.isRecording) break;
           if (status.metering && status.metering < -40) {
-            console.log("Metering is too low, stopping recording");
             break;
-          } else console.log("Metering is", status.metering);
+          }
           await sleep(METERING_CHECK_INTERVAL);
         }
       })(),
@@ -436,12 +475,12 @@ export const Recorder = ({
   }
 
   useAppStatusEffect({
-    onBackground: pauseRecording,
+    onBackground: handlePauseRecording,
   });
 
   useOnAudioPlayCallback(() => {
     if (recordingState === "recording") {
-      pauseRecording();
+      handlePauseRecording();
       toast.show({ title: t("audioRecordingPaused"), status: "Warning" });
     }
   });
@@ -453,43 +492,24 @@ export const Recorder = ({
     });
   }, []);
 
+  // Cleanup on unmount only - use ref to avoid stale closure issues
+  const sessionIdRef = useRef(sessionId);
   useEffect(() => {
-    if (lessonId) {
-      getPersistentAudioRecordings({ lessonId }).then((savedRecordings) => {
-        if (savedRecordings.length > 0) {
-          recordings = savedRecordings;
-          handleStatusChange("paused");
-          console.log("Restored recordings", savedRecordings);
-        }
-      });
-    }
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
+  useEffect(() => {
     return () => {
-      cutRecording().then(() => {
-        if (recordings.length === 0) return;
-        Alert.alert(
-          t("recordingScreen.discardRecording"),
-          t("recordingScreen.discardRecordingDescription"),
-          [
-            {
-              text: t("cancel"),
-              style: "cancel",
-              onPress: () => {
-                recordings = [];
-              },
-            },
-            {
-              text: t("discard"),
-              style: "destructive",
-              onPress: discardRecording,
-            },
-          ]
-        );
-      });
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
+      // Only show alert if there's an active session when unmounting
+      // Note: We don't auto-discard - the session will be recoverable on next mount
     };
-  }, [lessonId]);
+  }, []);
 
   const handleDiscard = () => {
-    pauseRecording();
+    handlePauseRecording();
     Alert.alert(
       t("recordingScreen.discardRecording"),
       t("recordingScreen.discardRecordingDescription"),
@@ -508,49 +528,141 @@ export const Recorder = ({
     );
   };
 
-  if (recordingState === "submitting")
+  // Upload Progress Modal Component - with uploading and completion states
+  const uploadModal = showModal ? (
+    <Modal visible transparent>
+      <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
+        {completionPhase === "uploading" ? (
+          <>
+            <LottieView
+              source={UploadingLottie}
+              autoPlay
+              loop={true}
+              style={{ width: 180, height: 180 }}
+            />
+            <Stack gap={16} ai="center">
+              <AnimatedTextInput
+                animatedProps={animatedProps}
+                editable={false}
+                defaultValue="0%"
+                style={{
+                  color: "whitesmoke",
+                  fontSize: 32,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  width: 120,
+                }}
+              />
+              <Text fontSize={12} color="$gray9Light">
+                Uploading {fragmentsCount}/{fragmentsCount + pendingUploads} audio fragments
+              </Text>
+              <Text fontSize={16} color="$gray8Light">
+                {t("pleaseDoNotCloseApp")}
+              </Text>
+            </Stack>
+          </>
+        ) : (
+          <>
+            <LottieView
+              source={ConfirmedLottie}
+              autoPlay
+              loop={false}
+              style={{ width: 200, height: 200 }}
+            />
+            <Animated.View style={[{ alignItems: "center", gap: 12 }, completionTextStyle]}>
+              <Text fontSize={24} fontWeight="600" color="white" textAlign="center">
+                {t("recordingUploaded")}
+              </Text>
+              <Text fontSize={16} color="$gray8Light" textAlign="center">
+                {t("youMayCloseApp")}
+              </Text>
+            </Animated.View>
+          </>
+        )}
+      </Stack>
+    </Modal>
+  ) : null;
+
+  // When submitting: show modal if uploading, otherwise show inline UI
+  if (recordingState === "submitting") {
+    // If modal is showing (including minimum display time), show only the modal
+    if (showModal) {
+      return uploadModal;
+    }
+
+    // No pending uploads - show inline UI for processing state
     return (
-      <Stack>
-        <ActivityIndicator />
+      <Stack ai="center" gap="$2.5" px="$4">
+        <Stack ai="center">
+          <Text fontSize={14} fontWeight="600" color={Colors.Success[1]} textAlign="center">
+            {t("recordingScreen.audioProcessingTitle")}
+          </Text>
+          <Text fontSize={12} color="$gray10" textAlign="center">
+            {t("recordingScreen.audioProcessingSubtitle")}
+          </Text>
+        </Stack>
+
+        <Button size="$2.5" onPress={handleCancelSubmission}>
+          <Text color="$red9" fontSize={11} fontWeight="500" opacity={0.8}>
+            {t("recordingScreen.cancelSubmission")}
+          </Text>
+        </Button>
       </Stack>
     );
+  }
 
   return (
-    <XStack jc="center" ai="center" gap="$8">
-      <View>
-        {recordingState !== "idle" && (
-          <IconButton size="sm" bg={Colors.Black[2]} icon={<CrossIcon />} onPress={handleDiscard} />
-        )}
-      </View>
+    <>
+      <XStack jc="center" ai="center" gap="$8">
+        <View>
+          {recordingState !== "idle" && (
+            <IconButton
+              size="sm"
+              bg={Colors.Black[2]}
+              icon={<CrossIcon />}
+              onPress={handleDiscard}
+            />
+          )}
+        </View>
 
-      <TouchableOpacity
-        onPress={
-          recordingState === "recording"
-            ? () => {
-                if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                pauseRecording();
-              }
-            : startRecording
-        }
-        activeOpacity={0.9}
-      >
-        <RecordingButton recordingState={recordingState} />
-      </TouchableOpacity>
-      <View>
-        {recordingState !== "idle" && (
-          <IconButton
-            size="sm"
-            bg={Colors.Success[1]}
-            icon={<Checkmark />}
-            onPress={submitRecording}
+        <TouchableOpacity
+          onPress={
+            recordingState === "recording"
+              ? () => {
+                  if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  handlePauseRecording();
+                }
+              : startRecording
+          }
+          activeOpacity={0.9}
+        >
+          <RecordingButton
+            recordingState={recordingState}
+            durationSeconds={displayDurationSeconds}
           />
-        )}
-      </View>
-    </XStack>
+        </TouchableOpacity>
+        <View>
+          {recordingState !== "idle" && (
+            <IconButton
+              size="sm"
+              bg={Colors.Success[1]}
+              icon={<Checkmark />}
+              onPress={submitRecording}
+            />
+          )}
+        </View>
+      </XStack>
+    </>
   );
 };
 
-const RecordingButton = ({ recordingState }: { recordingState: RecordingState }) => {
+const RecordingButton = ({
+  recordingState,
+  durationSeconds,
+}: {
+  recordingState: RecordingState;
+  durationSeconds: number;
+}) => {
   const isExpanded = recordingState === "recording" || recordingState === "paused";
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -582,32 +694,13 @@ const RecordingButton = ({ recordingState }: { recordingState: RecordingState })
       {recordingState === "recording" ? <RecordingPauseIcon /> : <RecordIcon />}
 
       <Animated.View style={[animatedTextStyle]}>
-        {recordingState !== "idle" && <RecordingTimer isRunning={recordingState === "recording"} />}
+        {recordingState !== "idle" && <RecordingTimer seconds={durationSeconds} />}
       </Animated.View>
     </Animated.View>
   );
 };
 
-const RecordingTimer = ({ isRunning }: { isRunning: boolean }) => {
-  const [seconds, setSeconds] = useState(
-    Math.round(recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) / 1000)
-  );
-
-  useEffect(() => {
-    if (isRunning) {
-      const interval = setInterval(() => {
-        setSeconds(
-          Math.round(
-            (recordings.reduce((acc, { durationInMs }) => acc + durationInMs, 0) +
-              +currentRecordingDurationMillis) /
-              1000
-          )
-        );
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isRunning]);
-
+const RecordingTimer = ({ seconds }: { seconds: number }) => {
   return (
     <View style={styles.recordingTimerContainer}>
       <View

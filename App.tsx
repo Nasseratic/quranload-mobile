@@ -68,8 +68,8 @@ function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-          <BottomSheetModalProvider>
-            <ConvexProvider>
+          <ConvexProvider>
+            <BottomSheetModalProvider>
               <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                   <RootToastContainer />
@@ -77,8 +77,8 @@ function App() {
                 </AuthProvider>
               </QueryClientProvider>
               <RootActionSheetContainer />
-            </ConvexProvider>
-          </BottomSheetModalProvider>
+            </BottomSheetModalProvider>
+          </ConvexProvider>
         </TamaguiProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

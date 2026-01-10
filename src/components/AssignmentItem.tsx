@@ -6,11 +6,11 @@ import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "./AssignmentStatusCheckbox";
 import { intlFormat } from "utils/formatTime";
 import { t } from "locales/config";
-import { Assignment } from "hooks/queries/assignments";
+import { AssignmentWithProcessing } from "hooks/queries/useAssignmentsWithProcessingStatus";
 import { endOfDay, isPast } from "date-fns";
 
 interface Props {
-  assignment: Assignment;
+  assignment: AssignmentWithProcessing;
   onPress: () => void;
 }
 
@@ -20,6 +20,7 @@ const AssignmentItem = ({ assignment, onPress }: Props) => {
       <AssignmentStatusCheckbox
         status={assignment.status}
         isDue={isPast(endOfDay(new Date(assignment.endDate ?? assignment.startDate!)))}
+        processingStatus={assignment.processingStatus}
       />
       {assignment.startPage && assignment.endPage ? (
         <Typography style={styles.assignmentText} type="Body">

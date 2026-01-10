@@ -27,6 +27,7 @@ export const userInfo = {
   currentAppVersion: v.string(),
   platform: v.string(),
   lastSeen: v.number(),
+  authToken: v.optional(v.string()),
 };
 
 export default defineSchema({
@@ -34,6 +35,12 @@ export default defineSchema({
     name: v.union(v.literal("chat"), v.literal("inAppEnrolment"), v.literal("supportChat")),
     enabled: v.boolean(),
   }),
+  userTeam: defineTable({
+    userId: v.string(),
+    teamId: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_teamId", ["teamId"]),
   messages: defineTable({
     ...messageInitializer,
     senderId: v.string(),
@@ -58,4 +65,50 @@ export default defineSchema({
     .index("by_archived", ["archived"]),
   contactSupportInfo: defineTable(contactSupportInfo),
   userInfo: defineTable(userInfo).index("by_userId", ["userId"]),
+
+  // Recording sessions for audio fragment management with R2
+  recordingSessions: defineTable({
+    sessionId: v.string(),
+    userId: v.string(),
+    status: v.union(
+      v.literal("recording"),
+      v.literal("paused"),
+      v.literal("finalizing"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    isActive: v.boolean(), // Whether this is an active/recoverable session
+    uploadType: v.optional(
+      v.union(
+        v.literal("media_only"),
+        v.literal("lesson_submission"),
+        v.literal("feedback_submission")
+      )
+    ),
+    lessonId: v.optional(v.string()),
+    studentId: v.optional(v.string()),
+    lessonState: v.optional(v.number()),
+    totalDuration: v.number(), // in milliseconds
+    fragmentsCount: v.number(),
+    finalAudioKey: v.optional(v.string()), // R2 key for concatenated audio
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_userId_status", ["userId", "status"])
+    .index("by_userId_lessonId_active", ["userId", "lessonId", "isActive"]),
+
+  // Audio fragments stored in R2
+  audioFragments: defineTable({
+    sessionId: v.string(),
+    fragmentIndex: v.number(),
+    r2Key: v.string(), // R2 object key
+    duration: v.number(), // in milliseconds
+    uploadedAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_session_and_index", ["sessionId", "fragmentIndex"]),
 });

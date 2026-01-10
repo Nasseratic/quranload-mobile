@@ -29,6 +29,8 @@ const danish: typeof english = {
   read: "Læs",
   cancel: "Fortryd",
   delete: "Slet",
+  archive: "Arkiv",
+  unarchive: "Fjern arkiv",
   feedback: "Feedback",
   handedIn: "Afleveret",
   notHandedIn: "Ikke afleveret",
@@ -37,6 +39,7 @@ const danish: typeof english = {
   enableNotifications: "Slå notifikationer til",
   enableNotificationsDescription:
     "Få en notifikation, når du har en ny lektie eller når din underviser sender dig feedback",
+  processing: "Behandler...",
   recordingScreen: {
     deleteRecording: "Slet optagelse",
     deleteRecordingDescription: "Er du sikker på, at du vil slette denne optagelse?",
@@ -54,6 +57,13 @@ const danish: typeof english = {
     failedToSubmitRecording: "Kunne ikke indsende optagelse",
     discard: "Kassér",
     retryUpload: "Prøv igen",
+    resumeRecording: "Genoptag optagelse?",
+    resumeRecordingDescription: "Du har en ufærdig optagelse til denne lektion. Vil du fortsætte?",
+    audioProcessingTitle: "Indsendelse gennemført!",
+    audioProcessingSubtitle: "Din lyd behandles og vil være tilgængelig om få minutter.",
+    cancelSubmission: "Annuller indsendelse",
+    submissionCanceled:
+      "Indsendelse annulleret - du kan fortsætte med at optage eller indsende igen",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
@@ -200,6 +210,12 @@ const danish: typeof english = {
   you_are_on_latest_version: "Du har den nyeste version",
   audio: "Lydoptagelse",
   audioRecordingPaused: "Lydoptagelsen er sat på pause",
+  uploadingFragments: "Uploader {{count}} fragment(er)...",
+  uploadingProgress: "Uploader {{uploaded}}/{{total}} ({{percentage}}%)",
+  pleaseDoNotCloseApp: "Luk ikke appen",
+  recordingUploaded: "Optagelse uploadet",
+  youMayCloseApp: "Du kan lukke appen nu",
+  resume: "Genoptag",
   image: "Billede",
   invalid: "Ugyldig",
   retry: "Prøv igen",
@@ -234,6 +250,8 @@ const danish: typeof english = {
     title: "Support",
     welcomeMessage: "Assalamu Alaikum! Hvordan kan vi hjælpe dig i dag?",
     placeholder: "Skriv din besked...",
+    archived: "Samtale arkiveret",
+    unarchived: "Samtale fjernet fra arkiv",
     bottomSheet: {
       title: "🐛 Ny Support Chat",
       description:
@@ -244,6 +262,10 @@ const danish: typeof english = {
   },
   chat: {
     imageUploadFailed: "Billedupload mislykkedes. Prøv igen.",
+  },
+  feedbackNotification: {
+    title: "Ny feedback fra din underviser",
+    bodyPrefix: "Din underviser har givet feedback på",
   },
 };
 export default danish;

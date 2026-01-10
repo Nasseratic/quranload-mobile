@@ -136,6 +136,41 @@ export const send = mutation({
         // ignore as most likely the user doesn't have push token
       }
     }
+
+    if (to.type === "team") {
+      // Get all users in the team
+      const teamMembers = await ctx.db
+        .query("userTeam")
+        .withIndex("by_teamId", (q) => q.eq("teamId", to.teamId))
+        .collect();
+
+      // Send notifications to all team members except the sender
+      await Promise.all(
+        teamMembers
+          .filter((member) => member.userId !== senderId)
+          .map(async (member) => {
+            try {
+              await pushNotifications.sendPushNotification(ctx, {
+                userId: member.userId,
+                notification: {
+                  title: `New message from ${messages[0]?.senderName || "Someone"}`,
+                  body: messages[0]?.text || mediaBody,
+                  data: {
+                    type: "team_message",
+                    message: {
+                      ...messages[0],
+                      ...to,
+                      senderId,
+                    },
+                  },
+                },
+              });
+            } catch {
+              // ignore as most likely the user doesn't have push token
+            }
+          })
+      );
+    }
   },
 });
 
@@ -360,6 +395,32 @@ export const getSupportConversationStatus = query({
     return {
       archived: conversation?.archived ?? false,
     };
+  },
+});
+
+export const notifyFeedbackReceived = mutation({
+  args: {
+    studentId: v.string(),
+    lessonId: v.string(),
+    title: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      await pushNotifications.sendPushNotification(ctx, {
+        userId: args.studentId,
+        notification: {
+          title: args.title,
+          body: args.body,
+          data: {
+            type: "feedback",
+            lessonId: args.lessonId,
+          },
+        },
+      });
+    } catch {
+      // ignore as most likely the user doesn't have push token
+    }
   },
 });
 

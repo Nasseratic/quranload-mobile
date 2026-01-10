@@ -28,6 +28,10 @@ const patterns = {
       receiverId: P.string.optional(),
     },
   },
+  feedback: {
+    type: "feedback",
+    lessonId: P.string,
+  },
 };
 
 type DeepLinkParams = P.infer<typeof patterns>[keyof typeof patterns];
@@ -47,6 +51,13 @@ const useHandleDeepLink = () => {
             ? message.senderName
             : user?.teams.find((team) => team.id == message.teamId)?.name ?? "",
         });
+      })
+      .with(patterns.feedback, () => {
+        // Navigate to Assignments screen with user's active team
+        const activeTeam = user?.teams.find((team) => team.isActive);
+        if (activeTeam) {
+          navigate("Assignments", { teamId: activeTeam.id });
+        }
       })
       .with(patterns.resetPassword, (params) => navigate("ResetPassword", params))
       .with(patterns.confirmEmail, (params) => navigate("ConfirmEmailScreen", params))
