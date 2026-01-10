@@ -8,11 +8,13 @@ import { PaperClipIcon } from "components/icons/PaperClipIcon";
 import { SendIcon } from "components/icons/SendIcon";
 import { Colors } from "constants/Colors";
 import { useMaybeUser } from "contexts/auth";
+import * as Linking from "expo-linking";
 import { RootStackParamList } from "navigation/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
-import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps } from "react-native-gifted-chat";
+import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform, TextStyle } from "react-native";
+import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps, MessageText } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
+import { ChatLinkPreview, extractFirstUrl } from "screens/chat/components/ChatLinkPreview";
 import { useChatMediaUploader } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
@@ -490,6 +492,39 @@ export const ChatScreen = () => {
                 }}
               />
             )}
+            renderMessageText={(props) => {
+              const message = props.currentMessage;
+              const hasUrl = message?.text ? extractFirstUrl(message.text) : null;
+              const isCurrentUser = message?.user?._id === userId || (isSupportChat && !!supportUserId && message?.user?._id === "support");
+
+              return (
+                <Stack>
+                  <MessageText {...props} />
+                  {hasUrl && message?.text && (
+                    <Stack paddingHorizontal={10} paddingBottom={6}>
+                      <ChatLinkPreview text={message.text} isCurrentUser={isCurrentUser} />
+                    </Stack>
+                  )}
+                </Stack>
+              );
+            }}
+            parsePatterns={(linkStyle: TextStyle) => [
+              {
+                type: "url",
+                style: { ...linkStyle, textDecorationLine: "underline" },
+                onPress: (url: string) => Linking.openURL(url),
+              },
+              {
+                type: "email",
+                style: { ...linkStyle, textDecorationLine: "underline" },
+                onPress: (email: string) => Linking.openURL(`mailto:${email}`),
+              },
+              {
+                type: "phone",
+                style: { ...linkStyle, textDecorationLine: "underline" },
+                onPress: (phone: string) => Linking.openURL(`tel:${phone}`),
+              },
+            ]}
             loadEarlier={status === "CanLoadMore"}
             onLoadEarlier={() => loadMore(QUERY_LIMIT)}
             isLoadingEarlier={status === "LoadingMore"}
