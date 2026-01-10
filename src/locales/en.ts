@@ -223,6 +223,8 @@ const english = {
   uploadingFragments: "Uploading {{count}} fragment(s)...",
   uploadingProgress: "Uploading {{uploaded}}/{{total}} ({{percentage}}%)",
   pleaseDoNotCloseApp: "Please do not close the app",
+  recordingUploaded: "Recording uploaded",
+  youMayCloseApp: "You may close the app now",
   resume: "Resume",
   invalid: "Invalid",
   readFromTo: "Read from page {{from}} to {{to}}, inclusive",
