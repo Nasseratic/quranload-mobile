@@ -263,5 +263,9 @@ const danish: typeof english = {
   chat: {
     imageUploadFailed: "Billedupload mislykkedes. Prøv igen.",
   },
+  feedbackNotification: {
+    title: "Ny feedback fra din underviser",
+    bodyPrefix: "Din underviser har givet feedback på",
+  },
 };
 export default danish;
