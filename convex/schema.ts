@@ -98,6 +98,7 @@ export default defineSchema({
     .index("by_sessionId", ["sessionId"])
     .index("by_userId", ["userId"])
     .index("by_status", ["status"])
+    .index("by_userId_status", ["userId", "status"])
     .index("by_userId_lessonId_active", ["userId", "lessonId", "isActive"]),
 
   // Audio fragments stored in R2

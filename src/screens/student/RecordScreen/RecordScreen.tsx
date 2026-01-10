@@ -44,6 +44,7 @@ import UploadingLottie from "assets/lottie/uploading.json";
 import { Sentry } from "utils/sentry";
 import { track } from "utils/tracking";
 import { sleep } from "utils/sleep";
+import { useRecordingSession } from "hooks/useRecordingSession";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -107,6 +108,15 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
       queryClient.invalidateQueries({ queryKey: [LESSON_DETAILS_QUERY_KEY, lessonId] });
     },
+  });
+
+  // Recording session hook for upload progress tracking
+  const recordingSession = useRecordingSession({
+    userId: user?.id ?? "",
+    lessonId,
+    studentId,
+    uploadType: isTeacher ? "feedback_submission" : "lesson_submission",
+    lessonState: isTeacher ? AssignmentStatusEnum.accepted : undefined,
   });
 
   const onDelete = () => {
@@ -369,8 +379,6 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
                 item === "RECORDER" ? (
                   <Recorder
                     lessonId={lessonId}
-                    onFinished={(audio) => setAudio(audio)}
-                    onSubmit={handleRecordingSubmit}
                     onServerSubmitSuccess={async (filename) => {
                       if (filename) {
                         // Server returned filename, update params immediately
@@ -471,26 +479,6 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             </XStack>
           </Stack>
         </Stack>
-      )}
-      {(studentSubmission.isPending || teacherFeedback.isPending) && (
-        <Modal visible transparent>
-          <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
-            <LottieView
-              source={UploadingLottie}
-              autoPlay
-              loop={true}
-              style={{ width: 180, height: 180 }}
-            />
-            <Stack gap={8} ai="center">
-              <Text color="whitesmoke" fontSize={20}>
-                Uploading...
-              </Text>
-              <Text fontSize={16} color="$gray8Light">
-                Please do not close the app
-              </Text>
-            </Stack>
-          </Stack>
-        </Modal>
       )}
     </View>
   );

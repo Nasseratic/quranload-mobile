@@ -29,6 +29,8 @@ const danish: typeof english = {
   read: "Læs",
   cancel: "Fortryd",
   delete: "Slet",
+  archive: "Arkiv",
+  unarchive: "Fjern arkiv",
   feedback: "Feedback",
   handedIn: "Afleveret",
   notHandedIn: "Ikke afleveret",
@@ -37,6 +39,7 @@ const danish: typeof english = {
   enableNotifications: "Slå notifikationer til",
   enableNotificationsDescription:
     "Få en notifikation, når du har en ny lektie eller når din underviser sender dig feedback",
+  processing: "Behandler...",
   recordingScreen: {
     deleteRecording: "Slet optagelse",
     deleteRecordingDescription: "Er du sikker på, at du vil slette denne optagelse?",
@@ -58,6 +61,9 @@ const danish: typeof english = {
     resumeRecordingDescription: "Du har en ufærdig optagelse til denne lektion. Vil du fortsætte?",
     audioProcessingTitle: "Indsendelse gennemført!",
     audioProcessingSubtitle: "Din lyd behandles og vil være tilgængelig om få minutter.",
+    cancelSubmission: "Annuller indsendelse",
+    submissionCanceled:
+      "Indsendelse annulleret - du kan fortsætte med at optage eller indsende igen",
   },
   homeScreen: {
     readingTime: "Læsetid pr. side i minutter",
@@ -205,6 +211,8 @@ const danish: typeof english = {
   audio: "Lydoptagelse",
   audioRecordingPaused: "Lydoptagelsen er sat på pause",
   uploadingFragments: "Uploader {{count}} fragment(er)...",
+  uploadingProgress: "Uploader {{uploaded}}/{{total}} ({{percentage}}%)",
+  pleaseDoNotCloseApp: "Luk ikke appen",
   resume: "Genoptag",
   image: "Billede",
   invalid: "Ugyldig",
@@ -240,6 +248,8 @@ const danish: typeof english = {
     title: "Support",
     welcomeMessage: "Assalamu Alaikum! Hvordan kan vi hjælpe dig i dag?",
     placeholder: "Skriv din besked...",
+    archived: "Samtale arkiveret",
+    unarchived: "Samtale fjernet fra arkiv",
     bottomSheet: {
       title: "🐛 Ny Support Chat",
       description:

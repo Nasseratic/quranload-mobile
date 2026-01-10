@@ -89,6 +89,7 @@ export interface UseRecordingSessionReturn {
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
   submitSession: () => Promise<void>;
+  cancelSubmission: () => Promise<void>;
   discardSession: () => Promise<void>;
   queueFragment: (uri: string, duration: number) => void;
 
@@ -307,6 +308,32 @@ export function useRecordingSession(
     }
   }, [activeSessionId, updateSessionStatusMutation]);
 
+  // Cancel submission and return to paused state
+  const cancelSubmission = useCallback(async (): Promise<void> => {
+    if (!activeSessionId) {
+      toast.show({
+        title: "No recording session found",
+        status: "Error",
+      });
+      return;
+    }
+
+    try {
+      await updateSessionStatusMutation({
+        sessionId: activeSessionId,
+        status: "paused",
+      });
+      // Fragment uploads will continue in background
+      // User can resume recording or submit again later
+    } catch (error) {
+      toast.show({
+        title: "Failed to cancel submission",
+        status: "Error",
+      });
+      Sentry.captureException(error);
+    }
+  }, [activeSessionId, updateSessionStatusMutation]);
+
   // Discard the current session
   const discardSession = useCallback(async (): Promise<void> => {
     const sessionToDiscard = activeSessionId;
@@ -379,6 +406,7 @@ export function useRecordingSession(
     pauseSession,
     resumeSession,
     submitSession,
+    cancelSubmission,
     discardSession,
     queueFragment,
     recoverableSession,

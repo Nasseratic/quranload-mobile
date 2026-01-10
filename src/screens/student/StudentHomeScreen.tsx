@@ -9,7 +9,10 @@ import { BookIcon, ClockIcon } from "assets/icons";
 import { Loader } from "components/Loader";
 import { i18n, t } from "locales/config";
 import AuthContext from "contexts/auth";
-import { useAssignments, useLatestAssignmentForTeam } from "hooks/queries/assignments";
+import {
+  useAssignments,
+  useLatestAssignmentWithProcessingForTeam,
+} from "hooks/queries/assignments";
 import { AssignmentStatusEnum } from "types/Lessons";
 import UserHeader from "components/UserHeader";
 import { useQuery } from "@tanstack/react-query";
@@ -81,7 +84,7 @@ export const StudentHomeScreen = ({ navigation }: Props) => {
 };
 
 const StudentTeamOverview = ({ team }: { team: Team }) => {
-  const latestTeamAssignment = useLatestAssignmentForTeam(team.id);
+  const latestTeamAssignment = useLatestAssignmentWithProcessingForTeam(team.id);
   const navigation = useNavigation();
   return (
     <Stack gap="$4" key={team.id}>

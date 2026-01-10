@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+} from "react-native";
+import LottieView from "lottie-react-native";
+import UploadingLottie from "assets/lottie/uploading.json";
 import {
   useAudioRecorder,
   setAudioModeAsync,
@@ -16,6 +26,8 @@ import { RecordingPauseIcon } from "components/icons/RecordingPauseIcon";
 import * as Linking from "expo-linking";
 import Animated, {
   useAnimatedStyle,
+  useAnimatedProps,
+  useSharedValue,
   withSequence,
   withSpring,
   withTiming,
@@ -26,8 +38,10 @@ import { CrossIcon } from "components/icons/CrossIcon";
 import * as Haptics from "expo-haptics";
 import { formatAudioDuration } from "utils/formatAudioDuration";
 import { IconButton } from "components/buttons/IconButton";
+import { actionSheet } from "components/ActionSheet";
+import { OptionsIcon } from "components/icons/OptionsIcon";
 
-import { Stack, Text, XStack } from "tamagui";
+import { Stack, Text, XStack, Button } from "tamagui";
 import { sleep } from "utils/sleep";
 import { t } from "locales/config";
 import { useAppStatusEffect } from "hooks/useAppStatusEffect";
@@ -55,6 +69,11 @@ const cleanCurrentRecording = async () => {
 
 const RECORDING_INTERVAL = 60 * 1000 * 2;
 const RECORDING_INTERVAL_TOLERANCE = 15 * 1000;
+
+// Animated TextInput for percentage display
+// Must whitelist 'text' prop for Reanimated to animate it
+Animated.addWhitelistedNativeProps({ text: true });
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const METERING_CHECK_INTERVAL = 300;
 
 export { RecordingState };
@@ -68,8 +87,6 @@ export const Recorder = ({
   lessonState,
 }: {
   lessonId?: string;
-  onSubmit?: (params: { uri: string; duration: number }) => Promise<unknown>;
-  onFinished?: (params: { uri: string; duration: number }) => void;
   onServerSubmitSuccess?: (filename?: string) => void | Promise<void>;
   onStatusChange?: (status: RecordingState, totalRecordingDuration: number) => void;
   uploadType?: "feedback" | "submission";
@@ -83,17 +100,26 @@ export const Recorder = ({
   // Track current fragment duration locally for UI display
   const [currentFragmentDurationMs, setCurrentFragmentDurationMs] = useState(0);
 
+  // Modal visibility with minimum display time
+  const [showModal, setShowModal] = useState(false);
+  const modalShowTimeRef = useRef<number | null>(null);
+
+  // Animated percentage display using Reanimated
+  const animatedPercentage = useSharedValue(0);
+
   // Use the Convex-based recording session hook
   const {
     sessionId,
     status: recordingState,
     totalDuration,
+    fragmentsCount,
     pendingUploads,
     isProcessingAudio,
     startSession,
     pauseSession,
     resumeSession,
     submitSession,
+    cancelSubmission,
     discardSession,
     queueFragment,
     recoverableSession,
@@ -107,6 +133,71 @@ export const Recorder = ({
     lessonState,
     onServerSubmitSuccess,
   });
+
+  // Calculate target percentage for animation
+  const targetPercentage = Math.round(
+    (fragmentsCount / (fragmentsCount + pendingUploads || 1)) * 100
+  );
+
+  const animatedProps = useAnimatedProps(() => ({
+    text: `${Math.round(animatedPercentage.value)}%`,
+  }));
+
+  // Drive the animation when modal shows or target changes
+  useEffect(() => {
+    if (showModal) {
+      animatedPercentage.value = withTiming(targetPercentage, { duration: 2000 });
+    } else {
+      animatedPercentage.value = 0;
+    }
+  }, [showModal, targetPercentage]);
+
+  // Track when uploads complete (hit 100%) and add 0.5s delay before closing
+  const [delayingClose, setDelayingClose] = useState(false);
+
+  useEffect(() => {
+    // When uploads complete but modal is still showing, start the 100% hang delay
+    if (showModal && pendingUploads === 0 && !delayingClose) {
+      setDelayingClose(true);
+      // Animate to 100% and then wait 0.5s
+      animatedPercentage.value = withTiming(100, { duration: 500 });
+    }
+
+    // Reset when modal closes
+    if (!showModal) {
+      setDelayingClose(false);
+    }
+  }, [showModal, pendingUploads, delayingClose]);
+
+  // Manage modal visibility with minimum display time of 2.5 seconds
+  // Modal only shows when submitting AND has pending uploads
+  const shouldShowModal = recordingState === "submitting" && pendingUploads > 0;
+
+  useEffect(() => {
+    const MINIMUM_MODAL_DISPLAY_TIME = 2500; // 2.5 seconds
+    const HANG_AT_100_DURATION = 500; // 0.5 seconds to hang at 100%
+
+    if (shouldShowModal) {
+      // Start showing modal
+      if (!showModal) {
+        setShowModal(true);
+        modalShowTimeRef.current = Date.now();
+      }
+    } else if (showModal) {
+      // Condition no longer met, check if we should hide modal
+      const timeShown = modalShowTimeRef.current ? Date.now() - modalShowTimeRef.current : 0;
+      const remainingMinTime = Math.max(0, MINIMUM_MODAL_DISPLAY_TIME - timeShown);
+
+      // Add extra time to hang at 100% (animation duration 500ms + hang time 500ms)
+      const totalRemainingTime = Math.max(remainingMinTime, 500 + HANG_AT_100_DURATION);
+
+      const timer = setTimeout(() => {
+        setShowModal(false);
+        modalShowTimeRef.current = null;
+      }, totalRemainingTime);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowModal, showModal]);
 
   // Notify parent of status changes (since removed from hook)
   useEffect(() => {
@@ -276,6 +367,18 @@ export const Recorder = ({
     }
   };
 
+  const handleCancelSubmission = async () => {
+    try {
+      await cancelSubmission();
+      toast.show({
+        title: t("recordingScreen.submissionCanceled"),
+        status: "Success",
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+    }
+  };
+
   async function startRecordingWithAutoFragmenting() {
     if (IS_IOS) {
       await setAudioModeAsync({
@@ -393,73 +496,110 @@ export const Recorder = ({
     );
   };
 
+  // Upload Progress Modal Component - extracted for reuse
+  const uploadModal = showModal ? (
+    <Modal visible transparent>
+      <Stack f={1} gap={64} jc="center" ai="center" bg="rgba(0,0,0,0.7)">
+        <LottieView
+          source={UploadingLottie}
+          autoPlay
+          loop={true}
+          style={{ width: 180, height: 180 }}
+        />
+        <Stack gap={16} ai="center">
+          <AnimatedTextInput
+            animatedProps={animatedProps}
+            editable={false}
+            defaultValue="0%"
+            style={{
+              color: "whitesmoke",
+              fontSize: 32,
+              fontWeight: "bold",
+              textAlign: "center",
+              width: 120,
+            }}
+          />
+          <Text fontSize={12} color="$gray9Light">
+            Uploading {fragmentsCount}/{fragmentsCount + pendingUploads} audio fragments
+          </Text>
+          <Text fontSize={16} color="$gray8Light">
+            {t("pleaseDoNotCloseApp")}
+          </Text>
+        </Stack>
+      </Stack>
+    </Modal>
+  ) : null;
+
+  // When submitting: show modal if uploading, otherwise show inline UI
   if (recordingState === "submitting") {
-    // Show success message when all uploads are done and audio is processing
-    if (isProcessingAudio) {
-      return (
-        <Stack ai="center" gap="$2" p="$2" px="$4">
-          <Text fontSize={16} fontWeight="600" color={Colors.Success[1]} textAlign="center">
+    // If modal is showing (including minimum display time), show only the modal
+    if (showModal) {
+      return uploadModal;
+    }
+
+    // No pending uploads - show inline UI for processing state
+    return (
+      <Stack ai="center" gap="$2.5" px="$4">
+        <Stack ai="center">
+          <Text fontSize={14} fontWeight="600" color={Colors.Success[1]} textAlign="center">
             {t("recordingScreen.audioProcessingTitle")}
           </Text>
-          <Text fontSize={14} color="$gray10" textAlign="center">
+          <Text fontSize={12} color="$gray10" textAlign="center">
             {t("recordingScreen.audioProcessingSubtitle")}
           </Text>
         </Stack>
-      );
-    }
-    // Still uploading fragments
-    return (
-      <Stack ai="center" gap="$3" p="$4">
-        <ActivityIndicator />
-        <Text fontSize={12} color="$gray10">
-          {t("uploadingFragments", { count: pendingUploads })}
-        </Text>
+
+        <Button size="$2.5" onPress={handleCancelSubmission}>
+          <Text color="$red9" fontSize={11} fontWeight="500" opacity={0.8}>
+            {t("recordingScreen.cancelSubmission")}
+          </Text>
+        </Button>
       </Stack>
     );
   }
 
   return (
-    <XStack jc="center" ai="center" gap="$8">
-      {/* Pending uploads indicator */}
-      {pendingUploads > 0 && (
-        <XStack ai="center" gap="$2" position="absolute" top={-30} left={0} right={0} jc="center">
-          <ActivityIndicator size="small" color={Colors.Primary[1]} />
-          <Text fontSize={12} color="$gray10">
-            {t("uploadingFragments", { count: pendingUploads })}
-          </Text>
-        </XStack>
-      )}
+    <>
+      <XStack jc="center" ai="center" gap="$8">
+        <View>
+          {recordingState !== "idle" && (
+            <IconButton
+              size="sm"
+              bg={Colors.Black[2]}
+              icon={<CrossIcon />}
+              onPress={handleDiscard}
+            />
+          )}
+        </View>
 
-      <View>
-        {recordingState !== "idle" && (
-          <IconButton size="sm" bg={Colors.Black[2]} icon={<CrossIcon />} onPress={handleDiscard} />
-        )}
-      </View>
-
-      <TouchableOpacity
-        onPress={
-          recordingState === "recording"
-            ? () => {
-                if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                handlePauseRecording();
-              }
-            : startRecording
-        }
-        activeOpacity={0.9}
-      >
-        <RecordingButton recordingState={recordingState} durationSeconds={displayDurationSeconds} />
-      </TouchableOpacity>
-      <View>
-        {recordingState !== "idle" && (
-          <IconButton
-            size="sm"
-            bg={Colors.Success[1]}
-            icon={<Checkmark />}
-            onPress={submitRecording}
+        <TouchableOpacity
+          onPress={
+            recordingState === "recording"
+              ? () => {
+                  if (IS_IOS) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  handlePauseRecording();
+                }
+              : startRecording
+          }
+          activeOpacity={0.9}
+        >
+          <RecordingButton
+            recordingState={recordingState}
+            durationSeconds={displayDurationSeconds}
           />
-        )}
-      </View>
-    </XStack>
+        </TouchableOpacity>
+        <View>
+          {recordingState !== "idle" && (
+            <IconButton
+              size="sm"
+              bg={Colors.Success[1]}
+              icon={<Checkmark />}
+              onPress={submitRecording}
+            />
+          )}
+        </View>
+      </XStack>
+    </>
   );
 };
 

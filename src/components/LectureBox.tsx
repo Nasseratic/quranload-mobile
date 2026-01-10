@@ -7,13 +7,14 @@ import { ChevronRightIcon } from "assets/icons";
 import AssignmentStatusCheckbox from "components/AssignmentStatusCheckbox";
 import { Team } from "types/User";
 import { Assignment } from "hooks/queries/assignments";
+import { AssignmentWithProcessing } from "hooks/queries/useAssignmentsWithProcessingStatus";
 import { useNavigation } from "@react-navigation/native";
 import { t } from "locales/config";
 import { endOfDay, isPast } from "date-fns";
 
 interface Props {
   team: Team;
-  latestOpenAssignment?: Assignment;
+  latestOpenAssignment?: AssignmentWithProcessing;
   onLecturePress: () => void;
   pendingAssignments: boolean;
 }
@@ -52,6 +53,7 @@ const LectureBox = ({ team, latestOpenAssignment, onLecturePress, pendingAssignm
               latestOpenAssignment.endDate != null &&
               isPast(endOfDay(new Date(latestOpenAssignment.endDate)))
             }
+            processingStatus={latestOpenAssignment.processingStatus}
           />
 
           <Typography

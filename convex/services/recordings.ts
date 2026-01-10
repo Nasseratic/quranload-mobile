@@ -425,3 +425,36 @@ export const failSession = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Get processing sessions for a user
+ * Returns a map of lessonId -> status for sessions in "finalizing" or "processing" state
+ */
+export const getProcessingSessionsForUser = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    // Use compound index to query only relevant statuses
+    const [finalizingSessions, processingSessions] = await Promise.all([
+      ctx.db
+        .query("recordingSessions")
+        .withIndex("by_userId_status", (q) =>
+          q.eq("userId", args.userId).eq("status", "finalizing")
+        )
+        .collect(),
+      ctx.db
+        .query("recordingSessions")
+        .withIndex("by_userId_status", (q) =>
+          q.eq("userId", args.userId).eq("status", "processing")
+        )
+        .collect(),
+    ]);
+
+    const sessions = [...finalizingSessions, ...processingSessions];
+    return sessions
+      .filter((s) => s.lessonId)
+      .reduce((acc, s) => {
+        if (s.lessonId) acc[s.lessonId] = s.status;
+        return acc;
+      }, {} as Record<string, string>);
+  },
+});
