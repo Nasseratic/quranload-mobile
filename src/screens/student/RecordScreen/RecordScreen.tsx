@@ -45,6 +45,7 @@ import { Sentry } from "utils/sentry";
 import { track } from "utils/tracking";
 import { sleep } from "utils/sleep";
 import { useRecordingSession } from "hooks/useRecordingSession";
+import { useAuthenticatedAudioUrl } from "hooks/useAuthenticatedAudioUrl";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Record">;
 
@@ -76,6 +77,21 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     queryFn: () => feedbackId && fetchFeedbackUrl({ lessonId, feedbackId, studentId }),
     enabled: !!feedbackId,
   });
+
+  // Download authenticated audio files to local cache
+  // Azure URLs require Bearer token headers which expo-audio doesn't support,
+  // so we download them first and play from local cache
+  const {
+    localUri: submissionLocalUri,
+    isLoading: isDownloadingSubmission,
+    progress: submissionProgress,
+  } = useAuthenticatedAudioUrl(submissionUrl);
+
+  const {
+    localUri: feedbackLocalUri,
+    isLoading: isDownloadingFeedback,
+    progress: feedbackProgress,
+  } = useAuthenticatedAudioUrl(feedbackUrl);
 
   const attachments = useMemo(
     () => assignment.attachments?.map((attachment) => attachment.id).filter(isNotNullish),
@@ -256,23 +272,37 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     () =>
       [
         // if teacher show submission by default else show feedback
+        // Use local cached URIs for Azure recordings (downloaded with auth headers)
         match(role)
-          .with("Teacher", () => submissionUrl)
-          .with("Student", () => feedbackUrl)
+          .with("Teacher", () => submissionLocalUri)
+          .with("Student", () => feedbackLocalUri)
           .exhaustive(),
         match(role)
-          .with("Teacher", () => feedbackUrl ?? audio?.uri ?? "RECORDER")
-          .with("Student", () => submissionUrl ?? audio?.uri ?? "RECORDER")
+          .with("Teacher", () => feedbackLocalUri ?? audio?.uri ?? "RECORDER")
+          .with("Student", () => submissionLocalUri ?? audio?.uri ?? "RECORDER")
           .exhaustive(),
       ].filter(isNotNullish),
-    [audio, submissionUrl, feedbackUrl, role]
+    [audio, submissionLocalUri, feedbackLocalUri, role]
   );
 
   const shouldAllowDeleteForIndex = match(role)
     .with("Teacher", () => carouselIndex === 1 && (!!feedbackId || !!audio))
     .with("Student", () => carouselIndex === carouselItems.length - 1 && (!!recordingId || !!audio))
     .exhaustive();
-  if ((!!recordingId && isLoadingSubmissionUrl) || (!!feedbackId && isLoadingFeedbackUrl)) {
+
+  // Show loading while fetching URLs or downloading audio files
+  const isLoadingAudio =
+    (!!recordingId && (isLoadingSubmissionUrl || isDownloadingSubmission)) ||
+    (!!feedbackId && (isLoadingFeedbackUrl || isDownloadingFeedback));
+
+  // Calculate download progress for display
+  const downloadProgress = isDownloadingSubmission
+    ? submissionProgress
+    : isDownloadingFeedback
+    ? feedbackProgress
+    : 0;
+
+  if (isLoadingAudio) {
     return (
       <Stack f={1}>
         <XStack mt={insets.top} gap="$2" ai="center">
@@ -280,9 +310,14 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             <ChevronLeftIcon color={Colors.Black[1]} />
           </Square>
         </XStack>
-        <Square f={1}>
+        <Stack f={1} jc="center" ai="center" gap="$2">
           <ActivityIndicator size="large" />
-        </Square>
+          {downloadProgress > 0 && (
+            <Text fontSize={14} color="$gray10">
+              {downloadProgress}%
+            </Text>
+          )}
+        </Stack>
       </Stack>
     );
   }
