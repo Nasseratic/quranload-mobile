@@ -84,11 +84,13 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
   const {
     localUri: submissionLocalUri,
     isLoading: isDownloadingSubmission,
+    progress: submissionProgress,
   } = useAuthenticatedAudioUrl(submissionUrl);
 
   const {
     localUri: feedbackLocalUri,
     isLoading: isDownloadingFeedback,
+    progress: feedbackProgress,
   } = useAuthenticatedAudioUrl(feedbackUrl);
 
   const attachments = useMemo(
@@ -293,6 +295,13 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
     (!!recordingId && (isLoadingSubmissionUrl || isDownloadingSubmission)) ||
     (!!feedbackId && (isLoadingFeedbackUrl || isDownloadingFeedback));
 
+  // Calculate download progress for display
+  const downloadProgress = isDownloadingSubmission
+    ? submissionProgress
+    : isDownloadingFeedback
+    ? feedbackProgress
+    : 0;
+
   if (isLoadingAudio) {
     return (
       <Stack f={1}>
@@ -301,9 +310,14 @@ export const RecordScreen: FunctionComponent<Props> = ({ route, navigation }) =>
             <ChevronLeftIcon color={Colors.Black[1]} />
           </Square>
         </XStack>
-        <Square f={1}>
+        <Stack f={1} jc="center" ai="center" gap="$2">
           <ActivityIndicator size="large" />
-        </Square>
+          {downloadProgress > 0 && (
+            <Text fontSize={14} color="$gray10">
+              {downloadProgress}%
+            </Text>
+          )}
+        </Stack>
       </Stack>
     );
   }
