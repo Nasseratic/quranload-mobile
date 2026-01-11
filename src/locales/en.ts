@@ -260,7 +260,9 @@ const english = {
   },
   chat: {
     imageUploadFailed: "Image upload failed. Please try again.",
+    mediaUploadFailed: "Media upload failed. Please try again.",
   },
+  video: "Video",
   feedbackNotification: {
     title: "New feedback from your teacher",
     bodyPrefix: "Your teacher has provided feedback on",

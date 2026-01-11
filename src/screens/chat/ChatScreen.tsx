@@ -13,7 +13,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { ActivityIndicator, Clipboard, TouchableOpacity, ActionSheetIOS, Platform } from "react-native";
 import { GiftedChat, Bubble, IMessage, Send, Composer, SendProps, InputToolbar, InputToolbarProps } from "react-native-gifted-chat";
 import { View, XStack, Card, Circle, Image, ScrollView, Stack, Text, Separator } from "tamagui";
-import { useChatMediaUploader } from "hooks/useMediaPicker";
+import { useChatMediaUploader, MediaItem } from "hooks/useMediaPicker";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { CrossIcon } from "components/icons/CrossIcon";
 import { ImageViewer, ImageViewerRef, ImageWrapper } from "react-native-reanimated-viewer";
@@ -30,6 +30,7 @@ import { isNotNullish } from "utils/notNullish";
 import { toast } from "components/Toast";
 import { OptionsIcon } from "components/icons/OptionsIcon";
 import { MediaImage } from "components/Image";
+import { VideoPlayer } from "components/VideoPlayer";
 
 // Extended message type that includes media key for lazy URL resolution
 type ChatMessage = IMessage & {
@@ -118,7 +119,10 @@ export const ChatScreen = () => {
   const imageViewerRef = useRef<ImageViewerRef>(null);
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
-  const { pickImage, images, removeImage, upload, isUploading } = useChatMediaUploader();
+  // Allow videos only in support chat
+  const { pickMedia, mediaItems, removeMedia, upload, isUploading, images } = useChatMediaUploader({
+    allowVideos: isSupportChat,
+  });
 
   if (!teamId && !interlocutorId && !supportChat) {
     throw Error("teamId, interlocutorId, or supportChat must be provided");
@@ -152,13 +156,13 @@ export const ChatScreen = () => {
             type: "direct" as const,
             receiverId: interlocutorId!,
           })),
-        messages: messages.map(({ text, audio, image, user }) => ({
+        messages: messages.map(({ text, audio, image, video, user }: IMessage & { video?: string }) => ({
           text,
           senderName: user.name,
           receiverName: params.title,
           // Store the R2 key - URLs are resolved when fetching messages
-          mediaKey: image ?? audio,
-          mediaType: audio ? "audio" : image ? "image" : undefined,
+          mediaKey: video ?? image ?? audio,
+          mediaType: video ? "video" : audio ? "audio" : image ? "image" : undefined,
           isSystem: false,
         })),
       });
@@ -176,7 +180,7 @@ export const ChatScreen = () => {
   );
 
   const renderSend = ({ onSend, text, sendButtonProps, ...props }: SendProps<IMessage>) => {
-    const isTextOrImages = text || images.length > 0;
+    const isTextOrMedia = text || mediaItems.length > 0;
     return (
       <Send
         {...props}
@@ -184,30 +188,30 @@ export const ChatScreen = () => {
           ...sendButtonProps,
           disabled: isUploading,
           onPress: async () => {
-            if (!isTextOrImages) {
+            if (!isTextOrMedia) {
               return setIsRecorderVisible(true);
             }
-            if (images.length > 0) {
-              const uploadedImages = await upload();
-              const validUploadedImages = uploadedImages.filter(isNotNullish);
-              if (validUploadedImages.length === 0) {
+            if (mediaItems.length > 0) {
+              const uploadedMedia = await upload();
+              const validUploadedMedia = uploadedMedia.filter(isNotNullish);
+              if (validUploadedMedia.length === 0) {
                 // All uploads failed
-                toast.show({ status: "Error", title: t("chat.imageUploadFailed") });
+                toast.show({ status: "Error", title: t("chat.mediaUploadFailed") });
                 return;
               }
 
-              const lastImage = validUploadedImages[validUploadedImages.length - 1];
-              const restImages = validUploadedImages.slice(0, validUploadedImages.length - 1);
-              onSend?.(
-                [
-                  ...restImages.map((image) => ({ image })),
-                  {
-                    text: text?.trim(),
-                    image: lastImage,
-                  },
-                ],
-                true
-              );
+              // Build messages for each media item
+              const mediaMessages = validUploadedMedia.map((media, index) => {
+                const isLast = index === validUploadedMedia.length - 1;
+                return {
+                  // For images, use 'image' field; for videos, use 'video' field
+                  ...(media.type === "image" ? { image: media.key } : { video: media.key }),
+                  // Include text only with the last media item
+                  text: isLast ? text?.trim() : undefined,
+                };
+              });
+
+              onSend?.(mediaMessages, true);
               onSend?.([], true);
             } else {
               onSend?.({ text: text?.trim() }, true);
@@ -218,7 +222,7 @@ export const ChatScreen = () => {
         <Stack pr="$3" h={32} jc="center">
           {isUploading ? (
             <ActivityIndicator size="small" color="black" />
-          ) : isTextOrImages ? (
+          ) : isTextOrMedia ? (
             <SendIcon size={30} />
           ) : (
             <RecordIcon color="#000" size={28} />
@@ -231,7 +235,7 @@ export const ChatScreen = () => {
   const renderActions = () => {
     return (
       <Stack pl="$3">
-        <IconButton onPress={pickImage} icon={<PaperClipIcon size={28} />} size="xs" />
+        <IconButton onPress={pickMedia} icon={<PaperClipIcon size={28} />} size="xs" />
       </Stack>
     );
   };
@@ -252,7 +256,18 @@ export const ChatScreen = () => {
     return <AudioPlayer mediaKey={props.currentMessage.audio} isVisible={true} isCompact width={250} />;
   };
 
-  // Render attached images
+  const renderMessageVideo = (props: { currentMessage: IMessage }) => {
+    const message = props.currentMessage as ChatMessage;
+    if (!message.video || message.mediaType !== "video") return null;
+    // video field contains mediaKey from R2 storage
+    return (
+      <Stack m={4}>
+        <VideoPlayer mediaKey={message.video} width={200} height={200} borderRadius={16} />
+      </Stack>
+    );
+  };
+
+  // Render attached media (images and videos)
   const renderChatFooter = () => (
     <View gap="$2" marginBottom={5}>
       <ScrollView
@@ -266,22 +281,26 @@ export const ChatScreen = () => {
         showsHorizontalScrollIndicator={false}
       >
         <XStack gap="$2">
-          {images?.map((image, index) => (
+          {mediaItems?.map((item, index) => (
             <Stack ov="visible" key={index}>
-              <ImageWrapper
-                viewerRef={imageViewerRef}
-                index={index}
-                source={{ uri: image }}
-                style={{
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: "#e5e5e5",
-                  height: 60,
-                  width: 60,
-                }}
-              >
-                <Image height={60} width={60} borderRadius="$2" source={{ uri: image }} />
-              </ImageWrapper>
+              {item.type === "image" ? (
+                <ImageWrapper
+                  viewerRef={imageViewerRef}
+                  index={index}
+                  source={{ uri: item.uri }}
+                  style={{
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: "#e5e5e5",
+                    height: 60,
+                    width: 60,
+                  }}
+                >
+                  <Image height={60} width={60} borderRadius="$2" source={{ uri: item.uri }} />
+                </ImageWrapper>
+              ) : (
+                <VideoPlayer uri={item.uri} width={60} height={60} borderRadius={8} />
+              )}
               <Circle
                 position="absolute"
                 right={-5}
@@ -292,7 +311,7 @@ export const ChatScreen = () => {
                 pressStyle={{
                   opacity: 0.5,
                 }}
-                onPress={() => removeImage(image)}
+                onPress={() => removeMedia(item.uri)}
               >
                 <CrossIcon width={16} height={16} />
               </Circle>
@@ -410,13 +429,15 @@ export const ChatScreen = () => {
         </Stack>
       ) : (
         <Fragment>
-          {/* ImageViewer for footer/upload images */}
+          {/* ImageViewer for footer/upload images (only images, not videos) */}
           <ImageViewer
             ref={imageViewerRef}
-            data={images.map((image) => ({
-              key: image,
-              source: { uri: image },
-            }))}
+            data={mediaItems
+              .filter((item) => item.type === "image")
+              .map((item) => ({
+                key: item.uri,
+                source: { uri: item.uri },
+              }))}
           />
 
           <GiftedChat
@@ -435,6 +456,7 @@ export const ChatScreen = () => {
             renderInputToolbar={renderInputToolbar}
             renderChatFooter={renderChatFooter}
             renderMessageAudio={renderMessageAudio}
+            renderMessageVideo={renderMessageVideo}
             renderUsernameOnMessage={!interlocutorId} // Show sender name only in team chats
             renderAvatarOnTop // Render avatars at the top of consecutive messages, rather than the bottom
             showAvatarForEveryMessage={false} // One avatar for consecutive messages from the same user on the same day
@@ -525,7 +547,8 @@ const mapMessageToGiftedChatMessage = (
   // Include mediaKey for lazy URL resolution in render components
   mediaKey: message.mediaKey ?? undefined,
   mediaType: message.mediaType ?? undefined,
-  // Set image/audio to mediaKey so GiftedChat knows to render the media component
+  // Set image/audio/video to mediaKey so GiftedChat knows to render the media component
   ...(message.mediaType === "image" && message.mediaKey ? { image: message.mediaKey } : {}),
   ...(message.mediaType === "audio" && message.mediaKey ? { audio: message.mediaKey } : {}),
+  ...(message.mediaType === "video" && message.mediaKey ? { video: message.mediaKey } : {}),
 });

@@ -112,7 +112,9 @@ export const send = mutation({
       messages?.[0]?.mediaKey && messages?.[0]?.mediaType
         ? messages[0].mediaType === "image"
           ? `📷 Image`
-          : `🎙️ Audio`
+          : messages[0].mediaType === "video"
+            ? `🎬 Video`
+            : `🎙️ Audio`
         : undefined;
 
     if (to.type === "direct") {
