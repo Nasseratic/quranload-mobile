@@ -308,13 +308,11 @@ export const ChatAudioRecorder = ({
         <>
           {/* Cancel Button */}
           <IconButton
+            icon={<CrossIcon color="#666" />}
             size="xs"
             bg={Colors.Black[4]}
             onPress={discardRecording}
-            testID="chat-recorder-cancel"
-          >
-            <CrossIcon color="#666" />
-          </IconButton>
+          />
 
           {/* Timer Display with Animated Dot */}
           <XStack ai="center" gap="$2" flex={1} jc="center">
@@ -335,13 +333,11 @@ export const ChatAudioRecorder = ({
 
           {/* Stop Button */}
           <IconButton
+            icon={<StopIcon color="#fff" size={18} />}
             size="xs"
             bg={Colors.Error[1]}
             onPress={stopRecording}
-            testID="chat-recorder-stop"
-          >
-            <StopIcon color="#fff" size={18} />
-          </IconButton>
+          />
         </>
       )}
 
@@ -350,13 +346,11 @@ export const ChatAudioRecorder = ({
         <>
           {/* Discard Button */}
           <IconButton
+            icon={<CrossIcon color="#666" />}
             size="xs"
             bg={Colors.Black[4]}
             onPress={discardRecording}
-            testID="chat-recorder-discard"
-          >
-            <CrossIcon color="#666" />
-          </IconButton>
+          />
 
           {/* Duration Display */}
           <Text fontSize={16} fontWeight="600" color="$gray12">
@@ -368,13 +362,11 @@ export const ChatAudioRecorder = ({
             <ActivityIndicator size="small" color={Colors.Success[1]} />
           ) : (
             <IconButton
+              icon={<SendIcon color="#fff" size={18} />}
               size="xs"
               bg={Colors.Success[1]}
               onPress={sendRecording}
-              testID="chat-recorder-send"
-            >
-              <SendIcon color="#fff" size={18} />
-            </IconButton>
+            />
           )}
         </>
       )}
