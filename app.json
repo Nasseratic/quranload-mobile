@@ -73,6 +73,9 @@
       }
     },
     "owner": "quranload-app",
+    "experiments": {
+      "reactCompiler": true
+    },
     "updates": {
       "fallbackToCacheTimeout": 5000,
       "requestHeaders": {
