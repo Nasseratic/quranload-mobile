@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from "expo-audio";
+import type { AudioPlayer as AudioPlayerType } from "expo-audio";
 import Typography from "./Typography";
 import { AnimatedText } from "./AnimatedText";
 import Slider from "./Slider";
@@ -21,6 +22,53 @@ import { Colors } from "constants/Colors";
 import { SCREEN_WIDTH } from "constants/GeneralConstants";
 import { useOnAudioPlayCallback } from "hooks/useAudioManager";
 import { useMediaUrl } from "hooks/useMediaUrl";
+
+/**
+ * Safely call a method on an audio player, catching errors that occur
+ * when the native player object has been deallocated (e.g., during unmount
+ * or when the audio source changes).
+ */
+const safePlayerCall = <T,>(fn: () => T, fallback?: T): T | undefined => {
+  try {
+    return fn();
+  } catch (error) {
+    // Ignore NativeSharedObjectNotFoundException errors that occur when
+    // the player has been deallocated
+    if (
+      error instanceof Error &&
+      (error.message.includes("NativeSharedObjectNotFoundException") ||
+        error.message.includes("native shared object") ||
+        error.message.includes("FunctionCallException"))
+    ) {
+      return fallback;
+    }
+    throw error;
+  }
+};
+
+/**
+ * Safely pause a player, handling cases where it may be deallocated
+ */
+const safePause = (player: AudioPlayerType | null): void => {
+  if (!player) return;
+  safePlayerCall(() => player.pause());
+};
+
+/**
+ * Safely seek a player, handling cases where it may be deallocated
+ */
+const safeSeekTo = (player: AudioPlayerType | null, position: number): void => {
+  if (!player) return;
+  safePlayerCall(() => player.seekTo(position));
+};
+
+/**
+ * Safely play a player, handling cases where it may be deallocated
+ */
+const safePlay = (player: AudioPlayerType | null): void => {
+  if (!player) return;
+  safePlayerCall(() => player.play());
+};
 
 interface AudioPlayerProps {
   /** Direct audio URL - use this for local files or already-resolved URLs */
@@ -56,9 +104,17 @@ export function AudioPlayer({
   // Track if audio mode has been set
   const audioModeSetRef = useRef(false);
 
+  // Track if component is mounted (for cleanup safety)
+  const isMountedRef = useRef(true);
+
   // Create audio player - will be null until we have a valid URL
   const player = useAudioPlayer(audioSource);
   const status = useAudioPlayerStatus(player);
+
+  // Keep a ref to the current player for use in animated reactions
+  // This ensures animated callbacks always call the latest player instance
+  const playerRef = useRef(player);
+  playerRef.current = player;
 
   // Convert duration and currentTime from seconds to milliseconds
   const durationMs = (status.duration || 0) * 1000;
@@ -77,9 +133,10 @@ export function AudioPlayer({
   const isSeekingRef = useRef(false);
 
   // Wrapper functions for player methods (needed for runOnJS)
+  // Use playerRef to always call the latest player instance, avoiding stale closures
   const pausePlayer = useCallback(() => {
-    player.pause();
-  }, [player]);
+    safePause(playerRef.current);
+  }, []);
 
   const playPlayer = useCallback(async () => {
     // Ensure audio mode is set before playing
@@ -90,16 +147,16 @@ export function AudioPlayer({
       });
       audioModeSetRef.current = true;
     }
-    player.play();
-  }, [player]);
+    safePlay(playerRef.current);
+  }, []);
 
   // Pause this player when another audio starts playing
   useOnAudioPlayCallback(
     useCallback(() => {
       if (status.playing) {
-        player.pause();
+        safePause(playerRef.current);
       }
-    }, [player, status.playing])
+    }, [status.playing])
   );
 
   // Sync playing state with actual player status
@@ -119,9 +176,9 @@ export function AudioPlayer({
   // Pause when component becomes invisible
   useEffect(() => {
     if (!isVisible && status.playing) {
-      player.pause();
+      safePause(playerRef.current);
     }
-  }, [isVisible, status.playing, player]);
+  }, [isVisible, status.playing]);
 
   // Resume playback after seeking
   const resumeAfterSeek = useCallback(
@@ -129,15 +186,16 @@ export function AudioPlayer({
       const duration = status.duration || 0;
       const positionSec = Math.max(0, Math.min(positionMs / 1000, duration));
       isSeekingRef.current = true;
-      player.seekTo(positionSec);
+      safeSeekTo(playerRef.current, positionSec);
       setTimeout(() => {
+        if (!isMountedRef.current) return;
         isSeekingRef.current = false;
         if (shouldPlay) {
           playPlayer();
         }
       }, 100);
     },
-    [player, status.duration, playPlayer]
+    [status.duration, playPlayer]
   );
 
   const valueToTime = useDerivedValue(() => {
@@ -278,12 +336,15 @@ export function AudioPlayer({
     getOpacityStyle(playing.value, pressed.value ? 500 : 0, { duration: 0 })
   );
 
-  // Cleanup on unmount
+  // Track mounted state and cleanup on unmount
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
-      player.pause();
+      isMountedRef.current = false;
+      // Use safePause to handle cases where player may be deallocated
+      safePause(playerRef.current);
     };
-  }, [player]);
+  }, []);
 
   const onPausePress = useCallback(async () => {
     // Don't try to play if audio isn't loaded yet
@@ -292,7 +353,7 @@ export function AudioPlayer({
     }
 
     if (status.playing) {
-      player.pause();
+      safePause(playerRef.current);
       // Optimistic UI update
       playing.value = false;
     } else {
@@ -307,13 +368,13 @@ export function AudioPlayer({
 
       // If at the end, restart from beginning
       if (status.currentTime >= (status.duration || 0) - 0.1) {
-        player.seekTo(0);
+        safeSeekTo(playerRef.current, 0);
       }
-      player.play();
+      safePlay(playerRef.current);
       // Optimistic UI update
       playing.value = true;
     }
-  }, [player, status.playing, status.currentTime, status.duration, status.isLoaded, playing]);
+  }, [status.playing, status.currentTime, status.duration, status.isLoaded, playing]);
 
   // Show loading state while resolving URL or loading audio
   const isLoading = isResolvingUrl || (!status.isLoaded && audioSource !== null);

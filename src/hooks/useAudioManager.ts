@@ -6,12 +6,32 @@ let activeSound: AudioPlayer | null = null;
 
 const audioListeners = new Set<() => void>();
 
+/**
+ * Safely call a method on an audio player, catching errors that occur
+ * when the native player object has been deallocated.
+ */
+const safePlayerCall = <T>(fn: () => T): T | undefined => {
+  try {
+    return fn();
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("NativeSharedObjectNotFoundException") ||
+        error.message.includes("native shared object") ||
+        error.message.includes("FunctionCallException"))
+    ) {
+      return undefined;
+    }
+    throw error;
+  }
+};
+
 export const useAudioManager = (initialSound?: AudioPlayer | null) => {
   const [sound, setSound] = useState<AudioPlayer | null | undefined>(initialSound);
 
   const playSound = async () => {
     if (activeSound != null && activeSound !== sound) {
-      activeSound.pause();
+      safePlayerCall(() => activeSound?.pause());
     }
     if (sound) {
       audioListeners.forEach((listener) => listener());
@@ -19,7 +39,7 @@ export const useAudioManager = (initialSound?: AudioPlayer | null) => {
         allowsRecording: false,
       });
       activeSound = sound;
-      sound.play();
+      safePlayerCall(() => sound.play());
     }
   };
 
@@ -27,7 +47,7 @@ export const useAudioManager = (initialSound?: AudioPlayer | null) => {
     if (activeSound === sound) {
       activeSound = null;
     }
-    sound?.pause();
+    safePlayerCall(() => sound?.pause());
   };
 
   useEffect(() => {
@@ -35,7 +55,7 @@ export const useAudioManager = (initialSound?: AudioPlayer | null) => {
       if (activeSound === sound) {
         activeSound = null;
       }
-      sound?.release();
+      safePlayerCall(() => sound?.release());
     };
   }, [sound]);
 
