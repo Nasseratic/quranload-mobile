@@ -3,17 +3,18 @@ import { client } from "api/convex";
 import { api } from "../../convex/_generated/api";
 
 /**
- * Upload chat media (image or audio) to Cloudflare R2 via Convex
+ * Upload chat media (image, audio, or video) to Cloudflare R2 via Convex
  * @param uri - Local file URI to upload
- * @param type - Media type: 'image' or 'audio'
+ * @param type - Media type: 'image', 'audio', or 'video'
  * @returns The R2 storage key for the uploaded file, or undefined on error
  */
 export const uploadChatMedia = async (
   uri: string,
-  type: "image" | "audio"
+  type: "image" | "audio" | "video"
 ): Promise<string | undefined> => {
   try {
-    const contentType = type === "image" ? "image/png" : "audio/mpeg";
+    const contentType =
+      type === "image" ? "image/png" : type === "video" ? "video/mp4" : "audio/mpeg";
 
     console.log(`[uploadChatMedia] Starting upload for ${type}: ${uri}`);
 
