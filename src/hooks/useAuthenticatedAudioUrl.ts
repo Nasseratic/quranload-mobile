@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { File, Directory, Paths } from "expo-file-system/next";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Cache directory for downloaded audio files
 const audioDir = new Directory(Paths.cache, "audio");
@@ -39,7 +38,10 @@ const ensureAudioDir = (): void => {
 };
 
 /**
- * Download an audio file with authentication headers and progress tracking
+ * Download an audio file with optional authentication headers and progress tracking.
+ *
+ * Note: Azure SAS URLs (pre-signed) don't need Authorization headers.
+ * Adding auth headers to a SAS URL causes HTTP 400 errors.
  */
 const downloadAuthenticatedAudio = async (
   url: string,
@@ -47,15 +49,10 @@ const downloadAuthenticatedAudio = async (
   onProgress?: (progress: number) => void,
   abortSignal?: AbortSignal
 ): Promise<string> => {
-  const token = await AsyncStorage.getItem("accessToken");
-
-  const headers: HeadersInit = {};
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+  // Don't add Authorization headers - Azure URLs are pre-signed SAS URLs
+  // that already have authentication in the URL query parameters.
+  // Adding a Bearer token to a SAS URL causes HTTP 400 errors.
   const response = await fetch(url, {
-    headers,
     signal: abortSignal,
   });
 
