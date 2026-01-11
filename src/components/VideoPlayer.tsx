@@ -34,14 +34,12 @@ export const VideoPlayer = ({
   const { url: resolvedUrl, isLoading: isResolvingUrl } = useMediaUrl(mediaKey);
   const videoSource = directUri || resolvedUrl || null;
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isVideoReady, setIsVideoReady] = useState(false);
   const fullscreenViewRef = useRef<VideoView>(null);
 
-  // Thumbnail player - muted, loops to show as animated preview
+  // Thumbnail player - muted, does not autoplay (placeholder preview)
   const thumbnailPlayer = useVideoPlayer(videoSource, (player) => {
-    player.loop = true;
     player.muted = true;
-    player.play();
+    player.loop = false;
   });
 
   // Fullscreen player - plays when modal opens
@@ -60,10 +58,6 @@ export const VideoPlayer = ({
     fullscreenPlayer.currentTime = 0;
     setIsFullscreen(false);
   }, [fullscreenPlayer]);
-
-  const handleVideoReady = useCallback(() => {
-    setIsVideoReady(true);
-  }, []);
 
   if (!videoSource && !isResolvingUrl) {
     return null;
@@ -86,7 +80,6 @@ export const VideoPlayer = ({
               contentFit="cover"
               nativeControls={false}
               allowsFullscreen={false}
-              onReadyForDisplay={handleVideoReady}
             />
           )}
           {/* Play button overlay */}
@@ -95,8 +88,8 @@ export const VideoPlayer = ({
               <PlayIcon size={24} fill={Colors.White[1]} />
             </View>
           </View>
-          {/* Loading spinner - show while resolving URL or video not ready */}
-          {(isResolvingUrl || !isVideoReady) && (
+          {/* Loading spinner - show while resolving URL */}
+          {isResolvingUrl && (
             <Stack
               position="absolute"
               top={0}
