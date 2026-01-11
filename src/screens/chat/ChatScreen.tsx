@@ -1,6 +1,5 @@
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useQueryClient } from "@tanstack/react-query";
 import { AppBar } from "components/AppBar";
 import { SafeView } from "components/SafeView";
 import { IconButton } from "components/buttons/IconButton";
@@ -88,10 +87,35 @@ export const ChatScreen = () => {
     { initialNumItems: QUERY_LIMIT }
   );
 
+  const messageCacheRef = useRef<Map<string, ChatMessage>>(new Map());
+
   // Map results to chat messages with media keys
   const mappedMessages = useMemo<ChatMessage[]>(() => {
     if (!results) return [];
-    return results.map(mapMessageToGiftedChatMessage);
+    const nextCache = new Map<string, ChatMessage>();
+    const mapped = results.map((message) => {
+      const cached = messageCacheRef.current.get(message._id);
+      const isSame =
+        cached &&
+        cached.text === (message.text ?? "") &&
+        cached.user._id === message.senderId &&
+        cached.user.name === message.senderName &&
+        cached.system === message.isSystem &&
+        cached.mediaKey === (message.mediaKey ?? undefined) &&
+        cached.mediaType === (message.mediaType ?? undefined) &&
+        cached.createdAt.getTime() === message._creationTime;
+
+      if (isSame) {
+        nextCache.set(message._id, cached);
+        return cached;
+      }
+
+      const mappedMessage = mapMessageToGiftedChatMessage(message);
+      nextCache.set(message._id, mappedMessage);
+      return mappedMessage;
+    });
+    messageCacheRef.current = nextCache;
+    return mapped;
   }, [results]);
 
   // Add welcome message for support chat when there are no messages
@@ -120,7 +144,7 @@ export const ChatScreen = () => {
   const [isRecorderVisible, setIsRecorderVisible] = useState(false);
 
   // Allow videos only in support chat
-  const { pickMedia, mediaItems, removeMedia, upload, isUploading, images } = useChatMediaUploader({
+  const { pickMedia, mediaItems, removeMedia, upload, isUploading } = useChatMediaUploader({
     allowVideos: isSupportChat,
   });
 
@@ -179,84 +203,84 @@ export const ChatScreen = () => {
     ]
   );
 
-  const renderSend = ({ onSend, text, sendButtonProps, ...props }: SendProps<IMessage>) => {
-    const isTextOrMedia = text || mediaItems.length > 0;
-    return (
-      <Send
-        {...props}
-        sendButtonProps={{
-          ...sendButtonProps,
-          disabled: isUploading,
-          onPress: async () => {
-            if (!isTextOrMedia) {
-              return setIsRecorderVisible(true);
-            }
-            if (mediaItems.length > 0) {
-              const uploadedMedia = await upload();
-              const validUploadedMedia = uploadedMedia.filter(isNotNullish);
-              if (validUploadedMedia.length === 0) {
-                // All uploads failed
-                toast.show({ status: "Error", title: t("chat.mediaUploadFailed") });
-                return;
+  const renderSend = useCallback(
+    ({ onSend, text, sendButtonProps, ...props }: SendProps<IMessage>) => {
+      const isTextOrMedia = text || mediaItems.length > 0;
+      return (
+        <Send
+          {...props}
+          sendButtonProps={{
+            ...sendButtonProps,
+            disabled: isUploading,
+            onPress: async () => {
+              if (!isTextOrMedia) {
+                return setIsRecorderVisible(true);
               }
+              if (mediaItems.length > 0) {
+                const uploadedMedia = await upload();
+                const validUploadedMedia = uploadedMedia.filter(isNotNullish);
+                if (validUploadedMedia.length === 0) {
+                  // All uploads failed
+                  toast.show({ status: "Error", title: t("chat.mediaUploadFailed") });
+                  return;
+                }
 
-              // Build messages for each media item
-              const mediaMessages = validUploadedMedia.map((media, index) => {
-                const isLast = index === validUploadedMedia.length - 1;
-                return {
-                  // For images, use 'image' field; for videos, use 'video' field
-                  ...(media.type === "image" ? { image: media.key } : { video: media.key }),
-                  // Include text only with the last media item
-                  text: isLast ? text?.trim() : undefined,
-                };
-              });
+                // Build messages for each media item
+                const mediaMessages = validUploadedMedia.map((media, index) => {
+                  const isLast = index === validUploadedMedia.length - 1;
+                  return {
+                    // For images, use 'image' field; for videos, use 'video' field
+                    ...(media.type === "image" ? { image: media.key } : { video: media.key }),
+                    // Include text only with the last media item
+                    text: isLast ? text?.trim() : undefined,
+                  };
+                });
 
-              onSend?.(mediaMessages, true);
-              onSend?.([], true);
-            } else {
-              onSend?.({ text: text?.trim() }, true);
-            }
-          },
-        }}
-      >
-        <Stack pr="$3" h={32} jc="center">
-          {isUploading ? (
-            <ActivityIndicator size="small" color="black" />
-          ) : isTextOrMedia ? (
-            <SendIcon size={30} />
-          ) : (
-            <RecordIcon color="#000" size={28} />
-          )}
-        </Stack>
-      </Send>
-    );
-  };
+                onSend?.(mediaMessages, true);
+                onSend?.([], true);
+              } else {
+                onSend?.({ text: text?.trim() }, true);
+              }
+            },
+          }}
+        >
+          <Stack pr="$3" h={32} jc="center">
+            {isUploading ? (
+              <ActivityIndicator size="small" color="black" />
+            ) : isTextOrMedia ? (
+              <SendIcon size={30} />
+            ) : (
+              <RecordIcon color="#000" size={28} />
+            )}
+          </Stack>
+        </Send>
+      );
+    },
+    [isUploading, mediaItems, upload, t, toast]
+  );
 
-  const renderActions = () => {
+  const renderActions = useCallback(() => {
     return (
       <Stack pl="$3">
         <IconButton onPress={pickMedia} icon={<PaperClipIcon size={28} />} size="xs" />
       </Stack>
     );
-  };
+  }, [pickMedia]);
 
   // Style the text input to be inline with the attachment and send icons
-  const renderComposer = (props: {}) => (
-    <Composer
-      textInputStyle={{
-        paddingTop: 15,
-      }}
-      {...props}
-    />
+  const composerTextInputStyle = useMemo(() => ({ paddingTop: 15 }), []);
+  const renderComposer = useCallback(
+    (props: {}) => <Composer textInputStyle={composerTextInputStyle} {...props} />,
+    [composerTextInputStyle]
   );
 
-  const renderMessageAudio = (props: { currentMessage: IMessage }) => {
+  const renderMessageAudio = useCallback((props: { currentMessage: IMessage }) => {
     if (!props.currentMessage.audio) return null;
     // audio field contains mediaKey from R2 storage, not a direct URL
     return <AudioPlayer mediaKey={props.currentMessage.audio} isVisible={true} isCompact width={250} />;
-  };
+  }, []);
 
-  const renderMessageVideo = (props: { currentMessage: IMessage }) => {
+  const renderMessageVideo = useCallback((props: { currentMessage: IMessage }) => {
     const message = props.currentMessage as ChatMessage;
     if (!message.video || message.mediaType !== "video") return null;
     // video field contains mediaKey from R2 storage
@@ -265,64 +289,71 @@ export const ChatScreen = () => {
         <VideoPlayer mediaKey={message.video} width={200} height={200} borderRadius={16} />
       </Stack>
     );
-  };
+  }, []);
 
   // Render attached media (images and videos)
-  const renderChatFooter = () => (
-    <View gap="$2" marginBottom={5}>
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 10,
-          paddingLeft: 10,
-        }}
-        w={SCREEN_WIDTH}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-      >
-        <XStack gap="$2">
-          {mediaItems?.map((item, index) => (
-            <Stack ov="visible" key={index}>
-              {item.type === "image" ? (
-                <ImageWrapper
-                  viewerRef={imageViewerRef}
-                  index={index}
-                  source={{ uri: item.uri }}
-                  style={{
-                    borderRadius: 8,
-                    borderWidth: 1,
-                    borderColor: "#e5e5e5",
-                    height: 60,
-                    width: 60,
+  const chatFooterContentContainerStyle = useMemo(
+    () => ({
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      paddingLeft: 10,
+    }),
+    []
+  );
+  const renderChatFooter = useCallback(
+    () => (
+      <View gap="$2" marginBottom={5}>
+        <ScrollView
+          contentContainerStyle={chatFooterContentContainerStyle}
+          w={SCREEN_WIDTH}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          <XStack gap="$2">
+            {mediaItems?.map((item, index) => (
+              <Stack ov="visible" key={index}>
+                {item.type === "image" ? (
+                  <ImageWrapper
+                    viewerRef={imageViewerRef}
+                    index={index}
+                    source={{ uri: item.uri }}
+                    style={{
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: "#e5e5e5",
+                      height: 60,
+                      width: 60,
+                    }}
+                  >
+                    <Image height={60} width={60} borderRadius="$2" source={{ uri: item.uri }} />
+                  </ImageWrapper>
+                ) : (
+                  <VideoPlayer uri={item.uri} width={60} height={60} borderRadius={8} />
+                )}
+                <Circle
+                  position="absolute"
+                  right={-5}
+                  top={-5}
+                  bg="black"
+                  p={4}
+                  zIndex={1}
+                  pressStyle={{
+                    opacity: 0.5,
                   }}
+                  onPress={() => removeMedia(item.uri)}
                 >
-                  <Image height={60} width={60} borderRadius="$2" source={{ uri: item.uri }} />
-                </ImageWrapper>
-              ) : (
-                <VideoPlayer uri={item.uri} width={60} height={60} borderRadius={8} />
-              )}
-              <Circle
-                position="absolute"
-                right={-5}
-                top={-5}
-                bg="black"
-                p={4}
-                zIndex={1}
-                pressStyle={{
-                  opacity: 0.5,
-                }}
-                onPress={() => removeMedia(item.uri)}
-              >
-                <CrossIcon width={16} height={16} />
-              </Circle>
-            </Stack>
-          ))}
-        </XStack>
-      </ScrollView>
-    </View>
+                  <CrossIcon width={16} height={16} />
+                </Circle>
+              </Stack>
+            ))}
+          </XStack>
+        </ScrollView>
+      </View>
+    ),
+    [chatFooterContentContainerStyle, mediaItems, removeMedia]
   );
 
-  const handleSupportChatOptions = () => {
+  const handleSupportChatOptions = useCallback(() => {
     if (!isSupportChat || !conversationId) return;
 
     const actionText = isArchived ? t("unarchive") : t("archive");
@@ -376,37 +407,148 @@ export const ChatScreen = () => {
         });
       }
     }
-  };
+  }, [
+    actualSupportUserId,
+    archiveSupportConversation,
+    conversationId,
+    isArchived,
+    isSupportChat,
+    navigation,
+    t,
+    toast,
+    unarchiveSupportConversation,
+  ]);
 
-  const renderInputToolbar = (props: InputToolbarProps<IMessage>) => {
-    if (isRecorderVisible) {
-      return (
-        <ChatAudioRecorder
-          isVisible={isRecorderVisible}
-          onClose={() => setIsRecorderVisible(false)}
-          onSend={async ({ uri }) => {
-            const uploadedUri = await uploadChatMedia(uri, "audio");
-            if (uploadedUri && user) {
-              await onSend([
-                {
-                  _id: uploadedUri,
-                  user: {
-                    _id: user.id,
-                    name: user.fullName,
+  const renderInputToolbar = useCallback(
+    (props: InputToolbarProps<IMessage>) => {
+      if (isRecorderVisible) {
+        return (
+          <ChatAudioRecorder
+            isVisible={isRecorderVisible}
+            onClose={() => setIsRecorderVisible(false)}
+            onSend={async ({ uri }) => {
+              const uploadedUri = await uploadChatMedia(uri, "audio");
+              if (uploadedUri && user) {
+                await onSend([
+                  {
+                    _id: uploadedUri,
+                    user: {
+                      _id: user.id,
+                      name: user.fullName,
+                    },
+                    createdAt: new Date(),
+                    text: "",
+                    audio: uploadedUri,
                   },
-                  createdAt: new Date(),
-                  text: "",
-                  audio: uploadedUri,
-                },
-              ]);
-            }
-            setIsRecorderVisible(false);
-          }}
+                ]);
+              }
+              setIsRecorderVisible(false);
+            }}
+          />
+        );
+      }
+      return <InputToolbar {...props} />;
+    },
+    [isRecorderVisible, onSend, user]
+  );
+
+  const imageViewerData = useMemo(
+    () =>
+      mediaItems
+        .filter((item) => item.type === "image")
+        .map((item) => ({
+          key: item.uri,
+          source: { uri: item.uri },
+        })),
+    [mediaItems]
+  );
+
+  const chatUser = useMemo(
+    () => ({
+      _id: isSupportChat && supportUserId ? "support" : user?.id ?? "unknown",
+      name: isSupportChat && supportUserId ? "Support" : user?.fullName ?? "User",
+    }),
+    [isSupportChat, supportUserId, user?.fullName, user?.id]
+  );
+
+  const renderAvatar = useMemo(() => {
+    return match({ interlocutorId, isSupportChat })
+      .with({ interlocutorId: P.not(P.nullish) }, () => () => null)
+      .with({ isSupportChat: true }, () => () => null)
+      .otherwise(() => undefined);
+  }, [interlocutorId, isSupportChat]);
+
+  const onPressAvatar = useCallback(() => {}, []);
+
+  const renderSystemMessage = useCallback(
+    (message: { currentMessage?: IMessage }) => (
+      <Card bg="$white0" p={12} my={16} mx={8} borderRadius={8}>
+        <Text color="$gray11" textAlign="center">
+          {message.currentMessage?.text}
+        </Text>
+      </Card>
+    ),
+    []
+  );
+
+  const renderMessageImage = useCallback((props: { currentMessage?: IMessage }) => {
+    const message = props.currentMessage as ChatMessage | undefined;
+    const mediaKey = message?.mediaKey;
+
+    return (
+      <Stack m={4}>
+        <MediaImage
+          mediaKey={mediaKey}
+          height={200}
+          width={200}
+          borderCurve="continuous"
+          borderRadius="$4"
+          viewerEnabled
         />
+      </Stack>
+    );
+  }, []);
+
+  const renderBubble = useCallback(
+    (props: any) => (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: {
+            backgroundColor: Colors.Success[1],
+          },
+        }}
+      />
+    ),
+    []
+  );
+
+  const handleLongPress = useCallback(
+    (context: unknown, message: IMessage) => {
+      const options = [
+        ...match(message.user._id === userId)
+          .with(true, () => [t("unsend")])
+          .otherwise(() => []),
+        t("copy"),
+        t("cancel"),
+      ];
+
+      const cancelButtonIndex = options.length - 1;
+      (context as any).actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        (buttonIndex: number) => {
+          match(buttonIndex)
+            .with(0, async () => unsend({ messageId: message._id as Id<"messages"> }))
+            .with(1, () => Clipboard.setString(message.text))
+            .otherwise(() => {});
+        }
       );
-    }
-    return <InputToolbar {...props} />;
-  };
+    },
+    [unsend, userId, t]
+  );
 
   return (
     // UX TODO: Identify which messages are from the teacher (can be done using the avatar or the message sender name)
@@ -432,21 +574,13 @@ export const ChatScreen = () => {
           {/* ImageViewer for footer/upload images (only images, not videos) */}
           <ImageViewer
             ref={imageViewerRef}
-            data={mediaItems
-              .filter((item) => item.type === "image")
-              .map((item) => ({
-                key: item.uri,
-                source: { uri: item.uri },
-              }))}
+            data={imageViewerData}
           />
 
           <GiftedChat
             keyboardShouldPersistTaps="never" // For Android
             messages={messages}
-            user={{
-              _id: isSupportChat && supportUserId ? "support" : user?.id ?? "unknown",
-              name: isSupportChat && supportUserId ? "Support" : user?.fullName ?? "User",
-            }}
+            user={chatUser}
             onSend={onSend}
             renderSend={renderSend}
             // Show send icon when there are images attached
@@ -460,68 +594,12 @@ export const ChatScreen = () => {
             renderUsernameOnMessage={!interlocutorId} // Show sender name only in team chats
             renderAvatarOnTop // Render avatars at the top of consecutive messages, rather than the bottom
             showAvatarForEveryMessage={false} // One avatar for consecutive messages from the same user on the same day
-            renderAvatar={match({ interlocutorId, isSupportChat })
-              .with({ interlocutorId: P.not(P.nullish) }, () => () => null)
-              .with({ isSupportChat: true }, () => () => null)
-              .otherwise(() => undefined)} // Show avatar in team chats only
-            onPressAvatar={(user) => {}} // UX TODO: Implement a chat with someone feature; can be view profile too
-            renderSystemMessage={(message) => (
-              <Card bg="$white0" p={12} my={16} mx={8} borderRadius={8}>
-                <Text color="$gray11" textAlign="center">
-                  {message.currentMessage?.text}
-                </Text>
-              </Card>
-            )}
-            renderMessageImage={(props) => {
-              const message = props.currentMessage as ChatMessage | undefined;
-              const mediaKey = message?.mediaKey;
-
-              return (
-                <Stack m={4}>
-                  <MediaImage
-                    mediaKey={mediaKey}
-                    height={200}
-                    width={200}
-                    borderCurve="continuous"
-                    borderRadius="$4"
-                    viewerEnabled
-                  />
-                </Stack>
-              );
-            }}
-            onLongPress={(context, message) => {
-              const options = [
-                ...match(message.user._id === userId)
-                  .with(true, () => [t("unsend")])
-                  .otherwise(() => []),
-                t("copy"),
-                t("cancel"),
-              ];
-
-              const cancelButtonIndex = options.length - 1;
-              (context as any).actionSheet().showActionSheetWithOptions(
-                {
-                  options,
-                  cancelButtonIndex,
-                },
-                (buttonIndex: number) => {
-                  match(buttonIndex)
-                    .with(0, async () => unsend({ messageId: message._id as Id<"messages"> }))
-                    .with(1, () => Clipboard.setString(message.text))
-                    .otherwise(() => {});
-                }
-              );
-            }}
-            renderBubble={(props) => (
-              <Bubble
-                {...props}
-                wrapperStyle={{
-                  right: {
-                    backgroundColor: Colors.Success[1],
-                  },
-                }}
-              />
-            )}
+            renderAvatar={renderAvatar} // Show avatar in team chats only
+            onPressAvatar={onPressAvatar} // UX TODO: Implement a chat with someone feature; can be view profile too
+            renderSystemMessage={renderSystemMessage}
+            renderMessageImage={renderMessageImage}
+            onLongPress={handleLongPress}
+            renderBubble={renderBubble}
             loadEarlier={status === "CanLoadMore"}
             onLoadEarlier={() => loadMore(QUERY_LIMIT)}
             isLoadingEarlier={status === "LoadingMore"}
