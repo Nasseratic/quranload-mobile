@@ -21,6 +21,7 @@ interface VideoPlayerProps {
 
 /**
  * Video component that shows a thumbnail and plays in fullscreen on tap.
+ * The thumbnail is the video itself displayed without controls (muted, looping).
  * Supports both direct URLs and R2 media keys.
  */
 export const VideoPlayer = ({
@@ -33,14 +34,14 @@ export const VideoPlayer = ({
   const { url: resolvedUrl, isLoading: isResolvingUrl } = useMediaUrl(mediaKey);
   const videoSource = directUri || resolvedUrl || null;
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const fullscreenViewRef = useRef<VideoView>(null);
 
-  // Thumbnail player - paused, just showing first frame
+  // Thumbnail player - muted, loops to show as animated preview
   const thumbnailPlayer = useVideoPlayer(videoSource, (player) => {
-    player.loop = false;
+    player.loop = true;
     player.muted = true;
-    player.pause();
+    player.play();
   });
 
   // Fullscreen player - plays when modal opens
@@ -51,7 +52,6 @@ export const VideoPlayer = ({
 
   const handlePress = useCallback(() => {
     setIsFullscreen(true);
-    // Start playing when fullscreen opens
     fullscreenPlayer.play();
   }, [fullscreenPlayer]);
 
@@ -61,11 +61,9 @@ export const VideoPlayer = ({
     setIsFullscreen(false);
   }, [fullscreenPlayer]);
 
-  const handleThumbnailLoad = useCallback(() => {
-    setIsThumbnailLoaded(true);
+  const handleVideoReady = useCallback(() => {
+    setIsVideoReady(true);
   }, []);
-
-  const showSpinner = isResolvingUrl || !isThumbnailLoaded;
 
   if (!videoSource && !isResolvingUrl) {
     return null;
@@ -88,7 +86,7 @@ export const VideoPlayer = ({
               contentFit="cover"
               nativeControls={false}
               allowsFullscreen={false}
-              onReadyForDisplay={handleThumbnailLoad}
+              onReadyForDisplay={handleVideoReady}
             />
           )}
           {/* Play button overlay */}
@@ -97,8 +95,8 @@ export const VideoPlayer = ({
               <PlayIcon size={24} fill={Colors.White[1]} />
             </View>
           </View>
-          {/* Loading spinner */}
-          {showSpinner && (
+          {/* Loading spinner - show while resolving URL or video not ready */}
+          {(isResolvingUrl || !isVideoReady) && (
             <Stack
               position="absolute"
               top={0}
