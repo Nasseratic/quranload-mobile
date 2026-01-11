@@ -17,23 +17,31 @@ jobs:
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 20.x
 
-      - name: Install dependencies
-        run: npm ci
+      - name: 🏗 Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: 📦 Install dependencies
+        run: bun i
+
+      - name: 🔄 Setup Convex production environment
+        run: bunx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          CONVEX_URL: ${{ secrets.CONVEX_URL }}
 
       - name: Configure Expo and EAS
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
           eas-version: latest
-          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Publish production update
         env:
           DEPLOY_MESSAGE: ${{ github.event.head_commit.message || format('Automated production deploy ({0})', github.sha) }}
+          EXPO_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL }}
         run: |
           eas update \
             --branch main \
